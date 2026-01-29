@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Historical Analysis - Bitcoin Power Law Observatory</title>
+  <meta name="description" content="Explore Bitcoin's historical price data through log-log charts and mean reversion analysis.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Power Law Observatory
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html" class="active">History</a>
+        <a href="future.html">Future</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Historical Analysis</h1>
+        <p>Bitcoin's price history plotted on a log-log scale reveals a remarkably consistent power law relationship. Deviations from the trend are dramatic but statistically ordinary.</p>
+      </section>
+
+      <!-- Model Toggle -->
+      <div class="model-toggle" role="group" aria-label="Select power law model">
+        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
+        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
+      </div>
+
+      <!-- Main Chart -->
+      <div class="chart-container" style="height: 500px;">
+        <canvas id="history-chart" aria-label="Bitcoin historical price on log-log scale with power law trend" role="img"></canvas>
+      </div>
+
+      <!-- Controls -->
+      <div class="dashboard" style="margin-top: var(--spacing-lg);">
+        <div class="card">
+          <div class="card-label">Date Range</div>
+          <select id="date-range" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid var(--gray-border); border-radius: var(--border-radius);">
+            <option value="all">All Time (2010-present)</option>
+            <option value="10y">Last 10 Years</option>
+            <option value="5y">Last 5 Years</option>
+            <option value="3y">Last 3 Years</option>
+            <option value="1y">Last Year</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Show Bands</div>
+          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="show-1sigma" checked> &plusmn;1&sigma; bands
+            </label>
+            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+              <input type="checkbox" id="show-2sigma" checked> &plusmn;2&sigma; bands
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Export Data</div>
+          <button id="export-csv" class="toggle-btn" style="margin-top: 0.5rem;">Download CSV</button>
+        </div>
+      </div>
+
+      <!-- Mean Reversion Explanation -->
+      <div class="info-box" style="margin-top: var(--spacing-xl);">
+        <h4>Understanding Mean Reversion</h4>
+        <p>Think of the power law trend as a rubber band. Price can stretch far above or below the trend, but it always snaps back. This isn't magic; it's statistics. Extreme deviations are unsustainable by definition.</p>
+      </div>
+
+      <!-- Bell Curve Section -->
+      <section id="bell-curve-section" style="margin-top: var(--spacing-xxl);">
+        <h2>Deviation Distribution (Bell Curve)</h2>
+        <p style="color: var(--gray); margin-bottom: var(--spacing-lg);">How Bitcoin's price deviates from the power law trend follows a near-normal distribution. Most of history clusters around fair value.</p>
+
+        <div class="chart-container" style="height: 400px;">
+          <canvas id="bell-curve-chart" aria-label="Bell curve showing distribution of Bitcoin price deviations from power law trend" role="img"></canvas>
+        </div>
+
+        <!-- Bell Curve Stats -->
+        <div class="dashboard" style="margin-top: var(--spacing-lg);">
+          <div class="card">
+            <div class="card-label">Today's Position</div>
+            <div class="card-value" id="today-multiplier" style="font-size: 1.5rem;">--</div>
+            <div class="card-sub" id="today-percentile">-- percentile</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Within &plusmn;1&sigma;</div>
+            <div class="card-value" id="within-1sigma">--</div>
+            <div class="card-sub">of all history</div>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Model &sigma;</div>
+            <div class="card-value" id="bell-sigma">--</div>
+            <div class="card-sub">log standard deviation</div>
+          </div>
+        </div>
+
+        <!-- Educational Text -->
+        <div class="info-box" style="margin-top: var(--spacing-lg);">
+          <h4>What This Means</h4>
+          <p>Bitcoin's prices deviate from the power law trend in a bell-shaped pattern—most time is spent near fair value (&plusmn;1&sigma;). Extreme deviations always revert, driving the dramatic swings we see in cycles. This isn't random chaos; it's statistically normal behavior that reveals Bitcoin's predictable long-term adoption path.</p>
+        </div>
+      </section>
+
+      <!-- Historical Examples -->
+      <h2 style="margin-top: var(--spacing-xl);">Notable Deviations</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Event</th>
+              <th>Date</th>
+              <th>Peak Multiplier</th>
+              <th>Subsequent Drawdown</th>
+              <th>Time to Trend</th>
+            </tr>
+          </thead>
+          <tbody id="deviations-table">
+            <tr>
+              <td>2011 Bubble</td>
+              <td>Jun 2011</td>
+              <td>~8&times; over trend</td>
+              <td>-94%</td>
+              <td>~2 years</td>
+            </tr>
+            <tr>
+              <td>2013 Double Top</td>
+              <td>Dec 2013</td>
+              <td>~4&times; over trend</td>
+              <td>-86%</td>
+              <td>~3 years</td>
+            </tr>
+            <tr>
+              <td>2017 Bull Run</td>
+              <td>Dec 2017</td>
+              <td>~4&times; over trend</td>
+              <td>-84%</td>
+              <td>~3 years</td>
+            </tr>
+            <tr>
+              <td>2021 Peak</td>
+              <td>Nov 2021</td>
+              <td>~2.5&times; over trend</td>
+              <td>-77%</td>
+              <td>~2 years</td>
+            </tr>
+            <tr>
+              <td>2022 Bottom</td>
+              <td>Nov 2022</td>
+              <td>~0.5&times; (under)</td>
+              <td>N/A (bottom)</td>
+              <td>Recovery began</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rubber Band Animation -->
+      <div class="info-box" style="margin-top: var(--spacing-xl); text-align: center;">
+        <h4>The Rubber Band Effect</h4>
+        <div id="rubber-band-demo" style="height: 100px; position: relative; margin: var(--spacing-lg) 0;">
+          <div style="position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: var(--orange);"></div>
+          <div id="rubber-band-ball" style="position: absolute; top: 50%; left: 50%; width: 20px; height: 20px; background: var(--black); border-radius: 50%; transform: translate(-50%, -50%); transition: top 0.5s ease-in-out;"></div>
+        </div>
+        <p style="margin-top: var(--spacing-sm);">Price stretches away from trend, then gravity pulls it back. Every cycle. Without fail (so far).</p>
+        <button id="animate-rubber-band" class="toggle-btn" style="margin-top: var(--spacing-sm);">Animate</button>
+      </div>
+
+      <!-- Statistics -->
+      <h2 style="margin-top: var(--spacing-xl);">Model Statistics</h2>
+      <div class="dashboard">
+        <div class="card">
+          <div class="card-label">Current &sigma;</div>
+          <div class="card-value" id="current-sigma">--</div>
+          <div class="card-sub">Log volatility from residuals</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Max Historical Multiplier</div>
+          <div class="card-value" id="max-mult">--</div>
+          <div class="card-sub" id="max-mult-date">--</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Min Historical Multiplier</div>
+          <div class="card-value" id="min-mult">--</div>
+          <div class="card-sub" id="min-mult-date">--</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Data Sources</h4>
+          <p>Historical: Bitstamp, CryptoDataDownload<br>Combined dataset from July 2010</p>
+        </div>
+        <div class="footer-section">
+          <h4>Models</h4>
+          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>This is not financial advice. Historical model fit does not guarantee future performance.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/powerlaw.js"></script>
+  <script src="../js/history.js"></script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>About - Bitcoin Power Law Observatory</title>
+  <meta name="description" content="Understanding the Bitcoin power law model, its origins, methodology, and limitations.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Power Law Observatory
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">History</a>
+        <a href="future.html">Future</a>
+        <a href="about.html" class="active">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>About the Power Law</h1>
+        <p>A mathematical framework for understanding Bitcoin's long-term price behavior through the lens of network adoption.</p>
+      </section>
+
+      <!-- What is a Power Law -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>What is a Power Law?</h2>
+        <p>A power law is a mathematical relationship where one quantity varies as a power of another:</p>
+
+        <div class="info-box" style="font-family: monospace; font-size: 1.1rem; text-align: center;">
+          y = A &times; x<sup>&beta;</sup>
+        </div>
+
+        <p>Power laws appear throughout nature and human systems:</p>
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li><strong>City populations</strong> follow a power law distribution (Zipf's Law)</li>
+          <li><strong>Earthquake magnitudes</strong> follow the Gutenberg-Richter law</li>
+          <li><strong>Word frequencies</strong> in languages follow power law distributions</li>
+          <li><strong>Network effects</strong> often exhibit power law growth (Metcalfe's Law)</li>
+        </ul>
+
+        <p style="margin-top: var(--spacing-md);">When plotted on a log-log scale, power law relationships appear as straight lines. This is exactly what we observe with Bitcoin's price over time.</p>
+      </section>
+
+      <!-- Bitcoin's Power Law -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Bitcoin's Power Law Behavior</h2>
+        <p>Since its inception, Bitcoin's price has followed a remarkably consistent power law relationship with time. When plotting log(price) against log(time since genesis), the data forms a nearly straight line with an R-squared of approximately 95%.</p>
+
+        <div class="info-box">
+          <h4>Why might this occur?</h4>
+          <p>The power law relationship likely emerges from Bitcoin's network effects. As more people adopt Bitcoin, the network becomes more valuable (similar to Metcalfe's Law, where network value scales with the square of users). The consistent growth rate suggests adoption follows predictable patterns over long time scales.</p>
+        </div>
+      </section>
+
+      <!-- The Models -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>The Models</h2>
+
+        <div class="card" style="margin-bottom: var(--spacing-lg);">
+          <h3 style="color: var(--orange);">Krueger/Sigman Model</h3>
+          <p style="margin-bottom: var(--spacing-sm);"><strong>Source:</strong> <em>Bitcoin One Million: The Final Chapter of Fiat</em> by Fred Krueger & Ben Sigman (2025)</p>
+
+          <div class="info-box" style="font-family: monospace; margin: var(--spacing-md) 0;">
+            trend_price = 10<sup>-1.847796462</sup> &times; years<sup>5.616314045</sup>
+          </div>
+
+          <p>This model uses years since genesis (January 3, 2009) as the time variable. Key characteristics:</p>
+          <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+            <li>&beta; = 5.616 (exponent)</li>
+            <li>R&sup2; &asymp; 95.65%</li>
+            <li>Projects $1M trend around January 2034</li>
+          </ul>
+        </div>
+
+        <div class="card">
+          <h3 style="color: var(--orange);">Perrenod/Santostasi Model</h3>
+          <p style="margin-bottom: var(--spacing-sm);"><strong>Source:</strong> Giovanni Santostasi's original Bitcoin Power Law Theory research</p>
+
+          <div class="info-box" style="font-family: monospace; margin: var(--spacing-md) 0;">
+            trend_price = 10<sup>-17</sup> &times; days<sup>5.8</sup>
+          </div>
+
+          <p>This model uses days since genesis directly (without converting to years). Key characteristics:</p>
+          <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+            <li>&beta; = 5.8 (exponent)</li>
+            <li>Slightly steeper curve than Krueger/Sigman</li>
+            <li>Generally projects milestones slightly earlier</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Mean Reversion -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Mean Reversion</h2>
+        <p>One of the most important aspects of the power law model is understanding mean reversion. Bitcoin's price doesn't follow the trend line perfectly; it oscillates around it, sometimes dramatically.</p>
+
+        <div class="dashboard" style="margin: var(--spacing-lg) 0;">
+          <div class="card">
+            <div class="card-label">Historical Maximum</div>
+            <div class="card-value" style="color: var(--red);">~8&times;</div>
+            <div class="card-sub">Above trend (June 2011)</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Historical Minimum</div>
+            <div class="card-value" style="color: var(--green);">~0.3&times;</div>
+            <div class="card-sub">Below trend (bear markets)</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Typical Range</div>
+            <div class="card-value">0.5&times; - 2&times;</div>
+            <div class="card-sub">&plusmn;1&sigma; from trend</div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>The Rubber Band Analogy</h4>
+          <p>Think of price as attached to the trend line by a rubber band. It can stretch far in either direction during bubbles or crashes, but the further it stretches, the stronger the pull back toward the trend. This isn't predictive of short-term movements, but historically, extreme deviations have always corrected.</p>
+        </div>
+      </section>
+
+      <!-- Methodology -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Methodology</h2>
+
+        <h3>Data Sources</h3>
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li><strong>Historical prices (2010-2024):</strong> GitHub Bitcoin price dataset</li>
+          <li><strong>Recent prices (2024-present):</strong> Bitstamp exchange data via CryptoDataDownload</li>
+          <li><strong>Live price:</strong> CoinGecko API</li>
+        </ul>
+
+        <h3 style="margin-top: var(--spacing-lg);">Standard Deviation Calculation</h3>
+        <p>The &sigma; (sigma) bands are calculated dynamically from the historical data:</p>
+        <ol style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li>For each historical data point, calculate log<sub>10</sub>(actual_price) - log<sub>10</sub>(trend_price)</li>
+          <li>These "log residuals" show how far price deviated from trend</li>
+          <li>Calculate the standard deviation of these residuals</li>
+          <li>Use this &sigma; to create bands: trend &times; 10<sup>&plusmn;k&sigma;</sup></li>
+        </ol>
+
+        <h3 style="margin-top: var(--spacing-lg);">Genesis Block</h3>
+        <p>Both models use January 3, 2009, 00:00:00 UTC as the genesis timestamp (block 0).</p>
+      </section>
+
+      <!-- Limitations -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Limitations & Caveats</h2>
+
+        <div class="disclaimer">
+          <p><strong>This is not financial advice.</strong> The power law model is an empirical observation, not a guarantee of future performance.</p>
+        </div>
+
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2; margin-top: var(--spacing-lg);">
+          <li><strong>Empirical, not fundamental:</strong> The power law is a curve fit to historical data. It doesn't derive from first principles.</li>
+          <li><strong>Extrapolation risk:</strong> Past patterns may not continue indefinitely. The model could break down.</li>
+          <li><strong>Volatility:</strong> Even if the trend holds, actual prices can deviate by 50-80% in either direction.</li>
+          <li><strong>External factors:</strong> Regulatory changes, technological disruption, or macroeconomic events could alter Bitcoin's trajectory.</li>
+          <li><strong>Survivorship bias:</strong> We're analyzing Bitcoin because it survived. Failed cryptocurrencies don't appear in this analysis.</li>
+          <li><strong>Model uncertainty:</strong> Different parameter choices (beta, genesis time, data sources) yield different projections.</li>
+        </ul>
+      </section>
+
+      <!-- Further Reading -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Further Reading</h2>
+
+        <div class="card" style="margin-bottom: var(--spacing-md);">
+          <h4>Bitcoin One Million: The Final Chapter of Fiat</h4>
+          <p style="color: var(--gray);">Fred Krueger & Ben Sigman (2025)</p>
+          <p>Comprehensive exploration of the power law model, network effects, and Bitcoin's potential role in replacing fiat currency.</p>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-md);">
+          <h4>Giovanni Santostasi's Power Law Research</h4>
+          <p style="color: var(--gray);">Original academic work on Bitcoin's power law behavior</p>
+          <p>The foundational research establishing the mathematical framework for Bitcoin's power law price dynamics.</p>
+        </div>
+
+        <div class="card">
+          <h4>b1m.io</h4>
+          <p style="color: var(--gray);">Bitcoin metrics and power law visualization</p>
+          <p>A clean, data-focused site that inspired much of this observatory's design approach.</p>
+        </div>
+      </section>
+
+      <!-- Technical Reference -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Technical Reference</h2>
+
+        <div class="info-box" style="font-family: monospace; font-size: 0.9rem; overflow-x: auto;">
+          <pre style="margin: 0; white-space: pre-wrap;">
+// Genesis block
+const GENESIS = new Date('2009-01-03T00:00:00Z');
+
+// Krueger/Sigman Model
+const daysSinceGenesis = (Date.now() - GENESIS.getTime()) / (1000 * 60 * 60 * 24);
+const yearsSinceGenesis = daysSinceGenesis / 365.25;
+const trendPrice = Math.pow(10, -1.847796462) * Math.pow(yearsSinceGenesis, 5.616314045);
+
+// Perrenod/Santostasi Model
+const trendPriceAlt = 1e-17 * Math.pow(daysSinceGenesis, 5.8);
+
+// Sigma bands (where sigma is calculated from historical log residuals)
+const upperBand = trendPrice * Math.pow(10, sigma);
+const lowerBand = trendPrice * Math.pow(10, -sigma);
+          </pre>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Data Sources</h4>
+          <p>Live: CoinGecko API<br>Historical: Bitstamp, CryptoDataDownload, GitHub</p>
+        </div>
+        <div class="footer-section">
+          <h4>Attribution</h4>
+          <p>Models based on work by Krueger, Sigman, Santostasi, and Perrenod</p>
+        </div>
+        <div class="footer-section">
+          <h4>Open Source</h4>
+          <p>This site is for educational purposes only</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>This is not financial advice. Historical model fit does not guarantee future performance. Always do your own research.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

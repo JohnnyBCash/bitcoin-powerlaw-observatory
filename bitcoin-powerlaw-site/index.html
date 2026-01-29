@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin Power Law Observatory</title>
+  <meta name="description" content="Track Bitcoin's price through the power law lens - current valuation, historical context, and long-term projections.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Power Law Observatory
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="index.html" class="active">Dashboard</a>
+        <a href="pages/history.html">History</a>
+        <a href="pages/future.html">Future</a>
+        <a href="pages/about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Bitcoin Power Law</h1>
+        <p>Viewing Bitcoin's price through the lens of mathematical consistency. Power law models suggest Bitcoin follows predictable long-term growth patterns driven by network adoption.</p>
+      </section>
+
+      <!-- Model Toggle -->
+      <div class="model-toggle" role="group" aria-label="Select power law model">
+        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
+        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
+      </div>
+
+      <!-- Dashboard Cards -->
+      <div class="dashboard">
+        <div class="card">
+          <div class="card-label">Current Price</div>
+          <div class="card-value large" id="current-price">--</div>
+          <div class="card-sub" id="price-change">Loading...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Model Trend Value</div>
+          <div class="card-value" id="trend-price">--</div>
+          <div class="card-sub" id="model-name">Krueger/Sigman model</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Price / Trend</div>
+          <div class="card-value" id="multiplier">--</div>
+          <div class="card-sub">
+            <span class="valuation-badge" id="valuation-badge">--</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Days Since Genesis</div>
+          <div class="card-value" id="days-count">--</div>
+          <div class="card-sub" id="genesis-date">Since Jan 3, 2009</div>
+        </div>
+      </div>
+
+      <!-- Info tooltip -->
+      <div class="info-box">
+        <h4>What does this mean?</h4>
+        <p>The power law views Bitcoin's price as a function of adoption growth over time, similar to network effects described by Metcalfe's Law. A multiplier below 1.0 suggests the current price is below the long-term trend; above 1.0 suggests it's above trend. Historically, price has oscillated around this trend line, always reverting toward it.</p>
+      </div>
+
+      <!-- Mini chart showing position -->
+      <div class="sparkline-container">
+        <h3>Current Position on Power Law Curve</h3>
+        <div class="chart-container">
+          <canvas id="sparkline-chart" aria-label="Bitcoin price position relative to power law trend" role="img"></canvas>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="dashboard" style="margin-top: var(--spacing-xl);">
+        <div class="card">
+          <div class="card-label">Model R-squared</div>
+          <div class="card-value" id="r-squared">~95.6%</div>
+          <div class="card-sub">Historical fit quality</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Log Volatility (1&sigma;)</div>
+          <div class="card-value" id="sigma-value">--</div>
+          <div class="card-sub">Standard deviation of log residuals</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Data Points</div>
+          <div class="card-value" id="data-points">--</div>
+          <div class="card-sub">Daily closes since July 2010</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Data Sources</h4>
+          <p>Live price: CoinGecko API<br>Historical: Bitstamp, CryptoDataDownload</p>
+        </div>
+        <div class="footer-section">
+          <h4>Models</h4>
+          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+        </div>
+        <div class="footer-section">
+          <h4>Links</h4>
+          <p><a href="pages/about.html">About & Methodology</a></p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>This is not financial advice. Historical model fit does not guarantee future performance. For educational purposes only.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/powerlaw.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
