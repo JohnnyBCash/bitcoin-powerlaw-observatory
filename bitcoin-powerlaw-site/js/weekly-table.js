@@ -1,5 +1,6 @@
 // Bitcoin Power Law Observatory - Weekly History Table
 // Displays weekly historical data with intuitive log deviation visualization
+// Supports toggle between Santostasi/Perrenod and Krueger/Sigman models
 
 (function() {
   'use strict';
@@ -10,6 +11,9 @@
     maxLogDev: 1.2,  // Max log deviation for bar scaling (covers historical extremes)
     minLogDev: -0.5  // Min log deviation for bar scaling
   };
+
+  // Current model selection
+  let currentModel = 'santostasi'; // 'santostasi' or 'krueger'
 
   // Log deviation thresholds and labels
   const LOG_DEV_ZONES = [
@@ -69,29 +73,60 @@
     return date >= weekAgo && date <= now;
   }
 
+  // Calculate values for a given model
+  function getModelValues(item) {
+    if (currentModel === 'santostasi') {
+      // Use pre-calculated values from JSON
+      return {
+        trend: item.trend_sp,
+        multiple: item.multiple_sp,
+        logDev: item.log_dev_sp
+      };
+    } else {
+      // Calculate Krueger/Sigman values on-the-fly
+      if (window.PowerLaw) {
+        const trend = window.PowerLaw.trendPrice('krueger', new Date(item.date + 'T00:00:00Z'));
+        const multiple = item.close / trend;
+        const logDev = Math.log10(item.close / trend);
+        return {
+          trend: Math.round(trend * 100) / 100,
+          multiple: Math.round(multiple * 1000) / 1000,
+          logDev: Math.round(logDev * 1000) / 1000
+        };
+      }
+      // Fallback to Santostasi if PowerLaw not loaded
+      return {
+        trend: item.trend_sp,
+        multiple: item.multiple_sp,
+        logDev: item.log_dev_sp
+      };
+    }
+  }
+
   // Render a single row
   function renderRow(item, isFirst) {
-    const zone = getLogDevZone(item.log_dev_sp);
-    const barWidth = getBarWidth(item.log_dev_sp);
-    const isUnder = item.log_dev_sp < 0;
-    const multipleClass = item.multiple_sp < 0.8 ? 'under' : (item.multiple_sp > 1.2 ? 'over' : 'fair');
+    const values = getModelValues(item);
+    const zone = getLogDevZone(values.logDev);
+    const barWidth = getBarWidth(values.logDev);
+    const isUnder = values.logDev < 0;
+    const multipleClass = values.multiple < 0.8 ? 'under' : (values.multiple > 1.2 ? 'over' : 'fair');
     const currentWeekClass = isFirst ? 'current-week' : '';
 
     return `
       <tr class="${currentWeekClass}">
         <td>${formatDate(item.date)}</td>
         <td>${formatPrice(item.close)}</td>
-        <td>${formatPrice(item.trend_sp)}</td>
-        <td class="multiple-cell ${multipleClass}">${item.multiple_sp.toFixed(3)}x</td>
+        <td>${formatPrice(values.trend)}</td>
+        <td class="multiple-cell ${multipleClass}">${values.multiple.toFixed(3)}x</td>
         <td class="log-dev-cell">
           <div class="log-dev-bar-container">
             <div class="log-dev-bar">
               <div class="log-dev-bar-center"></div>
               <div class="log-dev-bar-fill ${isUnder ? 'under' : 'over'}"
-                   style="${isUnder ? 'width: ' + barWidth + '%;' : 'width: ' + barWidth + '%;'}">
+                   style="width: ${barWidth}%;">
               </div>
             </div>
-            <span class="log-dev-value ${isUnder ? 'under' : (item.log_dev_sp > 0.1 ? 'over' : 'fair')}">${formatLogDev(item.log_dev_sp)}</span>
+            <span class="log-dev-value ${isUnder ? 'under' : (values.logDev > 0.1 ? 'over' : 'fair')}">${formatLogDev(values.logDev)}</span>
           </div>
         </td>
         <td><span class="log-dev-label ${zone.class}">${zone.label}</span></td>
@@ -135,9 +170,22 @@
       // Get unique years for quick jump
       const years = [...new Set(data.map(d => d.date.substring(0, 4)))].sort().reverse();
 
+      // Get model display name
+      function getModelName() {
+        return currentModel === 'santostasi' ? 'Perrenod/Santostasi' : 'Krueger/Sigman';
+      }
+
+      function getModelShortName() {
+        return currentModel === 'santostasi' ? 'S/P' : 'K/S';
+      }
+
       // Render controls
       const controlsHtml = `
         <div class="weekly-table-controls">
+          <div class="model-toggle" id="weekly-model-toggle">
+            <button class="toggle-btn ${currentModel === 'santostasi' ? 'active' : ''}" data-model="santostasi">Perrenod/Santostasi</button>
+            <button class="toggle-btn ${currentModel === 'krueger' ? 'active' : ''}" data-model="krueger">Krueger/Sigman</button>
+          </div>
           <input type="text" class="weekly-table-search" id="weekly-search"
                  placeholder="Search by date or price...">
           <div class="quick-jump-btns">
@@ -148,14 +196,15 @@
       `;
 
       // Render table
-      const tableHtml = `
+      function renderTable() {
+        return `
         <div class="weekly-table-wrapper">
           <table id="weekly-history-table">
             <thead>
               <tr>
                 <th>Week Ending</th>
                 <th>Close</th>
-                <th>Trend (S/P)</th>
+                <th id="trend-header">Trend (${getModelShortName()})</th>
                 <th>Multiple</th>
                 <th>
                   Log Deviation
@@ -165,26 +214,46 @@
               </tr>
             </thead>
             <tbody id="weekly-table-body">
-              ${data.map((item, i) => renderRow(item, i === 0)).join('')}
             </tbody>
           </table>
         </div>
       `;
+      }
+
+      const tableHtml = renderTable();
 
       container.innerHTML = controlsHtml + tableHtml;
 
       // Add event listeners
       const searchInput = document.getElementById('weekly-search');
       const tbody = document.getElementById('weekly-table-body');
+      const trendHeader = document.getElementById('trend-header');
       let currentYear = 'all';
 
       function updateTable() {
         let filtered = filterByYear(data, currentYear);
         filtered = searchData(filtered, searchInput.value);
         tbody.innerHTML = filtered.map((item, i) => renderRow(item, i === 0 && currentYear === 'all')).join('');
+        // Update header to reflect current model
+        if (trendHeader) {
+          trendHeader.textContent = `Trend (${getModelShortName()})`;
+        }
       }
 
+      // Initial table population
+      updateTable();
+
       searchInput.addEventListener('input', updateTable);
+
+      // Model toggle event listeners
+      document.querySelectorAll('#weekly-model-toggle .toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#weekly-model-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentModel = btn.dataset.model;
+          updateTable();
+        });
+      });
 
       document.querySelectorAll('.quick-jump-btn').forEach(btn => {
         btn.addEventListener('click', () => {
