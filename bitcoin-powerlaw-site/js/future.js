@@ -40,7 +40,7 @@ async function init() {
 // Load historical data
 async function loadHistoricalData() {
   try {
-    const response = await fetch('../../datasets/btc_historical.json');
+    const response = await fetch('../datasets/btc_historical.json');
     historicalData = await response.json();
   } catch (error) {
     console.error('Failed to load historical data:', error);

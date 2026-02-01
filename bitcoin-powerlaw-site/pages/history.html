@@ -118,6 +118,71 @@
         </div>
       </section>
 
+      <!-- Weekly Historical Table -->
+      <section class="weekly-table-section" id="weekly-history-section">
+        <h2>Weekly Historical Data</h2>
+        <p style="color: var(--gray); margin-bottom: var(--spacing-md);">
+          Your primary sanity check: see every week's closing price, trend value, and deviation.
+          Use this to judge current position in historical context.
+        </p>
+
+        <!-- Log Deviation Explainer -->
+        <div class="info-box" style="margin-bottom: var(--spacing-lg);">
+          <h4>Understanding Log Deviation</h4>
+          <p style="margin-bottom: var(--spacing-sm);">
+            <strong>Log deviation = log₁₀(price ÷ trend)</strong>. It measures distance from fair value on a logarithmic scale,
+            which better captures Bitcoin's exponential nature.
+          </p>
+          <table style="width: 100%; font-size: 0.875rem; margin-top: var(--spacing-sm);">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 6px;">Log Dev</th>
+                <th style="text-align: left; padding: 6px;">Meaning</th>
+                <th style="text-align: left; padding: 6px;">Multiple</th>
+                <th style="text-align: left; padding: 6px;">Action Signal</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 6px; color: var(--green); font-weight: 600;">−0.30</td>
+                <td style="padding: 6px;">50% below trend</td>
+                <td style="padding: 6px;">0.50×</td>
+                <td style="padding: 6px;"><span class="log-dev-label extreme-under">Borrow fiat / Strong buy</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px; color: var(--green);">−0.15</td>
+                <td style="padding: 6px;">~30% below trend</td>
+                <td style="padding: 6px;">0.71×</td>
+                <td style="padding: 6px;"><span class="log-dev-label under">Accumulate</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px; color: var(--gray);">0.00</td>
+                <td style="padding: 6px;">Fair value (on trend)</td>
+                <td style="padding: 6px;">1.00×</td>
+                <td style="padding: 6px;"><span class="log-dev-label fair">Hold</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px; color: var(--red);">+0.30</td>
+                <td style="padding: 6px;">~100% above trend</td>
+                <td style="padding: 6px;">2.00×</td>
+                <td style="padding: 6px;"><span class="log-dev-label over">Take profits</span></td>
+              </tr>
+              <tr>
+                <td style="padding: 6px; color: var(--red); font-weight: 600;">+0.60</td>
+                <td style="padding: 6px;">~300% above trend</td>
+                <td style="padding: 6px;">4.00×</td>
+                <td style="padding: 6px;"><span class="log-dev-label extreme-over">Sell / Bubble zone</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table container (populated by weekly-table.js) -->
+        <div id="weekly-table-container">
+          <p style="color: var(--gray);">Loading weekly data...</p>
+        </div>
+      </section>
+
       <!-- Historical Examples -->
       <h2 style="margin-top: var(--spacing-xl);">Notable Deviations</h2>
       <div class="table-container">
@@ -227,5 +292,6 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../js/powerlaw.js"></script>
   <script src="../js/history.js"></script>
+  <script src="../js/weekly-table.js"></script>
 </body>
 </html>

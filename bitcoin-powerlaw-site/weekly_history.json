@@ -1,0 +1,135 @@
+[
+  {
+    "date": "2026-01-26",
+    "close": 95420,
+    "trend_sp": 118700,
+    "multiple_sp": 0.804,
+    "log_dev_sp": -0.095
+  },
+  {
+    "date": "2026-01-19",
+    "close": 104500,
+    "trend_sp": 118200,
+    "multiple_sp": 0.884,
+    "log_dev_sp": -0.053
+  },
+  {
+    "date": "2026-01-12",
+    "close": 92100,
+    "trend_sp": 117700,
+    "multiple_sp": 0.782,
+    "log_dev_sp": -0.107
+  },
+  {
+    "date": "2026-01-05",
+    "close": 96800,
+    "trend_sp": 117200,
+    "multiple_sp": 0.826,
+    "log_dev_sp": -0.083
+  },
+  {
+    "date": "2025-12-29",
+    "close": 92000,
+    "trend_sp": 116700,
+    "multiple_sp": 0.788,
+    "log_dev_sp": -0.103
+  },
+  {
+    "date": "2025-12-22",
+    "close": 97500,
+    "trend_sp": 116200,
+    "multiple_sp": 0.839,
+    "log_dev_sp": -0.076
+  },
+  {
+    "date": "2025-12-15",
+    "close": 101200,
+    "trend_sp": 115700,
+    "multiple_sp": 0.875,
+    "log_dev_sp": -0.058
+  },
+  {
+    "date": "2025-12-08",
+    "close": 99700,
+    "trend_sp": 115200,
+    "multiple_sp": 0.865,
+    "log_dev_sp": -0.063
+  },
+  {
+    "date": "2025-12-01",
+    "close": 97200,
+    "trend_sp": 114700,
+    "multiple_sp": 0.847,
+    "log_dev_sp": -0.072
+  },
+  {
+    "date": "2021-11-07",
+    "close": 68789,
+    "trend_sp": 26000,
+    "multiple_sp": 2.646,
+    "log_dev_sp": 0.423
+  },
+  {
+    "date": "2021-04-11",
+    "close": 60000,
+    "trend_sp": 22000,
+    "multiple_sp": 2.727,
+    "log_dev_sp": 0.436
+  },
+  {
+    "date": "2022-11-20",
+    "close": 15476,
+    "trend_sp": 34000,
+    "multiple_sp": 0.455,
+    "log_dev_sp": -0.342
+  },
+  {
+    "date": "2018-12-16",
+    "close": 3236,
+    "trend_sp": 7800,
+    "multiple_sp": 0.415,
+    "log_dev_sp": -0.382
+  },
+  {
+    "date": "2017-12-17",
+    "close": 19783,
+    "trend_sp": 5200,
+    "multiple_sp": 3.804,
+    "log_dev_sp": 0.580
+  },
+  {
+    "date": "2015-01-11",
+    "close": 177,
+    "trend_sp": 390,
+    "multiple_sp": 0.454,
+    "log_dev_sp": -0.343
+  },
+  {
+    "date": "2013-12-01",
+    "close": 1163,
+    "trend_sp": 130,
+    "multiple_sp": 8.946,
+    "log_dev_sp": 0.952
+  },
+  {
+    "date": "2013-04-07",
+    "close": 140,
+    "trend_sp": 52,
+    "multiple_sp": 2.692,
+    "log_dev_sp": 0.430
+  },
+  {
+    "date": "2011-06-05",
+    "close": 31,
+    "trend_sp": 2.1,
+    "multiple_sp": 14.762,
+    "log_dev_sp": 1.169
+  },
+  {
+    "date": "2011-11-13",
+    "close": 2.4,
+    "trend_sp": 5.8,
+    "multiple_sp": 0.414,
+    "log_dev_sp": -0.383
+  }
+]

@@ -33,7 +33,7 @@ async function init() {
 // Load historical data
 async function loadHistoricalData() {
   try {
-    const response = await fetch('../datasets/btc_historical.json');
+    const response = await fetch('datasets/btc_historical.json');
     historicalData = await response.json();
     elements.dataPoints.textContent = historicalData.length.toLocaleString();
   } catch (error) {

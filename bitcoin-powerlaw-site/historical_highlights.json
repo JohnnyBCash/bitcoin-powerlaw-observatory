@@ -1,0 +1,110 @@
+[
+  {
+    "date": "2011-06-08",
+    "event": "First Major Bubble Peak",
+    "close": 31.91,
+    "trend_sp": 2.10,
+    "deviation_sp": 15.19,
+    "reversion_outcome": "Crashed 93% to $2 by Nov 2011. Reverted to ~0.3× trend.",
+    "notes": "Mt. Gox hack contributed to collapse."
+  },
+  {
+    "date": "2011-11-18",
+    "event": "Post-Bubble Bottom",
+    "close": 2.14,
+    "trend_sp": 5.80,
+    "deviation_sp": 0.37,
+    "reversion_outcome": "Rose 230× to $1,163 by Dec 2013.",
+    "notes": "Deep undervaluation after first bubble."
+  },
+  {
+    "date": "2013-04-10",
+    "event": "First 2013 Peak",
+    "close": 259.34,
+    "trend_sp": 55.00,
+    "deviation_sp": 4.72,
+    "reversion_outcome": "Dropped 71% to $75 in 3 days, then recovered.",
+    "notes": "Cyprus banking crisis drove interest."
+  },
+  {
+    "date": "2013-12-04",
+    "event": "2013 Cycle Peak",
+    "close": 1147.25,
+    "trend_sp": 130.00,
+    "deviation_sp": 8.82,
+    "reversion_outcome": "Crashed 86% to $164 by Jan 2015. Mean reversion took 13 months.",
+    "notes": "China ban + Mt. Gox collapse."
+  },
+  {
+    "date": "2015-01-14",
+    "event": "2015 Cycle Bottom",
+    "close": 177.28,
+    "trend_sp": 390.00,
+    "deviation_sp": 0.45,
+    "reversion_outcome": "Rose 113× to $20,089 by Dec 2017.",
+    "notes": "Deep undervaluation; great accumulation zone."
+  },
+  {
+    "date": "2017-12-17",
+    "event": "2017 Cycle Peak",
+    "close": 19783.06,
+    "trend_sp": 5200.00,
+    "deviation_sp": 3.80,
+    "reversion_outcome": "Crashed 84% to $3,191 by Dec 2018.",
+    "notes": "ICO mania peak. CME futures launched."
+  },
+  {
+    "date": "2018-12-15",
+    "event": "2018 Cycle Bottom",
+    "close": 3236.76,
+    "trend_sp": 7800.00,
+    "deviation_sp": 0.41,
+    "reversion_outcome": "Rose 21× to $68,789 by Nov 2021.",
+    "notes": "Capitulation bottom; strong mean reversion."
+  },
+  {
+    "date": "2020-03-12",
+    "event": "COVID Crash",
+    "close": 4970.79,
+    "trend_sp": 11500.00,
+    "deviation_sp": 0.43,
+    "reversion_outcome": "Rose 14× to $68,789 in 20 months.",
+    "notes": "Black Thursday panic; V-shaped recovery."
+  },
+  {
+    "date": "2021-04-14",
+    "event": "2021 First Peak",
+    "close": 63503.46,
+    "trend_sp": 22000.00,
+    "deviation_sp": 2.89,
+    "reversion_outcome": "Dropped 55% to $28,805 by June 2021, then recovered.",
+    "notes": "Coinbase IPO. China mining ban followed."
+  },
+  {
+    "date": "2021-11-10",
+    "event": "2021 Cycle Peak",
+    "close": 68789.63,
+    "trend_sp": 26000.00,
+    "deviation_sp": 2.65,
+    "reversion_outcome": "Crashed 77% to $15,476 by Nov 2022.",
+    "notes": "All-time high. Fed tightening began."
+  },
+  {
+    "date": "2022-11-21",
+    "event": "FTX Crash Bottom",
+    "close": 15476.26,
+    "trend_sp": 34000.00,
+    "deviation_sp": 0.46,
+    "reversion_outcome": "Rose 7× to current levels by 2026.",
+    "notes": "FTX collapse; extreme undervaluation."
+  },
+  {
+    "date": "2024-03-14",
+    "event": "2024 Pre-Halving Peak",
+    "close": 73750.07,
+    "trend_sp": 52000.00,
+    "deviation_sp": 1.42,
+    "reversion_outcome": "Consolidated; 4th halving in April 2024.",
+    "notes": "ETF approval drove rally. Near fair value."
+  }
+]

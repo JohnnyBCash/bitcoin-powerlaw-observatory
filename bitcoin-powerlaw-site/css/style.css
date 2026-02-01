@@ -525,3 +525,258 @@ input[type="range"]::-webkit-slider-thumb {
 .band-fair { background: rgba(117,117,117,0.05); }
 .band-over { background: rgba(255,23,68,0.1); }
 .band-extreme-over { background: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,23,68,0.15) 5px, rgba(255,23,68,0.15) 10px); }
+
+/* Weekly History Table */
+.weekly-table-section {
+  margin-top: var(--spacing-xxl);
+}
+
+.weekly-table-wrapper {
+  max-height: 600px;
+  overflow-y: auto;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  position: relative;
+}
+
+.weekly-table-wrapper table {
+  margin: 0;
+}
+
+.weekly-table-wrapper thead {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  z-index: 10;
+  box-shadow: 0 1px 0 var(--gray-border);
+}
+
+.weekly-table-wrapper tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Log deviation bar visualization */
+.log-dev-cell {
+  position: relative;
+  min-width: 180px;
+}
+
+.log-dev-bar-container {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.log-dev-bar {
+  flex: 1;
+  height: 24px;
+  background: var(--gray-light);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.log-dev-bar-center {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: var(--gray);
+  z-index: 2;
+}
+
+.log-dev-bar-fill {
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+
+.log-dev-bar-fill.under {
+  right: 50%;
+  background: linear-gradient(90deg, var(--green), rgba(0, 200, 83, 0.5));
+}
+
+.log-dev-bar-fill.over {
+  left: 50%;
+  background: linear-gradient(90deg, rgba(255, 23, 68, 0.5), var(--red));
+}
+
+.log-dev-value {
+  min-width: 60px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: right;
+}
+
+.log-dev-value.under { color: var(--green); }
+.log-dev-value.over { color: var(--red); }
+.log-dev-value.fair { color: var(--gray); }
+
+/* Log deviation semantic label */
+.log-dev-label {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.log-dev-label.extreme-under {
+  background: rgba(0, 200, 83, 0.15);
+  color: var(--green);
+}
+
+.log-dev-label.under {
+  background: rgba(0, 200, 83, 0.1);
+  color: var(--green);
+}
+
+.log-dev-label.fair {
+  background: rgba(117, 117, 117, 0.1);
+  color: var(--gray);
+}
+
+.log-dev-label.over {
+  background: rgba(255, 23, 68, 0.1);
+  color: var(--red);
+}
+
+.log-dev-label.extreme-over {
+  background: rgba(255, 23, 68, 0.15);
+  color: var(--red);
+}
+
+/* Multiple column styling */
+.multiple-cell {
+  font-weight: 600;
+}
+
+.multiple-cell.under { color: var(--green); }
+.multiple-cell.over { color: var(--red); }
+.multiple-cell.fair { color: var(--gray); }
+
+/* Info tooltip for log deviation explanation */
+.log-dev-info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--gray-light);
+  color: var(--gray);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: help;
+  margin-left: var(--spacing-xs);
+  position: relative;
+}
+
+.log-dev-info:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--black);
+  color: var(--white);
+  padding: var(--spacing-sm);
+  border-radius: var(--border-radius);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  width: 280px;
+  line-height: 1.4;
+  z-index: 100;
+  white-space: normal;
+}
+
+.log-dev-info:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--black);
+  z-index: 100;
+}
+
+/* Search/filter for weekly table */
+.weekly-table-controls {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-md);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.weekly-table-search {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  font-family: var(--font-family);
+  font-size: 0.9375rem;
+  min-width: 200px;
+}
+
+.weekly-table-search:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+/* Quick jump buttons */
+.quick-jump-btns {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.quick-jump-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--gray-border);
+  background: var(--white);
+  border-radius: var(--border-radius);
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-jump-btn:hover {
+  border-color: var(--orange);
+  color: var(--orange);
+}
+
+/* Row highlight for current week */
+.weekly-table-wrapper tr.current-week {
+  background: rgba(247, 147, 26, 0.08);
+}
+
+.weekly-table-wrapper tr.current-week td {
+  font-weight: 600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .weekly-table-wrapper {
+    max-height: 400px;
+  }
+
+  .log-dev-bar-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+  }
+
+  .log-dev-value {
+    text-align: left;
+  }
+
+  .weekly-table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
