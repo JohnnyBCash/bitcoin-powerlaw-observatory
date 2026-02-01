@@ -1,0 +1,9 @@
+[build]
+  base = "bitcoin-powerlaw-site"
+  publish = "bitcoin-powerlaw-site"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
