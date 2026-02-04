@@ -121,7 +121,13 @@
         <p>Weekly closing prices from 2014 to present. Toggle each axis independently between linear and logarithmic scale.</p>
       </section>
 
-      <!-- Axis scale toggles -->
+      <!-- Model toggle -->
+      <div class="model-toggle" role="group" aria-label="Select power law model">
+        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
+        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
+      </div>
+
+      <!-- Axis scale toggles + band checkboxes -->
       <div class="scale-toggles">
         <div class="scale-group">
           <span class="scale-group-label">Time</span>
@@ -137,6 +143,18 @@
             <button class="pill-btn active" data-axis="y" data-scale="linear">Linear</button>
             <button class="pill-btn"        data-axis="y" data-scale="logarithmic">Log</button>
           </div>
+        </div>
+
+        <div class="scale-group" style="gap: 1rem;">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-trend" checked> Trend
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-1sigma" checked> ±1σ
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-2sigma" checked> ±2σ
+          </label>
         </div>
       </div>
 
@@ -175,11 +193,12 @@
 
       <!-- Info box -->
       <div class="info-box" style="margin-top: var(--spacing-xl);">
-        <h4>Why toggle scales?</h4>
+        <h4>How to read this chart</h4>
         <p><strong>Linear + Linear</strong> shows the explosive recent growth in raw dollar terms — early years are flattened near zero.<br>
            <strong>Linear + Log (price)</strong> spreads out the early history so you can see every cycle clearly.<br>
-           <strong>Log + Log</strong> is the classic power-law view: if BTC follows a power law, price becomes a straight line on a log-log chart.<br>
+           <strong>Log + Log</strong> is the classic power-law view: if BTC follows a power law, the trend becomes a straight line.<br>
            <strong>Log time + Linear price</strong> compresses the early quiet years while keeping dollar moves intuitive.</p>
+        <p style="margin-top: var(--spacing-sm);"><strong>Trend</strong> is the power-law fair-value curve. The <strong>σ bands</strong> show one and two standard deviations above and below — historically price has always reverted back inside these bounds.</p>
       </div>
     </div>
   </main>
