@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BTC Price Chart - Bitcoin Power Law Observatory</title>
+  <meta name="description" content="Interactive Bitcoin price chart with toggleable linear and logarithmic scales on both axes.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* Scale toggle pill group */
+    .scale-toggles {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xl);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .scale-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .scale-group-label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      min-width: 52px;
+    }
+
+    .pill-group {
+      display: flex;
+      border: 1px solid var(--gray-border);
+      border-radius: 20px;
+      overflow: hidden;
+      background: var(--white);
+    }
+
+    .pill-btn {
+      padding: 6px 18px;
+      border: none;
+      background: transparent;
+      font-family: var(--font-family);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      white-space: nowrap;
+    }
+
+    .pill-btn:hover {
+      background: var(--gray-light);
+    }
+
+    .pill-btn.active {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    /* Stats row beneath the chart */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--spacing-sm);
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .stat-item .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .stat-item .stat-value.green { color: var(--green); }
+    .stat-item .stat-value.red   { color: var(--red); }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Power Law Observatory
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">History</a>
+        <a href="price-chart.html" class="active">Price Chart</a>
+        <a href="future.html">Future</a>
+        <a href="about.html">About</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>BTC Price Chart</h1>
+        <p>Weekly closing prices from 2014 to present. Toggle each axis independently between linear and logarithmic scale.</p>
+      </section>
+
+      <!-- Axis scale toggles -->
+      <div class="scale-toggles">
+        <div class="scale-group">
+          <span class="scale-group-label">Time</span>
+          <div class="pill-group" role="group" aria-label="Time axis scale">
+            <button class="pill-btn active" data-axis="x" data-scale="linear">Linear</button>
+            <button class="pill-btn"        data-axis="x" data-scale="logarithmic">Log</button>
+          </div>
+        </div>
+
+        <div class="scale-group">
+          <span class="scale-group-label">Price</span>
+          <div class="pill-group" role="group" aria-label="Price axis scale">
+            <button class="pill-btn active" data-axis="y" data-scale="linear">Linear</button>
+            <button class="pill-btn"        data-axis="y" data-scale="logarithmic">Log</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-container" style="height: 520px;">
+        <canvas id="price-chart" aria-label="Bitcoin weekly price chart" role="img"></canvas>
+      </div>
+
+      <!-- Stats beneath chart -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-item">
+          <div class="stat-label">Latest Price</div>
+          <div class="stat-value" id="stat-latest">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">All-Time High</div>
+          <div class="stat-value" id="stat-ath">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ATH Date</div>
+          <div class="stat-value" id="stat-ath-date" style="font-size: 0.95rem;">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">All-Time Low</div>
+          <div class="stat-value" id="stat-atl">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ATL Date</div>
+          <div class="stat-value" id="stat-atl-date" style="font-size: 0.95rem;">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Weeks of Data</div>
+          <div class="stat-value" id="stat-weeks">--</div>
+        </div>
+      </div>
+
+      <!-- Info box -->
+      <div class="info-box" style="margin-top: var(--spacing-xl);">
+        <h4>Why toggle scales?</h4>
+        <p><strong>Linear + Linear</strong> shows the explosive recent growth in raw dollar terms — early years are flattened near zero.<br>
+           <strong>Linear + Log (price)</strong> spreads out the early history so you can see every cycle clearly.<br>
+           <strong>Log + Log</strong> is the classic power-law view: if BTC follows a power law, price becomes a straight line on a log-log chart.<br>
+           <strong>Log time + Linear price</strong> compresses the early quiet years while keeping dollar moves intuitive.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Data Source</h4>
+          <p>Weekly closes derived from Bitstamp daily data via CryptoDataDownload</p>
+        </div>
+        <div class="footer-section">
+          <h4>Models</h4>
+          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>This is not financial advice. Historical model fit does not guarantee future performance.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="https://cdn.jsdelivr.net/npm/date-fns"></script>
+  <script src="../js/powerlaw.js"></script>
+  <script src="../js/price-chart.js"></script>
+</body>
+</html>
