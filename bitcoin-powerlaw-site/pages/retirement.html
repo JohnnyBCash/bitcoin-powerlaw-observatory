@@ -131,7 +131,7 @@
       <section id="cagr-section" class="hidden">
         <h2>Expected Return Decay</h2>
         <p>Power law assets have decreasing annual returns over time. Unlike exponential growth (constant CAGR), the power law's CAGR declines — which fundamentally changes retirement math.</p>
-        <div class="chart-container" style="height: 300px;">
+        <div class="chart-container" style="position: relative; height: 350px;">
           <canvas id="cagr-chart" aria-label="CAGR decay over time"></canvas>
         </div>
       </section>
@@ -170,7 +170,7 @@
       <!-- ── Stack Over Time Chart ──────────────────────── -->
       <section id="stack-chart-section" class="hidden">
         <h2>Stack & Spending Over Time</h2>
-        <div class="chart-container" style="height: 400px;">
+        <div class="chart-container" style="position: relative; height: 450px;">
           <canvas id="stack-chart" aria-label="BTC stack and spending over time"></canvas>
         </div>
       </section>
@@ -235,6 +235,19 @@
 
   <!-- Page-specific styles -->
   <style>
+    /* Override global canvas height to respect container */
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Ensure sections don't overlap */
+    section {
+      position: relative;
+      z-index: 1;
+      margin-bottom: var(--spacing-xl);
+    }
+
     .input-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
