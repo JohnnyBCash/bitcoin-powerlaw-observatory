@@ -30,7 +30,6 @@
     }
 
     weeklyData.sort((a, b) => a.date - b.date);
-    window._btcWeeklyData = weeklyData;   // share with time-travel.js
   }
 
   /* -------------------------------------------------- sigma -------------------------------------------------------- */

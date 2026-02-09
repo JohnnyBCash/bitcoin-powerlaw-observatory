@@ -9,6 +9,153 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Time Travel section ── */
+    .tt-section {
+      margin-top: var(--spacing-xxl);
+      padding-top: var(--spacing-xl);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .tt-section h2 {
+      text-align: center;
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .tt-section > p {
+      text-align: center;
+      max-width: 640px;
+      margin: 0 auto var(--spacing-lg);
+      color: var(--gray);
+    }
+
+    /* slider row */
+    .tt-slider-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      max-width: 760px;
+      margin: 0 auto var(--spacing-md);
+    }
+
+    .tt-slider-row label {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--gray);
+      white-space: nowrap;
+      min-width: 42px;
+    }
+
+    .tt-slider-row input[type="range"] {
+      flex: 1;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--gray-light);
+      appearance: none;
+      outline: none;
+    }
+    .tt-slider-row input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--orange);
+      cursor: grab;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    }
+
+    #tt-slider-label {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--orange);
+      min-width: 48px;
+      text-align: right;
+    }
+
+    /* play / reset buttons */
+    .tt-controls {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .tt-btn {
+      padding: 8px 24px;
+      border: 1px solid var(--gray-border);
+      background: var(--white);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--black);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .tt-btn:hover { border-color: var(--orange); color: var(--orange); }
+    .tt-btn.primary {
+      background: var(--black);
+      color: var(--white);
+      border-color: var(--black);
+    }
+    .tt-btn.primary:hover { background: #333; border-color: #333; color: var(--white); }
+
+    /* quick-jump age buttons */
+    .tt-quick-ages {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .tt-age-btn {
+      padding: 4px 12px;
+      border: 1px solid var(--gray-border);
+      background: var(--white);
+      border-radius: 14px;
+      font-family: var(--font-family);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tt-age-btn:hover          { border-color: var(--orange); color: var(--orange); }
+    .tt-age-btn.active         { background: var(--orange); color: var(--white); border-color: var(--orange); }
+
+    /* Stats row for time travel */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--spacing-sm);
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+    }
+
+    .stat-item .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 2px;
+    }
+
+    .stat-item .stat-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .stat-item .stat-value.green { color: var(--green); }
+    .stat-item .stat-value.red   { color: var(--red); }
+  </style>
 </head>
 <body>
   <header class="header">
@@ -118,6 +265,73 @@
         <canvas id="projection-chart" aria-label="Bitcoin power law projection chart" role="img"></canvas>
       </div>
 
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <!--                     TIME TRAVEL SECTION                            -->
+      <!-- ═══════════════════════════════════════════════════════════════════ -->
+      <section class="tt-section">
+        <h2>Time Travel</h2>
+        <p>Bitcoin is <strong>17 years old</strong>. What does the power law predict if it ages 50% more? What if the age doubles? Drag the slider — or hit Play — to watch the trend and corridor extend into the future.</p>
+
+        <!-- quick-jump buttons -->
+        <div class="tt-quick-ages">
+          <button class="tt-age-btn active" data-age="1.0">Now (1×)</button>
+          <button class="tt-age-btn"        data-age="1.25">+25%</button>
+          <button class="tt-age-btn"        data-age="1.5">1.5×</button>
+          <button class="tt-age-btn"        data-age="1.75">1.75×</button>
+          <button class="tt-age-btn"        data-age="2.0">2×</button>
+          <button class="tt-age-btn"        data-age="2.5">2.5×</button>
+          <button class="tt-age-btn"        data-age="3.0">3×</button>
+        </div>
+
+        <!-- slider -->
+        <div class="tt-slider-row">
+          <label>1×</label>
+          <input type="range" id="tt-slider" min="1.0" max="3.0" step="0.01" value="1.0">
+          <span id="tt-slider-label">1.00×</span>
+        </div>
+
+        <!-- play / reset -->
+        <div class="tt-controls">
+          <button class="tt-btn primary" id="tt-play-btn">Play</button>
+          <button class="tt-btn"         id="tt-reset-btn">Reset</button>
+        </div>
+
+        <!-- chart -->
+        <div class="chart-container" style="height: 520px;">
+          <canvas id="tt-chart" aria-label="Time travel power law projection chart" role="img"></canvas>
+        </div>
+
+        <!-- stat cards -->
+        <div class="stats-row" style="margin-top: var(--spacing-md);">
+          <div class="stat-item">
+            <div class="stat-label">Age Multiplier</div>
+            <div class="stat-value" id="tt-multiplier" style="color: var(--orange);">1.00×</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Target Date</div>
+            <div class="stat-value" id="tt-date" style="font-size: 0.95rem;">--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Trend Price</div>
+            <div class="stat-value" id="tt-trend">--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">±1σ Range</div>
+            <div class="stat-value" id="tt-1sigma" style="font-size: 0.85rem;">--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">±2σ Range</div>
+            <div class="stat-value" id="tt-2sigma" style="font-size: 0.85rem;">--</div>
+          </div>
+        </div>
+
+        <!-- explainer -->
+        <div class="info-box" style="margin-top: var(--spacing-lg);">
+          <h4>Why does this matter?</h4>
+          <p>Power laws have an unusual property: <strong>the older the network, the faster the trend grows in absolute dollars</strong>. Every additional year of age adds more to the trend price than the last. Doubling Bitcoin's age doesn't double the trend — it multiplies it by <strong>2<sup>β</sup></strong> (roughly 52× for the Santostasi model with β=5.688). That's the compounding engine behind Bitcoin's long-term trajectory. The ±σ corridor shows the historically normal range price has oscillated within — it widens in dollar terms over time, but stays statistically tight on a log scale.</p>
+        </div>
+      </section>
+
       <!-- Caveats -->
       <div class="info-box" style="margin-top: var(--spacing-xl);">
         <h4>Important Caveats</h4>
@@ -154,5 +368,25 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../js/powerlaw.js"></script>
   <script src="../js/future.js"></script>
+  <script src="../js/time-travel.js"></script>
+  <script>
+    // Quick-jump age buttons
+    document.querySelectorAll('.tt-age-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tt-age-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const slider = document.getElementById('tt-slider');
+        slider.value = btn.dataset.age;
+        slider.dispatchEvent(new Event('input'));
+      });
+    });
+    // Keep quick-jump highlights in sync when slider is dragged manually
+    document.getElementById('tt-slider').addEventListener('input', function () {
+      const val = parseFloat(this.value);
+      document.querySelectorAll('.tt-age-btn').forEach(b => {
+        b.classList.toggle('active', Math.abs(parseFloat(b.dataset.age) - val) < 0.005);
+      });
+    });
+  </script>
 </body>
 </html>

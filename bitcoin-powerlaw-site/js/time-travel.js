@@ -15,7 +15,7 @@
   const FUTURE_POINTS = 60;
 
   /* -------------------------------------------------------- state ---------------------------------------------------------- */
-  let weeklyData   = [];     // [{date: Date, price: number}]  – shared, loaded by price-chart.js first
+  let weeklyData   = [];     // [{date: Date, price: number}]  – loaded from btc_historical.json
   let ttChart      = null;
   let currentModel = 'santostasi';
   let sigma        = 0;
@@ -28,24 +28,28 @@
   let nowDate      = null;
 
   /* -------------------------------------------------------- grab shared data -------------------------------------------- */
-  // price-chart.js runs first and populates window._btcWeeklyData via a small shim we add.
-  // If that's not ready yet we load CSV ourselves.
+  // Load daily historical data from btc_historical.json (same dataset used by future.js).
+  // Downsample to weekly for chart performance.
   async function ensureData() {
-    if (window._btcWeeklyData && window._btcWeeklyData.length) {
-      weeklyData = window._btcWeeklyData;
-      return;
+    const res  = await fetch('../datasets/btc_historical.json');
+    const data = await res.json();
+
+    // Downsample daily → weekly (every 7th point) to keep the chart snappy
+    for (let i = 0; i < data.length; i += 7) {
+      const d = data[i];
+      weeklyData.push({
+        date:  new Date(d.date + 'T00:00:00Z'),
+        price: d.price
+      });
     }
-    // fallback: load directly
-    const res   = await fetch('../datasets/Prices.csv');
-    const text  = await res.text();
-    const lines = text.trim().split('\n');
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(',');
-      if (parts.length < 2) continue;
-      const date  = new Date(parts[0].trim() + 'T00:00:00Z');
-      const price = parseFloat(parts[1]);
-      if (isNaN(price) || isNaN(date.getTime())) continue;
-      weeklyData.push({ date, price });
+    // Always include the very last data point
+    const last = data[data.length - 1];
+    const lastEntry = weeklyData[weeklyData.length - 1];
+    if (last.date !== data[Math.floor((data.length - 1) / 7) * 7]?.date) {
+      weeklyData.push({
+        date:  new Date(last.date + 'T00:00:00Z'),
+        price: last.price
+      });
     }
     weeklyData.sort((a, b) => a.date - b.date);
   }
@@ -434,7 +438,6 @@
     }
   }
 
-  // Wait until the DOM + Chart.js are ready.  price-chart.js fires first; we run after a short delay
-  // so its data is available, but we don't depend on it (ensureData has its own fallback).
-  window.addEventListener('load', () => { setTimeout(init, 200); });
+  // Wait until the DOM + Chart.js are ready, then init.
+  window.addEventListener('load', init);
 })();
