@@ -21,6 +21,7 @@ const elements = {
 // Initialize
 async function init() {
   await loadHistoricalData();
+  await fillRecentPriceGap();
   calculateSigmas();
   await fetchLivePrice();
   initSparklineChart();
@@ -281,9 +282,79 @@ function updateSparklineData() {
   sparklineChart.update();
 }
 
-// Update sparkline with current price marker
+// Fetch recent daily prices from CoinGecko to fill the gap between
+// the static btc_historical.json and today
+async function fillRecentPriceGap() {
+  if (historicalData.length === 0) return;
+
+  const lastDate = new Date(historicalData[historicalData.length - 1].date);
+  const now = new Date();
+  const gapDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+
+  if (gapDays <= 1) return; // no gap to fill
+
+  try {
+    // CoinGecko market_chart: fetch enough days to cover the gap + buffer
+    const fetchDays = Math.min(gapDays + 2, 90);
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${fetchDays}&interval=daily`
+    );
+    const data = await response.json();
+
+    if (!data.prices || data.prices.length === 0) return;
+
+    // Append only dates after our last historical entry
+    const lastTimestamp = lastDate.getTime();
+    let added = 0;
+
+    for (const [timestamp, price] of data.prices) {
+      if (timestamp > lastTimestamp + 12 * 60 * 60 * 1000) { // at least 12h after last entry
+        const date = new Date(timestamp);
+        const dateStr = date.toISOString().split('T')[0];
+
+        // Avoid duplicate dates
+        const alreadyExists = historicalData.some(d => d.date === dateStr);
+        if (!alreadyExists) {
+          historicalData.push({ date: dateStr, price: price });
+          added++;
+        }
+      }
+    }
+
+    if (added > 0) {
+      console.log(`Filled ${added} days of price data from CoinGecko`);
+      elements.dataPoints.textContent = historicalData.length.toLocaleString();
+    }
+  } catch (error) {
+    console.warn('Could not fill price gap from CoinGecko:', error);
+  }
+}
+
+// Update sparkline with current live price as the final data point
 function updateSparkline(price, trend, mult, sigma) {
-  // Could add a marker for current price here if needed
+  if (!sparklineChart) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  const labels = sparklineChart.data.labels;
+  const lastLabel = labels[labels.length - 1];
+
+  // If today is already the last label, just update the value
+  // Otherwise append a new point
+  if (lastLabel === today) {
+    sparklineChart.data.datasets[5].data[labels.length - 1] = price;
+  } else {
+    // Add today to all datasets
+    labels.push(today);
+    const trendToday = PowerLaw.trendPrice(currentModel, new Date());
+    sparklineChart.data.datasets[0].data.push(trendToday * Math.pow(10, 2 * sigma));
+    sparklineChart.data.datasets[1].data.push(trendToday * Math.pow(10, sigma));
+    sparklineChart.data.datasets[2].data.push(trendToday);
+    sparklineChart.data.datasets[3].data.push(trendToday * Math.pow(10, -sigma));
+    sparklineChart.data.datasets[4].data.push(trendToday * Math.pow(10, -2 * sigma));
+    sparklineChart.data.datasets[5].data.push(price);
+  }
+
+  sparklineChart.update('none'); // update without animation for smooth 60s refresh
 }
 
 // Start the app
