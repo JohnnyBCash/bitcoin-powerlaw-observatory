@@ -133,6 +133,12 @@
         <button class="calculate-btn" id="calculate-btn">Calculate Retirement Plan</button>
         <button class="calculate-btn secondary" id="compare-btn">Compare: Loans vs No Loans</button>
 
+        <!-- Action buttons — shown after first calculation -->
+        <div class="action-buttons hidden" id="action-buttons">
+          <button class="calculate-btn secondary" id="export-pdf-btn">&#128196; Save as PDF</button>
+          <button class="calculate-btn secondary" id="reset-defaults-btn">&#8634; Reset Defaults</button>
+        </div>
+
         <!-- Status Banner - appears in-place after calculation -->
         <div id="status-banner" class="status-banner hidden">
           <div class="status-icon" id="status-icon"></div>
@@ -514,9 +520,28 @@
       background: var(--orange);
       color: var(--white);
     }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    @media print {
+      .header, .footer, .nav, .hero, .disclaimer,
+      .calculate-btn, .action-buttons, .loans-toggle-section,
+      #input-section { display: none !important; }
+      .hidden { display: block !important; }
+      body { background: white; }
+      .container { max-width: 100%; padding: 0; }
+      section { page-break-inside: avoid; margin-bottom: 1rem; }
+      .chart-container { height: 300px !important; }
+    }
   </style>
 
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../js/powerlaw.js"></script>

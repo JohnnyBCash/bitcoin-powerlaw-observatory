@@ -12,6 +12,8 @@
   let calculatedSigma = 0.3;
   let livePrice = null;       // live BTC price in USD
 
+  const STORAGE_KEY = 'btcRetirement_settings';
+
   // ── Currency Support ──────────────────────────────────────────
   let currency = 'USD';        // 'USD' or 'EUR'
   let eurRate = null;          // EUR per 1 USD (e.g. 0.92)
@@ -94,6 +96,7 @@
   async function init() {
     await loadHistoricalData();
     fetchLiveData(); // non-blocking, we don't await
+    loadSettings();  // restore saved settings from localStorage
     setupSliders();
     setupLoanToggle();
     setupCurrencyToggle();
@@ -178,13 +181,265 @@
     });
   }
 
+  // ── Settings Persistence ─────────────────────────────────────
+  function saveSettings() {
+    const data = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      inputs: {
+        'btc-holdings':    parseFloat($('btc-holdings').value),
+        'currency':        $('currency').value,
+        'annual-spend':    parseFloat($('annual-spend').value),
+        'retirement-year': parseInt($('retirement-year').value),
+        'time-horizon':    parseInt($('time-horizon').value),
+        'm2-growth':       parseFloat($('m2-growth').value),
+        'price-scenario':  $('price-scenario').value,
+        'use-loans':       $('use-loans').checked,
+        'loan-ltv':        parseFloat($('loan-ltv').value),
+        'loan-interest':   parseFloat($('loan-interest').value),
+        'loan-threshold':  parseFloat($('loan-threshold').value)
+      }
+    };
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+    catch (e) { console.warn('Failed to save settings:', e); }
+  }
+
+  function loadSettings() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      if (!data || !data.inputs) return false;
+      const inp = data.inputs;
+
+      // Numeric inputs
+      ['btc-holdings', 'annual-spend', 'retirement-year', 'time-horizon'].forEach(id => {
+        const el = $(id);
+        if (el && inp[id] !== undefined) el.value = inp[id];
+      });
+
+      // Select elements
+      ['currency', 'price-scenario'].forEach(id => {
+        const el = $(id);
+        if (el && inp[id] !== undefined) el.value = inp[id];
+      });
+
+      // Sliders + their display labels
+      const sliderMap = {
+        'm2-growth': 'm2-value',
+        'loan-ltv': 'ltv-value',
+        'loan-interest': 'interest-value',
+        'loan-threshold': 'threshold-value'
+      };
+      Object.entries(sliderMap).forEach(([sliderId, displayId]) => {
+        const el = $(sliderId);
+        const display = $(displayId);
+        if (el && inp[sliderId] !== undefined) {
+          el.value = inp[sliderId];
+          if (display) display.textContent = inp[sliderId];
+        }
+      });
+
+      // Checkbox + loan params visibility
+      if (inp['use-loans'] !== undefined) {
+        const toggle = $('use-loans');
+        toggle.checked = inp['use-loans'];
+        const params = $('loan-params');
+        const label = $('loans-label');
+        if (toggle.checked) {
+          params.classList.remove('hidden');
+          label.textContent = 'Loans: ON \u2014 Borrow below trend';
+        }
+      }
+
+      // Currency state
+      if (inp['currency']) {
+        currency = inp['currency'];
+        const label = $('currency-label');
+        if (label) label.textContent = currency;
+      }
+
+      // Spending growth hint
+      if (parseFloat(inp['m2-growth']) === 0) {
+        const hint = $('spending-growth-hint');
+        if (hint) hint.classList.remove('hidden');
+      }
+
+      return true;
+    } catch (e) {
+      console.warn('Failed to load settings:', e);
+      return false;
+    }
+  }
+
+  function resetDefaults() {
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+
+    $('btc-holdings').value = 1.0;
+    $('currency').value = 'USD';
+    $('annual-spend').value = 50000;
+    $('retirement-year').value = 2030;
+    $('time-horizon').value = 30;
+    $('m2-growth').value = 6.5;
+    $('price-scenario').value = 'cyclical';
+    $('use-loans').checked = false;
+    $('loan-ltv').value = 40;
+    $('loan-interest').value = 8;
+    $('loan-threshold').value = 1.0;
+
+    $('m2-value').textContent = '6.5';
+    $('ltv-value').textContent = '40';
+    $('interest-value').textContent = '8';
+    $('threshold-value').textContent = '1.0';
+
+    currency = 'USD';
+    $('currency-label').textContent = 'USD';
+
+    $('loan-params').classList.add('hidden');
+    $('loans-label').textContent = 'Loans: OFF \u2014 Sell only';
+
+    const hint = $('spending-growth-hint');
+    if (hint) hint.classList.add('hidden');
+  }
+
+  // ── PDF Export ─────────────────────────────────────────────────
+  function exportPDF() {
+    if (typeof html2pdf === 'undefined') {
+      alert('PDF library not loaded. Please check your connection and refresh.');
+      return;
+    }
+
+    const btn = $('export-pdf-btn');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '&#9203; Generating\u2026';
+    btn.disabled = true;
+
+    // Build a temporary wrapper for PDF content
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'font-family:Inter,system-ui,sans-serif; padding:20px; background:#fff; color:#000; max-width:800px;';
+
+    // ── Title header
+    const params = getParams();
+    const scenarioName = R.scenarioLabel(params.scenarioMode);
+    const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
+    const sym = getCurrencySymbol();
+    const spendDisplay = fmtCurrency(params.annualSpendUSD);
+
+    wrapper.innerHTML = `
+      <div style="text-align:center; margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid #F7931A;">
+        <h1 style="font-size:1.5rem; margin:0 0 4px; color:#000;">&#x20BF; Bitcoin Retirement Plan</h1>
+        <p style="font-size:0.8125rem; color:#757575; margin:0;">
+          Generated ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}
+          &mdash; Power Law Observatory
+        </p>
+      </div>
+      <table style="width:100%; border-collapse:collapse; font-size:0.8125rem; margin-bottom:20px;">
+        <tr>
+          <td style="padding:4px 8px; color:#757575;">BTC Holdings</td>
+          <td style="padding:4px 8px; font-weight:600;">${params.btcHoldings} BTC</td>
+          <td style="padding:4px 8px; color:#757575;">Annual Spending</td>
+          <td style="padding:4px 8px; font-weight:600;">${spendDisplay}/yr</td>
+        </tr>
+        <tr style="background:#f5f5f5;">
+          <td style="padding:4px 8px; color:#757575;">Start Year</td>
+          <td style="padding:4px 8px; font-weight:600;">${params.retirementYear}</td>
+          <td style="padding:4px 8px; color:#757575;">Horizon</td>
+          <td style="padding:4px 8px; font-weight:600;">${params.timeHorizonYears} years</td>
+        </tr>
+        <tr>
+          <td style="padding:4px 8px; color:#757575;">Scenario</td>
+          <td style="padding:4px 8px; font-weight:600;">${scenarioName}</td>
+          <td style="padding:4px 8px; color:#757575;">Strategy</td>
+          <td style="padding:4px 8px; font-weight:600;">${modeName}</td>
+        </tr>
+        <tr style="background:#f5f5f5;">
+          <td style="padding:4px 8px; color:#757575;">Spending Growth</td>
+          <td style="padding:4px 8px; font-weight:600;">${(params.m2GrowthRate * 100).toFixed(1)}%/yr</td>
+          <td style="padding:4px 8px; color:#757575;">Currency</td>
+          <td style="padding:4px 8px; font-weight:600;">${currency}</td>
+        </tr>
+      </table>
+    `;
+
+    // ── Clone visible sections, converting canvases to images
+    const sectionIds = [
+      'status-banner',
+      'cagr-section',
+      'results-section',
+      'comparison-section',
+      'stack-chart-section',
+      'table-section',
+      'insight-section'
+    ];
+
+    sectionIds.forEach(id => {
+      const el = $(id);
+      if (!el || el.classList.contains('hidden')) return;
+
+      const clone = el.cloneNode(true);
+      clone.classList.remove('hidden');
+      clone.style.marginBottom = '20px';
+
+      // Replace canvas elements with images
+      const canvases = el.querySelectorAll('canvas');
+      const clonedCanvases = clone.querySelectorAll('canvas');
+      canvases.forEach((canvas, i) => {
+        try {
+          const img = document.createElement('img');
+          img.src = canvas.toDataURL('image/png');
+          img.style.cssText = 'width:100%; height:auto; display:block;';
+          clonedCanvases[i].parentNode.replaceChild(img, clonedCanvases[i]);
+        } catch (e) {
+          console.warn('Canvas export failed:', e);
+        }
+      });
+
+      wrapper.appendChild(clone);
+    });
+
+    // ── Footer disclaimer
+    const footer = document.createElement('div');
+    footer.innerHTML = `
+      <div style="text-align:center; font-size:0.75rem; color:#757575; margin-top:20px; padding-top:12px; border-top:1px solid #E0E0E0;">
+        Not financial advice. Power law models are educational projections, not guarantees.
+      </div>
+    `;
+    wrapper.appendChild(footer);
+
+    // ── Append temporarily and generate PDF
+    document.body.appendChild(wrapper);
+
+    const filename = 'btc_retirement_' + params.btcHoldings + 'btc_' + params.retirementYear + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+
+    html2pdf().set({
+      margin:      [10, 10, 10, 10],
+      filename:    filename,
+      image:       { type: 'jpeg', quality: 0.95 },
+      html2canvas: { scale: 2, useCORS: true, logging: false },
+      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+    }).from(wrapper).save().then(() => {
+      document.body.removeChild(wrapper);
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    }).catch(err => {
+      console.error('PDF generation failed:', err);
+      document.body.removeChild(wrapper);
+      btn.innerHTML = originalHTML;
+      btn.disabled = false;
+    });
+  }
+
   function setupButtons() {
     $('calculate-btn').addEventListener('click', runCalculation);
     $('compare-btn').addEventListener('click', runComparison);
+    $('export-pdf-btn').addEventListener('click', exportPDF);
+    $('reset-defaults-btn').addEventListener('click', resetDefaults);
   }
 
   // ── Main Calculation ─────────────────────────────────────────
   function runCalculation() {
+    saveSettings();
     const params = getParams();
     const simulate = params.useLoans ? R.simulateWithLoans : R.simulateSellOnly;
     const result = simulate(params);
@@ -207,12 +462,16 @@
     show('insight-section');
     hide('comparison-section');
 
+    // Show action buttons (PDF export, reset)
+    show('action-buttons');
+
     // Scroll to results
     $('cagr-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // ── Comparison Mode ──────────────────────────────────────────
   function runComparison() {
+    saveSettings();
     const params = getParams();
     const comparison = R.compareStrategies(params);
 
@@ -245,6 +504,9 @@
     const cagrTable = R.cagrDecayTable(params.model, params.retirementYear, params.timeHorizonYears);
     renderCAGRChart(cagrTable);
     show('cagr-section');
+
+    // Show action buttons (PDF export, reset)
+    show('action-buttons');
 
     $('comparison-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
