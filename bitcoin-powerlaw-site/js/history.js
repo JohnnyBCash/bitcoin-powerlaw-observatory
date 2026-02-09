@@ -484,9 +484,9 @@ function binResiduals(residuals, numBins, sigma) {
     }
   }
 
-  // Normalize to percentage of total history
+  // Normalize to days per year (count/total * 365.25)
   for (const bin of bins) {
-    bin.y = (bin.count / residuals.length) * 100;
+    bin.y = (bin.count / residuals.length) * 365.25;
   }
 
   return bins;
@@ -729,7 +729,7 @@ function initBellCurve() {
         y: {
           title: {
             display: true,
-            text: '% of History',
+            text: 'Days per Year',
             font: { weight: 'bold' }
           },
           grid: {
@@ -738,7 +738,7 @@ function initBellCurve() {
           beginAtZero: true,
           ticks: {
             callback: function(value) {
-              return value.toFixed(0) + '%';
+              return Math.round(value);
             }
           }
         }
@@ -758,8 +758,8 @@ function initBellCurve() {
               if (context.dataset.type === 'bar') {
                 const binIndex = context.dataIndex;
                 const bin = bins[binIndex];
-                const pct = (bin.count / residuals.length * 100).toFixed(1);
-                return `Bitcoin spent ${pct}% of its history here`;
+                const dpy = (bin.count / residuals.length * 365.25).toFixed(1);
+                return `~${dpy} days per year at this level`;
               }
               return context.dataset.label;
             }
