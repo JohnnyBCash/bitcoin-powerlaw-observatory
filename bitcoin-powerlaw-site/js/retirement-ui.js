@@ -303,6 +303,13 @@
   }
 
   // ── PDF Export ─────────────────────────────────────────────────
+  function canvasToDataURL(id) {
+    const canvas = $(id);
+    if (!canvas) return null;
+    try { return canvas.toDataURL('image/png'); }
+    catch (e) { return null; }
+  }
+
   function exportPDF() {
     if (typeof html2pdf === 'undefined') {
       alert('PDF library not loaded. Please check your connection and refresh.');
@@ -314,110 +321,154 @@
     btn.innerHTML = '&#9203; Generating\u2026';
     btn.disabled = true;
 
-    // Build a temporary wrapper for PDF content
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'font-family:Inter,system-ui,sans-serif; padding:20px; background:#fff; color:#000; max-width:800px;';
-
-    // ── Title header
     const params = getParams();
     const scenarioName = R.scenarioLabel(params.scenarioMode);
     const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
-    const sym = getCurrencySymbol();
     const spendDisplay = fmtCurrency(params.annualSpendUSD);
+    const sym = getCurrencySymbol();
 
-    wrapper.innerHTML = `
-      <div style="text-align:center; margin-bottom:20px; padding-bottom:14px; border-bottom:2px solid #F7931A;">
-        <h1 style="font-size:1.5rem; margin:0 0 4px; color:#000;">&#x20BF; Bitcoin Retirement Plan</h1>
-        <p style="font-size:0.8125rem; color:#757575; margin:0;">
-          Generated ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })}
-          &mdash; Power Law Observatory
-        </p>
+    // ── Grab status banner text
+    const statusHeadline = $('status-headline') ? $('status-headline').textContent : '';
+    const statusDetail = $('status-detail') ? $('status-detail').innerHTML : '';
+    const statusBanner = $('status-banner');
+    let statusColor = '#00C853';
+    if (statusBanner && statusBanner.classList.contains('status-red')) statusColor = '#FF1744';
+    else if (statusBanner && statusBanner.classList.contains('status-amber')) statusColor = '#F7931A';
+
+    // ── Grab summary cards HTML
+    const cardsEl = $('summary-cards');
+    const cardsHTML = cardsEl ? cardsEl.innerHTML : '';
+
+    // ── Chart images
+    const cagrImg = canvasToDataURL('cagr-chart');
+    const stackImg = canvasToDataURL('stack-chart');
+
+    // ── Grab yearly table rows (compact: first 10 + last 5 for long horizons)
+    const tableBody = $('yearly-table-body');
+    let tableRowsHTML = '';
+    if (tableBody && !tableBody.closest('section').classList.contains('hidden')) {
+      const rows = tableBody.querySelectorAll('tr');
+      const total = rows.length;
+      if (total <= 20) {
+        rows.forEach(r => { tableRowsHTML += r.outerHTML; });
+      } else {
+        for (let i = 0; i < 10; i++) tableRowsHTML += rows[i].outerHTML;
+        tableRowsHTML += '<tr><td colspan="11" style="text-align:center;color:#757575;padding:4px;font-size:0.7rem;">... ' + (total - 15) + ' years omitted ...</td></tr>';
+        for (let i = total - 5; i < total; i++) tableRowsHTML += rows[i].outerHTML;
+      }
+    }
+
+    // ── Grab insight text
+    const insightEl = $('insight-text');
+    const insightHTML = insightEl && !insightEl.closest('section').classList.contains('hidden') ? insightEl.innerHTML : '';
+
+    // ── Comparison table
+    const compSection = $('comparison-section');
+    let compHTML = '';
+    if (compSection && !compSection.classList.contains('hidden')) {
+      const compTable = compSection.querySelector('table');
+      if (compTable) compHTML = compTable.outerHTML;
+    }
+
+    // ── Build self-contained compact HTML
+    const S = `
+      <div style="font-family:Inter,system-ui,-apple-system,sans-serif;font-size:11px;color:#000;line-height:1.4;">
+        <div style="text-align:center;padding-bottom:8px;border-bottom:2px solid #F7931A;margin-bottom:10px;">
+          <div style="font-size:18px;font-weight:700;">&#x20BF; Bitcoin Retirement Plan</div>
+          <div style="font-size:9px;color:#757575;">
+            Generated ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })} &mdash; Power Law Observatory
+          </div>
+        </div>
+
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;">
+          <tr>
+            <td style="padding:2px 6px;color:#757575;">Holdings</td>
+            <td style="padding:2px 6px;font-weight:600;">${params.btcHoldings} BTC</td>
+            <td style="padding:2px 6px;color:#757575;">Spending</td>
+            <td style="padding:2px 6px;font-weight:600;">${spendDisplay}/yr</td>
+            <td style="padding:2px 6px;color:#757575;">Start</td>
+            <td style="padding:2px 6px;font-weight:600;">${params.retirementYear}</td>
+          </tr>
+          <tr style="background:#f5f5f5;">
+            <td style="padding:2px 6px;color:#757575;">Horizon</td>
+            <td style="padding:2px 6px;font-weight:600;">${params.timeHorizonYears}yr</td>
+            <td style="padding:2px 6px;color:#757575;">Scenario</td>
+            <td style="padding:2px 6px;font-weight:600;">${scenarioName}</td>
+            <td style="padding:2px 6px;color:#757575;">Strategy</td>
+            <td style="padding:2px 6px;font-weight:600;">${modeName}</td>
+          </tr>
+        </table>
+
+        <div style="border-left:3px solid ${statusColor};padding:6px 10px;margin-bottom:10px;background:${statusColor}11;">
+          <div style="font-weight:600;font-size:12px;">${statusHeadline}</div>
+          <div style="font-size:10px;color:#555;">${statusDetail}</div>
+        </div>
+
+        ${cagrImg ? `
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Expected Return Decay</div>
+          <img src="${cagrImg}" style="width:100%;height:auto;display:block;" />
+        </div>` : ''}
+
+        ${stackImg ? `
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Stack & Spending Over Time</div>
+          <img src="${stackImg}" style="width:100%;height:auto;display:block;" />
+        </div>` : ''}
+
+        ${compHTML ? `
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Loans vs Sell-Only Comparison</div>
+          <div style="font-size:9px;">${compHTML}</div>
+        </div>` : ''}
+
+        ${tableRowsHTML ? `
+        <div style="margin-bottom:8px;">
+          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Year-by-Year Breakdown</div>
+          <table style="width:100%;border-collapse:collapse;font-size:8px;">
+            <thead><tr style="background:#f5f5f5;font-weight:600;">
+              <th style="padding:2px 3px;text-align:left;">Year</th>
+              <th style="padding:2px 3px;text-align:left;">Price</th>
+              <th style="padding:2px 3px;text-align:left;">Trend</th>
+              <th style="padding:2px 3px;text-align:left;">Mult.</th>
+              <th style="padding:2px 3px;text-align:left;">Spending</th>
+              <th style="padding:2px 3px;text-align:left;">Sold</th>
+              <th style="padding:2px 3px;text-align:left;">Loan</th>
+              <th style="padding:2px 3px;text-align:left;">Stack</th>
+              <th style="padding:2px 3px;text-align:left;">Value</th>
+              <th style="padding:2px 3px;text-align:left;">SWR</th>
+              <th style="padding:2px 3px;text-align:left;">Status</th>
+            </tr></thead>
+            <tbody>${tableRowsHTML}</tbody>
+          </table>
+        </div>` : ''}
+
+        ${insightHTML ? `
+        <div style="margin-bottom:8px;padding:6px 8px;background:#f5f5f5;border-radius:4px;font-size:9px;line-height:1.5;">
+          ${insightHTML}
+        </div>` : ''}
+
+        <div style="text-align:center;font-size:8px;color:#999;padding-top:6px;border-top:1px solid #e0e0e0;">
+          Not financial advice. Power law models are educational projections, not guarantees.
+        </div>
       </div>
-      <table style="width:100%; border-collapse:collapse; font-size:0.8125rem; margin-bottom:20px;">
-        <tr>
-          <td style="padding:4px 8px; color:#757575;">BTC Holdings</td>
-          <td style="padding:4px 8px; font-weight:600;">${params.btcHoldings} BTC</td>
-          <td style="padding:4px 8px; color:#757575;">Annual Spending</td>
-          <td style="padding:4px 8px; font-weight:600;">${spendDisplay}/yr</td>
-        </tr>
-        <tr style="background:#f5f5f5;">
-          <td style="padding:4px 8px; color:#757575;">Start Year</td>
-          <td style="padding:4px 8px; font-weight:600;">${params.retirementYear}</td>
-          <td style="padding:4px 8px; color:#757575;">Horizon</td>
-          <td style="padding:4px 8px; font-weight:600;">${params.timeHorizonYears} years</td>
-        </tr>
-        <tr>
-          <td style="padding:4px 8px; color:#757575;">Scenario</td>
-          <td style="padding:4px 8px; font-weight:600;">${scenarioName}</td>
-          <td style="padding:4px 8px; color:#757575;">Strategy</td>
-          <td style="padding:4px 8px; font-weight:600;">${modeName}</td>
-        </tr>
-        <tr style="background:#f5f5f5;">
-          <td style="padding:4px 8px; color:#757575;">Spending Growth</td>
-          <td style="padding:4px 8px; font-weight:600;">${(params.m2GrowthRate * 100).toFixed(1)}%/yr</td>
-          <td style="padding:4px 8px; color:#757575;">Currency</td>
-          <td style="padding:4px 8px; font-weight:600;">${currency}</td>
-        </tr>
-      </table>
     `;
 
-    // ── Clone visible sections, converting canvases to images
-    const sectionIds = [
-      'status-banner',
-      'cagr-section',
-      'results-section',
-      'comparison-section',
-      'stack-chart-section',
-      'table-section',
-      'insight-section'
-    ];
-
-    sectionIds.forEach(id => {
-      const el = $(id);
-      if (!el || el.classList.contains('hidden')) return;
-
-      const clone = el.cloneNode(true);
-      clone.classList.remove('hidden');
-      clone.style.marginBottom = '20px';
-
-      // Replace canvas elements with images
-      const canvases = el.querySelectorAll('canvas');
-      const clonedCanvases = clone.querySelectorAll('canvas');
-      canvases.forEach((canvas, i) => {
-        try {
-          const img = document.createElement('img');
-          img.src = canvas.toDataURL('image/png');
-          img.style.cssText = 'width:100%; height:auto; display:block;';
-          clonedCanvases[i].parentNode.replaceChild(img, clonedCanvases[i]);
-        } catch (e) {
-          console.warn('Canvas export failed:', e);
-        }
-      });
-
-      wrapper.appendChild(clone);
-    });
-
-    // ── Footer disclaimer
-    const footer = document.createElement('div');
-    footer.innerHTML = `
-      <div style="text-align:center; font-size:0.75rem; color:#757575; margin-top:20px; padding-top:12px; border-top:1px solid #E0E0E0;">
-        Not financial advice. Power law models are educational projections, not guarantees.
-      </div>
-    `;
-    wrapper.appendChild(footer);
-
-    // ── Append temporarily and generate PDF
+    // ── Create offscreen wrapper and generate PDF
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:190mm;background:#fff;padding:0;margin:0;';
+    wrapper.innerHTML = S;
     document.body.appendChild(wrapper);
 
     const filename = 'btc_retirement_' + params.btcHoldings + 'btc_' + params.retirementYear + '_' + new Date().toISOString().split('T')[0] + '.pdf';
 
     html2pdf().set({
-      margin:      [10, 10, 10, 10],
+      margin:      [5, 5, 5, 5],
       filename:    filename,
-      image:       { type: 'jpeg', quality: 0.95 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
+      image:       { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 2, useCORS: true, logging: false, width: wrapper.scrollWidth, height: wrapper.scrollHeight },
       jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:   { mode: ['avoid-all', 'css', 'legacy'] }
+      pagebreak:   { mode: 'css' }
     }).from(wrapper).save().then(() => {
       document.body.removeChild(wrapper);
       btn.innerHTML = originalHTML;
