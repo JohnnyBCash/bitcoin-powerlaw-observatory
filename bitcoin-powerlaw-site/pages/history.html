@@ -77,40 +77,40 @@
         <p>Think of the power law trend as a rubber band. Price can stretch far above or below the trend, but it always snaps back. This isn't magic; it's statistics. Extreme deviations are unsustainable by definition.</p>
       </div>
 
-      <!-- Bell Curve Section -->
+      <!-- Price Distribution Section -->
       <section id="bell-curve-section" style="margin-top: var(--spacing-xxl);">
-        <h2>Deviation Distribution (Bell Curve)</h2>
-        <p style="color: var(--gray); margin-bottom: var(--spacing-lg);">How Bitcoin's price deviates from the power law trend follows a near-normal distribution. Most of history clusters around fair value.</p>
+        <h2>Price Distribution: How Often Is Bitcoin This Cheap?</h2>
+        <p style="color: var(--gray); margin-bottom: var(--spacing-lg);">Each bar shows how much time Bitcoin has spent at that price level relative to the power law trend. Inspired by <a href="https://x.com/therealplanc" style="color: var(--orange);">PlanC's quantile analysis</a>.</p>
 
         <div class="chart-container" style="height: 400px;">
-          <canvas id="bell-curve-chart" aria-label="Bell curve showing distribution of Bitcoin price deviations from power law trend" role="img"></canvas>
+          <canvas id="bell-curve-chart" aria-label="Distribution chart showing how much time Bitcoin has spent at each price level relative to the power law trend" role="img"></canvas>
         </div>
 
-        <!-- Bell Curve Stats -->
+        <!-- Distribution Stats -->
         <div class="dashboard" style="margin-top: var(--spacing-lg);">
           <div class="card">
-            <div class="card-label">Today's Position</div>
-            <div class="card-value" id="today-multiplier" style="font-size: 1.5rem;">--</div>
-            <div class="card-sub" id="today-percentile">-- percentile</div>
+            <div class="card-label">Today vs Trend</div>
+            <div class="card-value" id="today-pct-from-trend" style="font-size: 1.5rem;">--</div>
+            <div class="card-sub" id="today-valuation-label">--</div>
           </div>
 
           <div class="card">
-            <div class="card-label">Within &plusmn;1&sigma;</div>
-            <div class="card-value" id="within-1sigma">--</div>
-            <div class="card-sub">of all history</div>
+            <div class="card-label">Historical Percentile</div>
+            <div class="card-value" id="today-percentile-value" style="font-size: 1.5rem;">--</div>
+            <div class="card-sub">Cheaper than <span id="pct-cheaper">--</span>% of all history</div>
           </div>
 
           <div class="card">
-            <div class="card-label">Model &sigma;</div>
-            <div class="card-value" id="bell-sigma">--</div>
-            <div class="card-sub">log standard deviation</div>
+            <div class="card-label">Typical Range (&plusmn;1&sigma;)</div>
+            <div class="card-value" id="typical-range-pct" style="font-size: 1.3rem;">--</div>
+            <div class="card-sub">Price spends most time in this band</div>
           </div>
         </div>
 
         <!-- Educational Text -->
         <div class="info-box" style="margin-top: var(--spacing-lg);">
-          <h4>What This Means</h4>
-          <p>Bitcoin's prices deviate from the power law trend in a bell-shaped pattern—most time is spent near fair value (&plusmn;1&sigma;). Extreme deviations always revert, driving the dramatic swings we see in cycles. This isn't random chaos; it's statistically normal behavior that reveals Bitcoin's predictable long-term adoption path.</p>
+          <h4>Reading This Chart</h4>
+          <p>Each bar shows how much of Bitcoin's history was spent at that price level relative to the power law trend. The <strong style="color: #00C853;">green zone</strong> on the left marks periods when Bitcoin was significantly cheaper than trend &mdash; historically great buying opportunities. The <strong style="color: #FF1744;">red zone</strong> on the right marks periods when Bitcoin was significantly more expensive than trend &mdash; prices always came back down from these levels. The orange line shows where we are today.</p>
         </div>
       </section>
 

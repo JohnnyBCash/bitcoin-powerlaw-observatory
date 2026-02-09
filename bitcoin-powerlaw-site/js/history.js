@@ -5,6 +5,9 @@ let sigmaCache = {};
 let currentModel = 'santostasi';
 let historyChart = null;
 let bellCurveChart = null;
+let bellCurveTodayResidual = 0;
+let bellCurveTodayMultiplier = 1;
+let bellCurveLnSigma = 0.7;
 
 // Initialize
 async function init() {
@@ -434,9 +437,9 @@ function binResiduals(residuals, numBins, sigma) {
     }
   }
 
-  // Normalize to density (so area sums to ~1, comparable to Gaussian)
+  // Normalize to percentage of total history
   for (const bin of bins) {
-    bin.y = bin.count / (totalInRange * binWidth);
+    bin.y = (bin.count / residuals.length) * 100;
   }
 
   return bins;
@@ -473,95 +476,185 @@ function calculatePercentile(value, sortedArray) {
   return (count / sortedArray.length) * 100;
 }
 
+// Chart.js plugin: draw zone backgrounds with labels
+const zoneLabelsPlugin = {
+  id: 'zoneLabels',
+  beforeDraw(chart) {
+    const { ctx, chartArea, scales: { x } } = chart;
+    if (!chartArea) return;
+    const { left, right, top, bottom } = chartArea;
+    const sigma = bellCurveLnSigma;
+
+    const zones = [
+      { min: -3 * sigma, max: -sigma, label: 'Cheap', color: 'rgba(0, 200, 83, 0.07)' },
+      { min: -sigma, max: sigma, label: 'Fair Value', color: 'rgba(117, 117, 117, 0.04)' },
+      { min: sigma, max: 3 * sigma, label: 'Expensive', color: 'rgba(255, 23, 68, 0.07)' }
+    ];
+
+    ctx.save();
+    for (const zone of zones) {
+      const xStart = Math.max(x.getPixelForValue(zone.min), left);
+      const xEnd = Math.min(x.getPixelForValue(zone.max), right);
+
+      // Background tint
+      ctx.fillStyle = zone.color;
+      ctx.fillRect(xStart, top, xEnd - xStart, bottom - top);
+
+      // Label at top
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.30)';
+      ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(zone.label, (xStart + xEnd) / 2, top + 16);
+    }
+    ctx.restore();
+  }
+};
+
+// Chart.js plugin: draw "TODAY" vertical marker with callout
+const todayMarkerPlugin = {
+  id: 'todayMarker',
+  afterDraw(chart) {
+    const { ctx, chartArea, scales: { x } } = chart;
+    if (!chartArea) return;
+    const { left, right, top, bottom } = chartArea;
+
+    const todayX = x.getPixelForValue(bellCurveTodayResidual);
+    if (todayX < left || todayX > right) return;
+
+    // Vertical dashed line
+    ctx.save();
+    ctx.setLineDash([6, 4]);
+    ctx.strokeStyle = '#F7931A';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.moveTo(todayX, top);
+    ctx.lineTo(todayX, bottom);
+    ctx.stroke();
+
+    // Callout box
+    const label = bellCurveTodayMultiplier.toFixed(2) + '× trend';
+    const sublabel = 'TODAY';
+
+    ctx.setLineDash([]);
+    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+    const labelWidth = Math.max(ctx.measureText(label).width, ctx.measureText(sublabel).width);
+    const boxWidth = labelWidth + 20;
+    const boxHeight = 34;
+
+    // Clamp box position so it doesn't overflow chart edges
+    let boxX = todayX - boxWidth / 2;
+    if (boxX < left) boxX = left + 2;
+    if (boxX + boxWidth > right) boxX = right - boxWidth - 2;
+    const boxY = top + 24;
+
+    // Rounded rect background
+    ctx.fillStyle = '#F7931A';
+    ctx.beginPath();
+    const r = 4;
+    ctx.moveTo(boxX + r, boxY);
+    ctx.lineTo(boxX + boxWidth - r, boxY);
+    ctx.arcTo(boxX + boxWidth, boxY, boxX + boxWidth, boxY + r, r);
+    ctx.lineTo(boxX + boxWidth, boxY + boxHeight - r);
+    ctx.arcTo(boxX + boxWidth, boxY + boxHeight, boxX + boxWidth - r, boxY + boxHeight, r);
+    ctx.lineTo(boxX + r, boxY + boxHeight);
+    ctx.arcTo(boxX, boxY + boxHeight, boxX, boxY + boxHeight - r, r);
+    ctx.lineTo(boxX, boxY + r);
+    ctx.arcTo(boxX, boxY, boxX + r, boxY, r);
+    ctx.closePath();
+    ctx.fill();
+
+    // Arrow pointing down
+    const arrowX = Math.min(Math.max(todayX, boxX + 8), boxX + boxWidth - 8);
+    ctx.beginPath();
+    ctx.moveTo(arrowX - 5, boxY + boxHeight);
+    ctx.lineTo(arrowX, boxY + boxHeight + 7);
+    ctx.lineTo(arrowX + 5, boxY + boxHeight);
+    ctx.fill();
+
+    // Text
+    ctx.fillStyle = '#FFFFFF';
+    ctx.textAlign = 'center';
+    const textCenterX = boxX + boxWidth / 2;
+    ctx.font = 'bold 11px Inter, system-ui, sans-serif';
+    ctx.fillText(sublabel, textCenterX, boxY + 13);
+    ctx.font = '10px Inter, system-ui, sans-serif';
+    ctx.fillText(label, textCenterX, boxY + 26);
+
+    ctx.restore();
+  }
+};
+
 // Initialize bell curve chart
 function initBellCurve() {
   const ctx = document.getElementById('bell-curve-chart').getContext('2d');
-  const sigmaData = sigmaCache[currentModel];
-  const sigma = sigmaData.sigma;
 
-  // Compute residuals
+  // Compute natural-log residuals
   const residuals = computeLogResiduals(currentModel);
-  const mean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+  const lnMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+  const lnSigma = Math.sqrt(residuals.reduce((s, r) => s + Math.pow(r - lnMean, 2), 0) / residuals.length);
+  bellCurveLnSigma = lnSigma;
 
-  // Bin the residuals
-  const bins = binResiduals(residuals, 30, sigma);
-
-  // Generate Gaussian curve
-  const gaussianPoints = generateGaussianCurve(mean, sigma);
+  // Bin the residuals (20 bins for cleaner look)
+  const bins = binResiduals(residuals, 20, lnSigma);
 
   // Get today's residual
   const latestData = historicalData[historicalData.length - 1];
-  const latestTrend = PowerLaw.trendPrice(currentModel, new Date(latestData.date));
-  const todayResidual = Math.log(latestData.price / latestTrend);
-  const todayMultiplier = latestData.price / latestTrend;
+  const todayTrend = PowerLaw.trendPrice(currentModel, new Date());
+  bellCurveTodayResidual = Math.log(latestData.price / todayTrend);
+  bellCurveTodayMultiplier = latestData.price / todayTrend;
 
   // Calculate percentile
   const sortedResiduals = [...residuals].sort((a, b) => a - b);
-  const percentile = calculatePercentile(todayResidual, sortedResiduals);
+  const percentile = calculatePercentile(bellCurveTodayResidual, sortedResiduals);
 
-  // Calculate % within 1 sigma
-  const within1Sigma = residuals.filter(r => Math.abs(r - mean) <= sigma).length / residuals.length * 100;
+  // Update stat cards
+  const todayMultEl = document.getElementById('today-pct-from-trend');
+  todayMultEl.textContent = PowerLaw.formatMultiplier(bellCurveTodayMultiplier);
 
-  // Update stats display
-  document.getElementById('today-multiplier').textContent = todayMultiplier.toFixed(2) + '×';
-  document.getElementById('today-percentile').textContent = percentile.toFixed(0) + 'th percentile';
-  document.getElementById('within-1sigma').textContent = within1Sigma.toFixed(0) + '%';
-  document.getElementById('bell-sigma').textContent = sigma.toFixed(3);
+  // Color based on valuation
+  const valuation = PowerLaw.valuationLabel(bellCurveTodayMultiplier);
+  todayMultEl.style.color = valuation.color;
+  document.getElementById('today-valuation-label').textContent = valuation.label;
 
-  // Color the today's position based on valuation
-  const todayEl = document.getElementById('today-multiplier');
-  if (todayMultiplier < 1 / Math.exp(sigma)) {
-    todayEl.style.color = '#00C853';
-  } else if (todayMultiplier > Math.exp(sigma)) {
-    todayEl.style.color = '#FF1744';
-  } else {
-    todayEl.style.color = 'var(--black)';
-  }
+  // Percentile card
+  const pctile = Math.round(percentile);
+  const suffix = pctile % 10 === 1 && pctile !== 11 ? 'st' :
+                 pctile % 10 === 2 && pctile !== 12 ? 'nd' :
+                 pctile % 10 === 3 && pctile !== 13 ? 'rd' : 'th';
+  document.getElementById('today-percentile-value').textContent = pctile + suffix;
+  document.getElementById('pct-cheaper').textContent = (100 - pctile);
 
-  // Create gradient for bars
-  const barColors = bins.map(bin => getBarColor(bin.x, sigma));
+  // Typical range card — show ±1σ as multiplier range
+  const upper1s = Math.exp(lnSigma);
+  const lower1s = Math.exp(-lnSigma);
+  document.getElementById('typical-range-pct').textContent = lower1s.toFixed(2) + '× to ' + upper1s.toFixed(1) + '×';
+
+  // Bar colors
+  const barColors = bins.map(bin => getBarColor(bin.x, lnSigma));
 
   bellCurveChart = new Chart(ctx, {
     type: 'bar',
     data: {
-      labels: bins.map(b => b.x.toFixed(2)),
+      labels: bins.map(b => b.x.toFixed(3)),
       datasets: [
         {
           type: 'bar',
-          label: 'Historical Deviations',
+          label: 'Historical Distribution',
           data: bins.map(b => b.y),
           backgroundColor: barColors,
           borderWidth: 0,
           barPercentage: 1.0,
           categoryPercentage: 1.0,
           order: 2
-        },
-        {
-          type: 'line',
-          label: 'Gaussian Fit (σ=' + sigma.toFixed(2) + ')',
-          data: gaussianPoints.map(p => ({ x: p.x, y: p.y })),
-          borderColor: '#F7931A',
-          backgroundColor: 'transparent',
-          borderWidth: 3,
-          pointRadius: 0,
-          tension: 0.4,
-          order: 1
-        },
-        {
-          type: 'scatter',
-          label: 'Today: ' + todayMultiplier.toFixed(2) + '× trend',
-          data: [{ x: todayResidual, y: 0 }],
-          backgroundColor: '#000000',
-          borderColor: '#000000',
-          pointRadius: 8,
-          pointStyle: 'rectRot',
-          order: 0
         }
       ]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: {
+        padding: { top: 50 }
+      },
       interaction: {
         intersect: false,
         mode: 'index'
@@ -571,7 +664,7 @@ function initBellCurve() {
           type: 'linear',
           title: {
             display: true,
-            text: 'Log Deviation (Undervalued ← → Overvalued)',
+            text: '← Cheaper than Trend | More Expensive →',
             font: { weight: 'bold' }
           },
           grid: {
@@ -580,6 +673,7 @@ function initBellCurve() {
           ticks: {
             callback: function(value) {
               const mult = Math.exp(value);
+              if (Math.abs(mult - 1) < 0.05) return '1× (Fair)';
               if (mult < 1) return mult.toFixed(2) + '×';
               return mult.toFixed(1) + '×';
             }
@@ -588,23 +682,23 @@ function initBellCurve() {
         y: {
           title: {
             display: true,
-            text: 'Density',
+            text: '% of History',
             font: { weight: 'bold' }
           },
           grid: {
             color: 'rgba(0, 0, 0, 0.05)'
           },
-          beginAtZero: true
+          beginAtZero: true,
+          ticks: {
+            callback: function(value) {
+              return value.toFixed(0) + '%';
+            }
+          }
         }
       },
       plugins: {
         legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            usePointStyle: true,
-            padding: 15
-          }
+          display: false
         },
         tooltip: {
           callbacks: {
@@ -618,17 +712,15 @@ function initBellCurve() {
                 const binIndex = context.dataIndex;
                 const bin = bins[binIndex];
                 const pct = (bin.count / residuals.length * 100).toFixed(1);
-                return `${pct}% of history in this range`;
-              }
-              if (context.dataset.type === 'scatter') {
-                return 'Current position';
+                return `Bitcoin spent ${pct}% of its history here`;
               }
               return context.dataset.label;
             }
           }
         }
       }
-    }
+    },
+    plugins: [zoneLabelsPlugin, todayMarkerPlugin]
   });
 }
 
@@ -636,58 +728,50 @@ function initBellCurve() {
 function updateBellCurve() {
   if (!bellCurveChart) return;
 
-  const sigmaData = sigmaCache[currentModel];
-  const sigma = sigmaData.sigma;
-
-  // Recompute residuals
+  // Recompute natural-log residuals and sigma
   const residuals = computeLogResiduals(currentModel);
-  const mean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+  const lnMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
+  const lnSigma = Math.sqrt(residuals.reduce((s, r) => s + Math.pow(r - lnMean, 2), 0) / residuals.length);
+  bellCurveLnSigma = lnSigma;
 
-  // Rebin
-  const bins = binResiduals(residuals, 30, sigma);
-
-  // Regenerate Gaussian
-  const gaussianPoints = generateGaussianCurve(mean, sigma);
+  // Rebin (20 bins)
+  const bins = binResiduals(residuals, 20, lnSigma);
 
   // Get today's residual
   const latestData = historicalData[historicalData.length - 1];
-  const latestTrend = PowerLaw.trendPrice(currentModel, new Date(latestData.date));
-  const todayResidual = Math.log(latestData.price / latestTrend);
-  const todayMultiplier = latestData.price / latestTrend;
+  const todayTrend = PowerLaw.trendPrice(currentModel, new Date());
+  bellCurveTodayResidual = Math.log(latestData.price / todayTrend);
+  bellCurveTodayMultiplier = latestData.price / todayTrend;
 
   // Calculate percentile
   const sortedResiduals = [...residuals].sort((a, b) => a - b);
-  const percentile = calculatePercentile(todayResidual, sortedResiduals);
+  const percentile = calculatePercentile(bellCurveTodayResidual, sortedResiduals);
 
-  // Calculate % within 1 sigma
-  const within1Sigma = residuals.filter(r => Math.abs(r - mean) <= sigma).length / residuals.length * 100;
+  // Update stat cards
+  const todayMultEl = document.getElementById('today-pct-from-trend');
+  todayMultEl.textContent = PowerLaw.formatMultiplier(bellCurveTodayMultiplier);
 
-  // Update stats display
-  document.getElementById('today-multiplier').textContent = todayMultiplier.toFixed(2) + '×';
-  document.getElementById('today-percentile').textContent = percentile.toFixed(0) + 'th percentile';
-  document.getElementById('within-1sigma').textContent = within1Sigma.toFixed(0) + '%';
-  document.getElementById('bell-sigma').textContent = sigma.toFixed(3);
+  const valuation = PowerLaw.valuationLabel(bellCurveTodayMultiplier);
+  todayMultEl.style.color = valuation.color;
+  document.getElementById('today-valuation-label').textContent = valuation.label;
 
-  // Color the today's position
-  const todayEl = document.getElementById('today-multiplier');
-  if (todayMultiplier < 1 / Math.exp(sigma)) {
-    todayEl.style.color = '#00C853';
-  } else if (todayMultiplier > Math.exp(sigma)) {
-    todayEl.style.color = '#FF1744';
-  } else {
-    todayEl.style.color = 'var(--black)';
-  }
+  const pctile = Math.round(percentile);
+  const suffix = pctile % 10 === 1 && pctile !== 11 ? 'st' :
+                 pctile % 10 === 2 && pctile !== 12 ? 'nd' :
+                 pctile % 10 === 3 && pctile !== 13 ? 'rd' : 'th';
+  document.getElementById('today-percentile-value').textContent = pctile + suffix;
+  document.getElementById('pct-cheaper').textContent = (100 - pctile);
+
+  const upper1s = Math.exp(lnSigma);
+  const lower1s = Math.exp(-lnSigma);
+  document.getElementById('typical-range-pct').textContent = lower1s.toFixed(2) + '× to ' + upper1s.toFixed(1) + '×';
 
   // Update chart data
-  const barColors = bins.map(bin => getBarColor(bin.x, sigma));
+  const barColors = bins.map(bin => getBarColor(bin.x, lnSigma));
 
-  bellCurveChart.data.labels = bins.map(b => b.x.toFixed(2));
+  bellCurveChart.data.labels = bins.map(b => b.x.toFixed(3));
   bellCurveChart.data.datasets[0].data = bins.map(b => b.y);
   bellCurveChart.data.datasets[0].backgroundColor = barColors;
-  bellCurveChart.data.datasets[1].data = gaussianPoints.map(p => ({ x: p.x, y: p.y }));
-  bellCurveChart.data.datasets[1].label = 'Gaussian Fit (σ=' + sigma.toFixed(2) + ')';
-  bellCurveChart.data.datasets[2].data = [{ x: todayResidual, y: 0 }];
-  bellCurveChart.data.datasets[2].label = 'Today: ' + todayMultiplier.toFixed(2) + '× trend';
 
   bellCurveChart.update();
 }
