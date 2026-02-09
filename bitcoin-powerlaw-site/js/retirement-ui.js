@@ -302,16 +302,9 @@
     if (hint) hint.classList.add('hidden');
   }
 
-  // ── PDF Export ─────────────────────────────────────────────────
-  function canvasToDataURL(id) {
-    const canvas = $(id);
-    if (!canvas) return null;
-    try { return canvas.toDataURL('image/png'); }
-    catch (e) { return null; }
-  }
-
+  // ── PDF Export (jsPDF direct drawing) ───────────────────────────
   function exportPDF() {
-    if (typeof html2pdf === 'undefined') {
+    if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined' && typeof window.jspdf === 'undefined') {
       alert('PDF library not loaded. Please check your connection and refresh.');
       return;
     }
@@ -321,164 +314,232 @@
     btn.innerHTML = '&#9203; Generating\u2026';
     btn.disabled = true;
 
-    const params = getParams();
-    const scenarioName = R.scenarioLabel(params.scenarioMode);
-    const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
-    const spendDisplay = fmtCurrency(params.annualSpendUSD);
-    const sym = getCurrencySymbol();
+    try {
+      const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+      const doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const W = 210, H = 297, M = 10; // page width, height, margin
+      const pw = W - 2 * M; // printable width
+      let y = M; // current y cursor
 
-    // ── Grab status banner text
-    const statusHeadline = $('status-headline') ? $('status-headline').textContent : '';
-    const statusDetail = $('status-detail') ? $('status-detail').innerHTML : '';
-    const statusBanner = $('status-banner');
-    let statusColor = '#00C853';
-    if (statusBanner && statusBanner.classList.contains('status-red')) statusColor = '#FF1744';
-    else if (statusBanner && statusBanner.classList.contains('status-amber')) statusColor = '#F7931A';
-
-    // ── Grab summary cards HTML
-    const cardsEl = $('summary-cards');
-    const cardsHTML = cardsEl ? cardsEl.innerHTML : '';
-
-    // ── Chart images
-    const cagrImg = canvasToDataURL('cagr-chart');
-    const stackImg = canvasToDataURL('stack-chart');
-
-    // ── Grab yearly table rows (compact: first 10 + last 5 for long horizons)
-    const tableBody = $('yearly-table-body');
-    let tableRowsHTML = '';
-    if (tableBody && !tableBody.closest('section').classList.contains('hidden')) {
-      const rows = tableBody.querySelectorAll('tr');
-      const total = rows.length;
-      if (total <= 20) {
-        rows.forEach(r => { tableRowsHTML += r.outerHTML; });
-      } else {
-        for (let i = 0; i < 10; i++) tableRowsHTML += rows[i].outerHTML;
-        tableRowsHTML += '<tr><td colspan="11" style="text-align:center;color:#757575;padding:4px;font-size:0.7rem;">... ' + (total - 15) + ' years omitted ...</td></tr>';
-        for (let i = total - 5; i < total; i++) tableRowsHTML += rows[i].outerHTML;
+      // Helper: add new page if needed, returns y
+      function checkPage(needed) {
+        if (y + needed > H - M) { doc.addPage(); y = M; }
+        return y;
       }
-    }
 
-    // ── Grab insight text
-    const insightEl = $('insight-text');
-    const insightHTML = insightEl && !insightEl.closest('section').classList.contains('hidden') ? insightEl.innerHTML : '';
+      // ── Title
+      doc.setFillColor(247, 147, 26);
+      doc.rect(M, y, pw, 0.7, 'F');
+      y += 3;
+      doc.setFontSize(16);
+      doc.setFont('helvetica', 'bold');
+      doc.text('\u20BF Bitcoin Retirement Plan', W / 2, y, { align: 'center' });
+      y += 5;
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(120);
+      doc.text('Generated ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + ' \u2014 Power Law Observatory', W / 2, y, { align: 'center' });
+      y += 5;
+      doc.setTextColor(0);
 
-    // ── Comparison table
-    const compSection = $('comparison-section');
-    let compHTML = '';
-    if (compSection && !compSection.classList.contains('hidden')) {
-      const compTable = compSection.querySelector('table');
-      if (compTable) compHTML = compTable.outerHTML;
-    }
+      // ── Parameters table
+      const params = getParams();
+      const scenarioName = R.scenarioLabel(params.scenarioMode);
+      const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
+      const spendDisplay = fmtCurrency(params.annualSpendUSD);
 
-    // ── Build self-contained compact HTML
-    const S = `
-      <div style="font-family:Inter,system-ui,-apple-system,sans-serif;font-size:11px;color:#000;line-height:1.4;">
-        <div style="text-align:center;padding-bottom:8px;border-bottom:2px solid #F7931A;margin-bottom:10px;">
-          <div style="font-size:18px;font-weight:700;">&#x20BF; Bitcoin Retirement Plan</div>
-          <div style="font-size:9px;color:#757575;">
-            Generated ${new Date().toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' })} &mdash; Power Law Observatory
-          </div>
-        </div>
+      doc.setFontSize(7.5);
+      const paramRows = [
+        ['Holdings', params.btcHoldings + ' BTC', 'Spending', spendDisplay + '/yr', 'Start', '' + params.retirementYear],
+        ['Horizon', params.timeHorizonYears + ' years', 'Scenario', scenarioName, 'Strategy', modeName],
+        ['Growth', (params.m2GrowthRate * 100).toFixed(1) + '%/yr', 'Currency', currency, '', '']
+      ];
+      const colW = pw / 6;
+      paramRows.forEach((row, ri) => {
+        if (ri % 2 === 1) {
+          doc.setFillColor(245);
+          doc.rect(M, y - 3, pw, 5, 'F');
+        }
+        for (let c = 0; c < 6; c++) {
+          const x = M + c * colW + 2;
+          if (c % 2 === 0) {
+            doc.setTextColor(120);
+            doc.setFont('helvetica', 'normal');
+          } else {
+            doc.setTextColor(0);
+            doc.setFont('helvetica', 'bold');
+          }
+          doc.text(row[c], x, y);
+        }
+        y += 5;
+      });
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(0);
+      y += 2;
 
-        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-bottom:8px;">
-          <tr>
-            <td style="padding:2px 6px;color:#757575;">Holdings</td>
-            <td style="padding:2px 6px;font-weight:600;">${params.btcHoldings} BTC</td>
-            <td style="padding:2px 6px;color:#757575;">Spending</td>
-            <td style="padding:2px 6px;font-weight:600;">${spendDisplay}/yr</td>
-            <td style="padding:2px 6px;color:#757575;">Start</td>
-            <td style="padding:2px 6px;font-weight:600;">${params.retirementYear}</td>
-          </tr>
-          <tr style="background:#f5f5f5;">
-            <td style="padding:2px 6px;color:#757575;">Horizon</td>
-            <td style="padding:2px 6px;font-weight:600;">${params.timeHorizonYears}yr</td>
-            <td style="padding:2px 6px;color:#757575;">Scenario</td>
-            <td style="padding:2px 6px;font-weight:600;">${scenarioName}</td>
-            <td style="padding:2px 6px;color:#757575;">Strategy</td>
-            <td style="padding:2px 6px;font-weight:600;">${modeName}</td>
-          </tr>
-        </table>
+      // ── Status banner
+      const statusHeadline = $('status-headline') ? $('status-headline').textContent : '';
+      const statusDetailEl = $('status-detail');
+      const statusDetailText = statusDetailEl ? statusDetailEl.textContent : '';
+      const statusBanner = $('status-banner');
+      let sR = 0, sG = 200, sB = 83; // green
+      if (statusBanner && statusBanner.classList.contains('status-red')) { sR = 255; sG = 23; sB = 68; }
+      else if (statusBanner && statusBanner.classList.contains('status-amber')) { sR = 247; sG = 147; sB = 26; }
 
-        <div style="border-left:3px solid ${statusColor};padding:6px 10px;margin-bottom:10px;background:${statusColor}11;">
-          <div style="font-weight:600;font-size:12px;">${statusHeadline}</div>
-          <div style="font-size:10px;color:#555;">${statusDetail}</div>
-        </div>
+      doc.setFillColor(sR, sG, sB);
+      doc.rect(M, y, 1.2, 10, 'F');
+      doc.setFillColor(sR, sG, sB, 0.06);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text(statusHeadline, M + 4, y + 4);
+      doc.setFontSize(7.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80);
+      const detailLines = doc.splitTextToSize(statusDetailText, pw - 6);
+      doc.text(detailLines.slice(0, 2), M + 4, y + 8);
+      doc.setTextColor(0);
+      y += 14;
 
-        ${cagrImg ? `
-        <div style="margin-bottom:8px;">
-          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Expected Return Decay</div>
-          <img src="${cagrImg}" style="width:100%;height:auto;display:block;" />
-        </div>` : ''}
+      // ── Charts
+      function addChart(canvasId, label) {
+        const canvas = $(canvasId);
+        if (!canvas || canvas.closest('section').classList.contains('hidden')) return;
+        try {
+          const imgData = canvas.toDataURL('image/png');
+          const ratio = canvas.height / canvas.width;
+          const imgW = pw;
+          const imgH = imgW * ratio;
+          const cappedH = Math.min(imgH, 55); // cap chart height
 
-        ${stackImg ? `
-        <div style="margin-bottom:8px;">
-          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Stack & Spending Over Time</div>
-          <img src="${stackImg}" style="width:100%;height:auto;display:block;" />
-        </div>` : ''}
+          checkPage(cappedH + 8);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text(label, M, y + 3);
+          y += 5;
+          doc.addImage(imgData, 'PNG', M, y, imgW, cappedH);
+          y += cappedH + 4;
+          doc.setFont('helvetica', 'normal');
+        } catch (e) {
+          console.warn('Chart export failed:', e);
+        }
+      }
 
-        ${compHTML ? `
-        <div style="margin-bottom:8px;">
-          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Loans vs Sell-Only Comparison</div>
-          <div style="font-size:9px;">${compHTML}</div>
-        </div>` : ''}
+      addChart('cagr-chart', 'Expected Return Decay');
+      addChart('stack-chart', 'Stack & Spending Over Time');
 
-        ${tableRowsHTML ? `
-        <div style="margin-bottom:8px;">
-          <div style="font-weight:600;font-size:11px;margin-bottom:4px;">Year-by-Year Breakdown</div>
-          <table style="width:100%;border-collapse:collapse;font-size:8px;">
-            <thead><tr style="background:#f5f5f5;font-weight:600;">
-              <th style="padding:2px 3px;text-align:left;">Year</th>
-              <th style="padding:2px 3px;text-align:left;">Price</th>
-              <th style="padding:2px 3px;text-align:left;">Trend</th>
-              <th style="padding:2px 3px;text-align:left;">Mult.</th>
-              <th style="padding:2px 3px;text-align:left;">Spending</th>
-              <th style="padding:2px 3px;text-align:left;">Sold</th>
-              <th style="padding:2px 3px;text-align:left;">Loan</th>
-              <th style="padding:2px 3px;text-align:left;">Stack</th>
-              <th style="padding:2px 3px;text-align:left;">Value</th>
-              <th style="padding:2px 3px;text-align:left;">SWR</th>
-              <th style="padding:2px 3px;text-align:left;">Status</th>
-            </tr></thead>
-            <tbody>${tableRowsHTML}</tbody>
-          </table>
-        </div>` : ''}
+      // ── Yearly table
+      const tableBody = $('yearly-table-body');
+      const tableSection = tableBody ? tableBody.closest('section') : null;
+      if (tableBody && tableSection && !tableSection.classList.contains('hidden')) {
+        const rows = tableBody.querySelectorAll('tr');
+        if (rows.length > 0) {
+          checkPage(20);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Year-by-Year Breakdown', M, y + 3);
+          y += 6;
 
-        ${insightHTML ? `
-        <div style="margin-bottom:8px;padding:6px 8px;background:#f5f5f5;border-radius:4px;font-size:9px;line-height:1.5;">
-          ${insightHTML}
-        </div>` : ''}
+          // Table header
+          const cols = ['Year', 'Price', 'Trend', 'Mult.', 'Spend', 'Sold', 'Loan', 'Stack', 'Value', 'SWR', 'Status'];
+          const cw = pw / cols.length;
+          doc.setFontSize(6);
+          doc.setFillColor(240);
+          doc.rect(M, y - 2.5, pw, 4, 'F');
+          doc.setFont('helvetica', 'bold');
+          cols.forEach((c, i) => doc.text(c, M + i * cw + 0.5, y));
+          y += 4;
+          doc.setFont('helvetica', 'normal');
 
-        <div style="text-align:center;font-size:8px;color:#999;padding-top:6px;border-top:1px solid #e0e0e0;">
-          Not financial advice. Power law models are educational projections, not guarantees.
-        </div>
-      </div>
-    `;
+          // Decide which rows to show
+          const total = rows.length;
+          let indices = [];
+          if (total <= 20) {
+            for (let i = 0; i < total; i++) indices.push(i);
+          } else {
+            for (let i = 0; i < 8; i++) indices.push(i);
+            indices.push(-1); // separator
+            for (let i = total - 5; i < total; i++) indices.push(i);
+          }
 
-    // ── Create offscreen wrapper and generate PDF
-    const wrapper = document.createElement('div');
-    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:190mm;background:#fff;padding:0;margin:0;';
-    wrapper.innerHTML = S;
-    document.body.appendChild(wrapper);
+          indices.forEach(idx => {
+            checkPage(4);
+            if (idx === -1) {
+              doc.setTextColor(120);
+              doc.text('... ' + (total - 13) + ' years omitted ...', M + pw / 2, y, { align: 'center' });
+              doc.setTextColor(0);
+              y += 3.5;
+              return;
+            }
+            const cells = rows[idx].querySelectorAll('td');
+            if (idx % 2 === 1) {
+              doc.setFillColor(250);
+              doc.rect(M, y - 2.5, pw, 3.5, 'F');
+            }
+            cells.forEach((td, ci) => {
+              if (ci < cols.length) {
+                const txt = td.textContent.trim().substring(0, 12);
+                doc.text(txt, M + ci * cw + 0.5, y);
+              }
+            });
+            y += 3.5;
+          });
+          y += 3;
+        }
+      }
 
-    const filename = 'btc_retirement_' + params.btcHoldings + 'btc_' + params.retirementYear + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+      // ── Comparison table
+      const compSection = $('comparison-section');
+      if (compSection && !compSection.classList.contains('hidden')) {
+        const compRows = compSection.querySelectorAll('tbody tr');
+        if (compRows.length > 0) {
+          checkPage(25);
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Loans vs Sell-Only: Required Stack', M, y + 3);
+          y += 6;
 
-    html2pdf().set({
-      margin:      [5, 5, 5, 5],
-      filename:    filename,
-      image:       { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 2, useCORS: true, logging: false, width: wrapper.scrollWidth, height: wrapper.scrollHeight },
-      jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      pagebreak:   { mode: 'css' }
-    }).from(wrapper).save().then(() => {
-      document.body.removeChild(wrapper);
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
-    }).catch(err => {
+          const compCols = ['Scenario', 'Sell Only', 'With Loans', 'BTC Saved', 'Savings %', 'Interest'];
+          const ccw = pw / compCols.length;
+          doc.setFontSize(6.5);
+          doc.setFillColor(240);
+          doc.rect(M, y - 2.5, pw, 4, 'F');
+          doc.setFont('helvetica', 'bold');
+          compCols.forEach((c, i) => doc.text(c, M + i * ccw + 0.5, y));
+          y += 4;
+          doc.setFont('helvetica', 'normal');
+
+          compRows.forEach((row, ri) => {
+            checkPage(4);
+            if (ri % 2 === 1) { doc.setFillColor(250); doc.rect(M, y - 2.5, pw, 3.5, 'F'); }
+            const cells = row.querySelectorAll('td');
+            cells.forEach((td, ci) => {
+              if (ci < compCols.length) doc.text(td.textContent.trim().substring(0, 18), M + ci * ccw + 0.5, y);
+            });
+            y += 3.5;
+          });
+          y += 3;
+        }
+      }
+
+      // ── Footer
+      checkPage(8);
+      doc.setDrawColor(200);
+      doc.line(M, y, W - M, y);
+      y += 3;
+      doc.setFontSize(6.5);
+      doc.setTextColor(150);
+      doc.text('Not financial advice. Power law models are educational projections, not guarantees.', W / 2, y, { align: 'center' });
+
+      // ── Save
+      const filename = 'btc_retirement_' + params.btcHoldings + 'btc_' + params.retirementYear + '_' + new Date().toISOString().split('T')[0] + '.pdf';
+      doc.save(filename);
+    } catch (err) {
       console.error('PDF generation failed:', err);
-      document.body.removeChild(wrapper);
-      btn.innerHTML = originalHTML;
-      btn.disabled = false;
-    });
+      alert('PDF generation failed: ' + err.message);
+    }
+
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
   }
 
   function setupButtons() {
