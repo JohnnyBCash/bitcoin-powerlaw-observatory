@@ -20,10 +20,9 @@
       <nav class="nav" aria-label="Hoofdnavigatie">
         <a href="../index.html">Dashboard</a>
         <a href="history.html" class="active">Geschiedenis</a>
-        <a href="price-chart.html">Prijsgrafiek</a>
         <a href="future.html">Toekomst</a>
-        <a href="retirement.html">Pensioen</a>
         <a href="dca.html">DCA</a>
+        <a href="retirement.html">Pensioen</a>
         <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
@@ -41,9 +40,68 @@
         <p>Bitcoin's prijsgeschiedenis uitgezet op een log-log schaal onthult een opmerkelijk consistente machtswetrelatie. Afwijkingen van de trend zijn dramatisch maar statistisch gewoon.</p>
       </section>
 
+      <!-- As-schaaltoggles + band-selectievakjes -->
+      <div class="scale-toggles">
+        <div class="scale-group">
+          <span class="scale-group-label">Tijd</span>
+          <div class="pill-group" role="group" aria-label="Tijdas schaal">
+            <button class="pill-btn" data-axis="x" data-scale="linear">Lineair</button>
+            <button class="pill-btn active" data-axis="x" data-scale="logarithmic">Log</button>
+          </div>
+        </div>
+
+        <div class="scale-group">
+          <span class="scale-group-label">Prijs</span>
+          <div class="pill-group" role="group" aria-label="Prijsas schaal">
+            <button class="pill-btn" data-axis="y" data-scale="linear">Lineair</button>
+            <button class="pill-btn active" data-axis="y" data-scale="logarithmic">Log</button>
+          </div>
+        </div>
+
+        <div class="scale-group" style="gap: 1rem;">
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-trend" checked> Trend
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-1sigma" checked> &plusmn;1&sigma;
+          </label>
+          <label style="display: flex; align-items: center; gap: 0.4rem; cursor: pointer; font-size: 0.875rem; color: var(--gray); font-weight: 500;">
+            <input type="checkbox" id="show-2sigma" checked> &plusmn;2&sigma;
+          </label>
+        </div>
+      </div>
+
       <!-- Hoofdgrafiek -->
-      <div class="chart-container" style="height: 500px;">
-        <canvas id="history-chart" aria-label="Bitcoin historische prijs op log-log schaal met machtswettrend" role="img"></canvas>
+      <div class="chart-container" style="height: 520px;">
+        <canvas id="history-chart" aria-label="Bitcoin historische prijsgrafiek met machtswettrend" role="img"></canvas>
+      </div>
+
+      <!-- Statistieken onder grafiek -->
+      <div class="stats-row" id="stats-row">
+        <div class="stat-item">
+          <div class="stat-label">Laatste Prijs</div>
+          <div class="stat-value" id="stat-latest">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Hoogste Ooit</div>
+          <div class="stat-value" id="stat-ath">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ATH Datum</div>
+          <div class="stat-value" id="stat-ath-date" style="font-size: 0.95rem;">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Laagste Ooit</div>
+          <div class="stat-value" id="stat-atl">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">ATL Datum</div>
+          <div class="stat-value" id="stat-atl-date" style="font-size: 0.95rem;">--</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-label">Datapunten</div>
+          <div class="stat-value" id="stat-points">--</div>
+        </div>
       </div>
 
       <!-- Bediening -->
@@ -60,25 +118,23 @@
         </div>
 
         <div class="card">
-          <div class="card-label">Toon Banden</div>
-          <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem;">
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" id="show-1sigma" checked> &plusmn;1&sigma; banden
-            </label>
-            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-              <input type="checkbox" id="show-2sigma" checked> &plusmn;2&sigma; banden
-            </label>
-          </div>
-        </div>
-
-        <div class="card">
           <div class="card-label">Data Exporteren</div>
           <button id="export-csv" class="toggle-btn" style="margin-top: 0.5rem;">Download CSV</button>
         </div>
       </div>
 
-      <!-- Uitleg Terugkeer naar Gemiddelde -->
+      <!-- Grafiek uitleg -->
       <div class="info-box" style="margin-top: var(--spacing-xl);">
+        <h4>Hoe lees je deze grafiek</h4>
+        <p><strong>Lineair + Lineair</strong> toont de explosieve recente groei in ruwe dollars &mdash; vroege jaren zijn afgeplat nabij nul.<br>
+           <strong>Lineair + Log (prijs)</strong> spreidt de vroege geschiedenis uit zodat je elke cyclus duidelijk ziet.<br>
+           <strong>Log + Log</strong> is de klassieke machtswetweergave: als BTC een machtswet volgt, wordt de trend een rechte lijn.<br>
+           <strong>Log tijd + Lineaire prijs</strong> comprimeert de vroege stille jaren terwijl dollarbewegingen intu&iuml;tief blijven.</p>
+        <p style="margin-top: var(--spacing-sm);"><strong>Trend</strong> is de machtswet eerlijke-waarde curve. De <strong>&sigma; banden</strong> tonen &eacute;&eacute;n en twee standaardafwijkingen boven en onder &mdash; historisch is de prijs altijd teruggekeerd binnen deze grenzen.</p>
+      </div>
+
+      <!-- Uitleg Terugkeer naar Gemiddelde -->
+      <div class="info-box" style="margin-top: var(--spacing-lg);">
         <h4>Terugkeer naar het Gemiddelde Begrijpen</h4>
         <p>Beschouw de machtswettrend als een elastiek. De prijs kan ver boven of onder de trend uitrekken, maar schiet altijd terug. Dit is geen magie; het is statistiek. Extreme afwijkingen zijn per definitie onhoudbaar.</p>
       </div>
@@ -292,6 +348,7 @@
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../../js/powerlaw.js"></script>
   <script src="../js/history.js"></script>
   <script src="../js/weekly-table.js"></script>

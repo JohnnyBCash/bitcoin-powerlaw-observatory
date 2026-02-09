@@ -1,4 +1,5 @@
 // Bitcoin Machtswet Observatorium - Geschiedenis Pagina Logica (NL)
+// Samengevoegd: bevat nu onafhankelijke as-schaalwisseling (Lineair/Log)
 
 // Override PowerLaw.valuationLabel with Dutch labels
 const _originalValuationLabel = PowerLaw.valuationLabel;
@@ -17,6 +18,12 @@ PowerLaw.formatDate = function(date) {
   return d.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
+// Override PowerLaw.formatPrice with Dutch locale
+PowerLaw.formatPrice = function(price) {
+  if (price >= 1) return '$' + price.toLocaleString('nl-NL', { maximumFractionDigits: 0 });
+  return '$' + price.toFixed(4);
+};
+
 let historicalData = [];
 let sigmaCache = {};
 let currentModel = 'santostasi';
@@ -29,13 +36,19 @@ let bellCurveBins = [];
 let bellCurveResiduals = [];
 let livePrice = null;
 
+// Schaaltoestand (standaard log-log — klassieke machtswet weergave)
+let xScale = 'logarithmic';   // 'linear' | 'logarithmic'
+let yScale = 'logarithmic';
+
 // Initialisatie
 async function init() {
   await loadHistoricalData();
   calculateSigmas();
+  computeStats();
   initHistoryChart();
   initBellCurve();
   setupControls();
+  setupScaleToggles();
   updateStatistics();
   setupRubberBandDemo();
   fetchLivePrice();
@@ -99,97 +112,155 @@ function calculateSigmas() {
   sigmaCache.santostasi = PowerLaw.calculateSigma(historicalData, 'santostasi');
 }
 
+/* -------------------------------------------------- opmaak ------------------------------------------------- */
+function formatUSD(n) {
+  if (n >= 1e6)  return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3)  return '$' + n.toLocaleString('nl-NL', { maximumFractionDigits: 0 });
+  if (n >= 1)    return '$' + n.toFixed(2);
+  return '$' + n.toFixed(4);
+}
+
+function fmtDate(d) {
+  if (!d) return '--';
+  const date = d instanceof Date ? d : new Date(d);
+  return date.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+/* -------------------------------------------------- statistieken (ATH/ATL) ---------------------------------- */
+function computeStats() {
+  if (!historicalData.length) return;
+
+  let ath = -Infinity, athDate = null;
+  let atl =  Infinity, atlDate = null;
+
+  for (const d of historicalData) {
+    if (d.price > ath) { ath = d.price; athDate = d.date; }
+    if (d.price < atl) { atl = d.price; atlDate = d.date; }
+  }
+
+  const latest = historicalData[historicalData.length - 1];
+
+  setText('stat-latest',  formatUSD(latest.price));
+  setText('stat-ath',     formatUSD(ath));
+  setText('stat-ath-date', fmtDate(athDate));
+  setText('stat-atl',     formatUSD(atl));
+  setText('stat-atl-date', fmtDate(atlDate));
+  setText('stat-points',  historicalData.length.toLocaleString('nl-NL'));
+}
+
+function setText(id, txt) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = txt;
+}
+
+/* -------------------------------------------------- x-waarde helper ----------------------------------------- */
+function xVal(dateStr) {
+  const date = dateStr instanceof Date ? dateStr : new Date(dateStr);
+  return xScale === 'logarithmic' ? PowerLaw.daysSinceGenesis(date) : date;
+}
+
+/* -------------------------------------------------- grafiekopties ------------------------------------------- */
+function buildOptions() {
+  const xIsLog = (xScale === 'logarithmic');
+  const sigma = sigmaCache[currentModel].sigma;
+
+  const xAxis = xIsLog
+    ? {
+        type: 'logarithmic',
+        title: {
+          display: true,
+          text: 'Dagen Sinds Genesis (logschaal)',
+          font: { weight: 'bold' }
+        },
+        grid: { color: 'rgba(0,0,0,0.05)' },
+        ticks: {
+          callback: function (value) {
+            if (value >= 365) return (value / 365).toFixed(0) + 'j';
+            return value + 'd';
+          }
+        }
+      }
+    : {
+        type: 'time',
+        time: { unit: 'year', displayFormats: { year: 'yyyy' } },
+        title: {
+          display: true,
+          text: 'Datum',
+          font: { weight: 'bold' }
+        },
+        grid: { color: 'rgba(0,0,0,0.05)' },
+        ticks: { maxTicksLimit: 12 }
+      };
+
+  const yAxis = {
+    type: yScale,
+    title: {
+      display: true,
+      text: 'Prijs USD' + (yScale === 'logarithmic' ? ' (logschaal)' : ''),
+      font: { weight: 'bold' }
+    },
+    grid: { color: 'rgba(0,0,0,0.05)' },
+    ticks: {
+      callback: function (value) { return formatUSD(value); }
+    }
+  };
+
+  if (yScale === 'linear') yAxis.beginAtZero = true;
+
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { intersect: false, mode: 'index' },
+    scales: { x: xAxis, y: yAxis },
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          padding: 20
+        }
+      },
+      tooltip: {
+        callbacks: {
+          title: function(context) {
+            const dataIndex = context[0].dataIndex;
+            const point = getDataPoint(dataIndex);
+            if (point) {
+              return fmtDate(point.date);
+            }
+            return '';
+          },
+          label: function(context) {
+            const value = context.raw.y;
+            return context.dataset.label + ': ' + formatUSD(value);
+          },
+          afterBody: function(context) {
+            const dataIndex = context[0].dataIndex;
+            const point = getDataPoint(dataIndex);
+            if (point) {
+              const mult = PowerLaw.multiplier(point.price, currentModel, new Date(point.date));
+              return ['Vermenigvuldiger: ' + PowerLaw.formatMultiplier(mult)];
+            }
+            return [];
+          }
+        }
+      }
+    }
+  };
+}
+
 // Hoofdgeschiedenisgrafiek initialiseren
 function initHistoryChart() {
   const ctx = document.getElementById('history-chart').getContext('2d');
   const sigma = sigmaCache[currentModel].sigma;
 
-  // Data voorbereiden - gebruik logschaal voor beide assen
   const chartData = prepareChartData(historicalData, currentModel, sigma);
 
   historyChart = new Chart(ctx, {
     type: 'line',
     data: chartData,
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: {
-        intersect: false,
-        mode: 'index'
-      },
-      scales: {
-        x: {
-          type: 'logarithmic',
-          title: {
-            display: true,
-            text: 'Dagen Sinds Genesis (logschaal)',
-            font: { weight: 'bold' }
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          },
-          ticks: {
-            callback: function(value) {
-              if (value >= 365) {
-                return (value / 365).toFixed(0) + 'j';
-              }
-              return value + 'd';
-            }
-          }
-        },
-        y: {
-          type: 'logarithmic',
-          title: {
-            display: true,
-            text: 'Prijs USD (logschaal)',
-            font: { weight: 'bold' }
-          },
-          grid: {
-            color: 'rgba(0, 0, 0, 0.05)'
-          },
-          ticks: {
-            callback: function(value) {
-              return PowerLaw.formatPrice(value);
-            }
-          }
-        }
-      },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            usePointStyle: true,
-            padding: 20
-          }
-        },
-        tooltip: {
-          callbacks: {
-            title: function(context) {
-              const dataIndex = context[0].dataIndex;
-              const point = getDataPoint(dataIndex);
-              if (point) {
-                return PowerLaw.formatDate(point.date);
-              }
-              return '';
-            },
-            label: function(context) {
-              const value = context.raw.y;
-              return context.dataset.label + ': ' + PowerLaw.formatPrice(value);
-            },
-            afterBody: function(context) {
-              const dataIndex = context[0].dataIndex;
-              const point = getDataPoint(dataIndex);
-              if (point) {
-                const mult = PowerLaw.multiplier(point.price, currentModel, new Date(point.date));
-                return ['Vermenigvuldiger: ' + PowerLaw.formatMultiplier(mult)];
-              }
-              return [];
-            }
-          }
-        }
-      }
-    }
+    options: buildOptions()
   });
 }
 
@@ -205,33 +276,51 @@ function prepareChartData(data, model, sigma) {
   const range = document.getElementById('date-range')?.value || 'all';
   const filteredData = filterDataByRange(data, range);
 
+  const showTrend  = document.getElementById('show-trend')?.checked ?? true;
   const show1Sigma = document.getElementById('show-1sigma')?.checked ?? true;
   const show2Sigma = document.getElementById('show-2sigma')?.checked ?? true;
 
-  // Converteren naar {x: dagen, y: prijs} formaat voor log-log grafiek
+  // Converteren naar {x, y} formaat — x hangt af van huidige schaal
   const priceData = filteredData.map(d => ({
-    x: PowerLaw.daysSinceGenesis(new Date(d.date)),
+    x: xVal(d.date),
     y: d.price
   }));
 
-  const trendData = filteredData.map(d => {
-    const days = PowerLaw.daysSinceGenesis(new Date(d.date));
-    return {
-      x: days,
-      y: PowerLaw.trendPrice(model, new Date(d.date))
-    };
-  });
+  const trendData = filteredData.map(d => ({
+    x: xVal(d.date),
+    y: PowerLaw.trendPrice(model, new Date(d.date))
+  }));
+
+  // Datasets in vaste volgorde opbouwen: [+2σ, +1σ, trend, prijs, -1σ, -2σ]
+  const upper2Data = filteredData.map(d => ({ x: xVal(d.date), y: PowerLaw.bandPrice(model, sigma, 2, new Date(d.date)) }));
+  const upper1Data = filteredData.map(d => ({ x: xVal(d.date), y: PowerLaw.bandPrice(model, sigma, 1, new Date(d.date)) }));
+  const lower1Data = filteredData.map(d => ({ x: xVal(d.date), y: PowerLaw.bandPrice(model, sigma, -1, new Date(d.date)) }));
+  const lower2Data = filteredData.map(d => ({ x: xVal(d.date), y: PowerLaw.bandPrice(model, sigma, -2, new Date(d.date)) }));
 
   const datasets = [
     {
-      label: 'BTC Prijs',
-      data: priceData,
-      borderColor: '#000000',
-      backgroundColor: 'transparent',
-      borderWidth: 1.5,
+      label: '+2σ',
+      data: upper2Data,
+      borderColor: 'rgba(255, 23, 68, 0.35)',
+      backgroundColor: 'rgba(255, 23, 68, 0.06)',
+      borderWidth: 1,
+      borderDash: [4, 4],
       pointRadius: 0,
       tension: 0,
-      order: 1
+      fill: { target: 1 },
+      display: show2Sigma
+    },
+    {
+      label: '+1σ',
+      data: upper1Data,
+      borderColor: 'rgba(255, 23, 68, 0.25)',
+      backgroundColor: 'rgba(255, 23, 68, 0.1)',
+      borderWidth: 1,
+      borderDash: [2, 3],
+      pointRadius: 0,
+      tension: 0,
+      fill: { target: 2 },
+      display: show1Sigma
     },
     {
       label: 'Machtswettrend',
@@ -241,94 +330,45 @@ function prepareChartData(data, model, sigma) {
       borderWidth: 2.5,
       pointRadius: 0,
       tension: 0,
-      order: 2
+      fill: false,
+      display: showTrend
+    },
+    {
+      label: 'BTC Prijs',
+      data: priceData,
+      borderColor: '#000000',
+      backgroundColor: 'transparent',
+      borderWidth: 1.8,
+      pointRadius: 0,
+      pointHoverRadius: 4,
+      tension: 0,
+      fill: false
+    },
+    {
+      label: '-1σ',
+      data: lower1Data,
+      borderColor: 'rgba(0, 200, 83, 0.25)',
+      backgroundColor: 'rgba(0, 200, 83, 0.1)',
+      borderWidth: 1,
+      borderDash: [2, 3],
+      pointRadius: 0,
+      tension: 0,
+      fill: { target: 2 },
+      display: show1Sigma
+    },
+    {
+      label: '-2σ',
+      data: lower2Data,
+      borderColor: 'rgba(0, 200, 83, 0.35)',
+      backgroundColor: 'rgba(0, 200, 83, 0.06)',
+      borderWidth: 1,
+      borderDash: [4, 4],
+      pointRadius: 0,
+      tension: 0,
+      fill: { target: 4 },
+      display: show2Sigma
     }
   ];
-
-  // Sigmabanden toevoegen
-  if (show2Sigma) {
-    const upper2 = filteredData.map(d => {
-      const days = PowerLaw.daysSinceGenesis(new Date(d.date));
-      return {
-        x: days,
-        y: PowerLaw.bandPrice(model, sigma, 2, new Date(d.date))
-      };
-    });
-
-    const lower2 = filteredData.map(d => {
-      const days = PowerLaw.daysSinceGenesis(new Date(d.date));
-      return {
-        x: days,
-        y: PowerLaw.bandPrice(model, sigma, -2, new Date(d.date))
-      };
-    });
-
-    datasets.unshift({
-      label: '+2\u03C3 (Extreem Over)',
-      data: upper2,
-      borderColor: 'rgba(255, 23, 68, 0.4)',
-      backgroundColor: 'rgba(255, 23, 68, 0.08)',
-      fill: '+1',
-      borderWidth: 1,
-      pointRadius: 0,
-      tension: 0,
-      order: 5
-    });
-
-    datasets.push({
-      label: '-2\u03C3 (Extreem Onder)',
-      data: lower2,
-      borderColor: 'rgba(0, 200, 83, 0.4)',
-      backgroundColor: 'rgba(0, 200, 83, 0.08)',
-      fill: '-1',
-      borderWidth: 1,
-      pointRadius: 0,
-      tension: 0,
-      order: 6
-    });
-  }
-
-  if (show1Sigma) {
-    const upper1 = filteredData.map(d => {
-      const days = PowerLaw.daysSinceGenesis(new Date(d.date));
-      return {
-        x: days,
-        y: PowerLaw.bandPrice(model, sigma, 1, new Date(d.date))
-      };
-    });
-
-    const lower1 = filteredData.map(d => {
-      const days = PowerLaw.daysSinceGenesis(new Date(d.date));
-      return {
-        x: days,
-        y: PowerLaw.bandPrice(model, sigma, -1, new Date(d.date))
-      };
-    });
-
-    datasets.splice(show2Sigma ? 1 : 0, 0, {
-      label: '+1\u03C3 (Overgewaardeerd)',
-      data: upper1,
-      borderColor: 'rgba(255, 23, 68, 0.25)',
-      backgroundColor: 'rgba(117, 117, 117, 0.05)',
-      fill: '+1',
-      borderWidth: 1,
-      pointRadius: 0,
-      tension: 0,
-      order: 3
-    });
-
-    datasets.push({
-      label: '-1\u03C3 (Ondergewaardeerd)',
-      data: lower1,
-      borderColor: 'rgba(0, 200, 83, 0.25)',
-      backgroundColor: 'rgba(117, 117, 117, 0.05)',
-      fill: '-1',
-      borderWidth: 1,
-      pointRadius: 0,
-      tension: 0,
-      order: 4
-    });
-  }
 
   return { datasets };
 }
@@ -365,12 +405,33 @@ function setupControls() {
   // Datumbereik
   document.getElementById('date-range').addEventListener('change', updateChart);
 
-  // Sigmaband schakelaars
-  document.getElementById('show-1sigma').addEventListener('change', updateChart);
-  document.getElementById('show-2sigma').addEventListener('change', updateChart);
+  // Band / trend schakelaars
+  ['show-trend', 'show-1sigma', 'show-2sigma'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', updateChart);
+  });
 
   // CSV exporteren
   document.getElementById('export-csv').addEventListener('click', exportCSV);
+}
+
+// Schaalknoppen instellen
+function setupScaleToggles() {
+  document.querySelectorAll('.pill-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const axis  = btn.dataset.axis;
+      const scale = btn.dataset.scale;
+
+      const group = btn.closest('.pill-group');
+      group.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      if (axis === 'x') xScale = scale;
+      else              yScale = scale;
+
+      updateChart();
+    });
+  });
 }
 
 // Grafiek bijwerken
@@ -378,6 +439,7 @@ function updateChart() {
   const sigma = sigmaCache[currentModel].sigma;
   const chartData = prepareChartData(historicalData, currentModel, sigma);
   historyChart.data = chartData;
+  historyChart.options = buildOptions();
   historyChart.update();
 }
 
@@ -689,7 +751,7 @@ function initBellCurve() {
   document.getElementById('today-percentile-value').textContent = pctile + suffix;
   document.getElementById('pct-cheaper').textContent = (100 - pctile);
 
-  // Typisch bereikkaart -- toon +-1sigma als vermenigvuldigerbereik
+  // Typisch bereikkaart — toon ±1σ als vermenigvuldigerbereik
   const upper1s = Math.exp(lnSigma);
   const lower1s = Math.exp(-lnSigma);
   document.getElementById('typical-range-pct').textContent = lower1s.toFixed(2) + '\u00D7 tot ' + upper1s.toFixed(1) + '\u00D7';
