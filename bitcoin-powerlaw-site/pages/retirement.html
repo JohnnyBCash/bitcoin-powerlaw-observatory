@@ -79,9 +79,11 @@
           <div class="input-group">
             <label for="price-scenario">Price Scenario</label>
             <select id="price-scenario">
-              <option value="0">Trend Line</option>
-              <option value="-1">Bear (−1σ below trend)</option>
-              <option value="-2">Deep Bear (−2σ below trend)</option>
+              <option value="cyclical" selected>Cyclical (±1σ, lengthening periods)</option>
+              <option value="cyclical_bear">Bear Bias Cycles (60% below trend)</option>
+              <option value="smooth_trend">Smooth Trend (flat on trend)</option>
+              <option value="smooth_bear">Bear (flat −1σ below trend)</option>
+              <option value="smooth_deep_bear">Deep Bear (flat −2σ below trend)</option>
             </select>
           </div>
         </div>
@@ -124,6 +126,15 @@
 
         <button class="calculate-btn" id="calculate-btn">Calculate Retirement Plan</button>
         <button class="calculate-btn secondary" id="compare-btn">Compare: Loans vs No Loans</button>
+
+        <!-- Status Banner - appears in-place after calculation -->
+        <div id="status-banner" class="status-banner hidden">
+          <div class="status-icon" id="status-icon"></div>
+          <div class="status-content">
+            <div class="status-headline" id="status-headline"></div>
+            <div class="status-detail" id="status-detail"></div>
+          </div>
+        </div>
       </div>
 
 
@@ -399,6 +410,66 @@
     .comparison-highlight {
       background: rgba(247, 147, 26, 0.08);
       font-weight: 600;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius);
+      margin-top: var(--spacing-lg);
+      border-left: 4px solid;
+      animation: statusFadeIn 0.3s ease-out;
+    }
+
+    @keyframes statusFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-banner.status-green {
+      background: rgba(0, 200, 83, 0.08);
+      border-left-color: var(--green);
+    }
+
+    .status-banner.status-amber {
+      background: rgba(247, 147, 26, 0.08);
+      border-left-color: var(--orange);
+    }
+
+    .status-banner.status-red {
+      background: rgba(255, 23, 68, 0.08);
+      border-left-color: var(--red);
+    }
+
+    .status-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .status-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-headline {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .status-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .status-detail strong {
+      color: var(--black);
     }
   </style>
 

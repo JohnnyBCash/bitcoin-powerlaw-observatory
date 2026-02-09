@@ -22,7 +22,7 @@
     loanInterestRate: 0.08,    // 8% annual interest
     loanThreshold: 1.0,        // borrow when price/trend < this multiple
     // Scenarios
-    priceScenario: 'trend',    // 'trend', 'bear', 'deep_bear'
+    scenarioMode: 'cyclical',  // 'smooth_trend', 'smooth_bear', 'smooth_deep_bear', 'cyclical', 'cyclical_bear'
   };
 
 
@@ -73,12 +73,74 @@
     return trend * Math.pow(10, sigmaK * sigma);
   }
 
-  function scenarioLabel(sigmaK) {
-    if (sigmaK === 0) return 'Trend';
-    if (sigmaK === -1) return 'Bear (−1σ)';
-    if (sigmaK === -2) return 'Deep Bear (−2σ)';
-    if (sigmaK === 1) return 'Bull (+1σ)';
-    return `${sigmaK > 0 ? '+' : ''}${sigmaK}σ`;
+  // ── Cyclical Price Model ──────────────────────────────────
+  // Dampened sine wave with lengthening cycle periods
+  // Returns sigmaK between -1 and +1 for a given year offset
+  function cyclicalSigmaK(yearsFromStart, options = {}) {
+    const {
+      T_base = 4.0,     // initial cycle length (years)
+      T_growth = 0.3,   // each cycle grows by this many years
+      damping = 0.02,   // amplitude decay rate per year
+      bearBias = 0,      // shift wave down (0.309 → 60% below trend)
+      amplitude = 1.0
+    } = options;
+
+    if (yearsFromStart <= 0) return -amplitude; // start at bottom
+
+    // Walk through cycles via phase accumulation
+    let elapsed = 0;
+    let cycleIndex = 0;
+
+    while (true) {
+      const period = T_base + cycleIndex * T_growth;
+      if (elapsed + period > yearsFromStart) {
+        // We're inside this cycle
+        const positionInCycle = (yearsFromStart - elapsed) / period; // 0..1
+        const phase = positionInCycle * 2 * Math.PI;
+
+        // Sine starting at -1 (trough), peaking at mid-cycle
+        let sineVal = Math.sin(phase - Math.PI / 2);
+
+        // Apply bear bias (shifts wave downward)
+        sineVal -= bearBias;
+
+        // Clamp to [-1, 1]
+        sineVal = Math.max(-1, Math.min(1, sineVal));
+
+        // Dampen amplitude over time
+        const dampFactor = Math.exp(-damping * yearsFromStart);
+
+        return amplitude * dampFactor * sineVal;
+      }
+      elapsed += period;
+      cycleIndex++;
+    }
+  }
+
+  // Resolve the effective sigmaK for a given year based on scenario mode
+  function resolveScenarioK(scenarioMode, yearIndex) {
+    switch (scenarioMode) {
+      case 'smooth_trend':      return 0;
+      case 'smooth_bear':       return -1;
+      case 'smooth_deep_bear':  return -2;
+      case 'cyclical':
+        return cyclicalSigmaK(yearIndex, { bearBias: 0 });
+      case 'cyclical_bear':
+        return cyclicalSigmaK(yearIndex, { bearBias: 0.309 });
+      default:
+        return 0;
+    }
+  }
+
+  function scenarioLabel(mode) {
+    const labels = {
+      'smooth_trend': 'Smooth Trend',
+      'smooth_bear': 'Bear (flat −1σ)',
+      'smooth_deep_bear': 'Deep Bear (flat −2σ)',
+      'cyclical': 'Cyclical (±1σ)',
+      'cyclical_bear': 'Bear Bias Cycles'
+    };
+    return labels[mode] || mode;
   }
 
   // ── Withdrawal Simulation: Sell-Only Mode ───────────────────
@@ -86,7 +148,7 @@
   function simulateSellOnly(params) {
     const {
       btcHoldings, annualSpendUSD, retirementYear,
-      timeHorizonYears, m2GrowthRate, model, sigma, priceScenarioK
+      timeHorizonYears, m2GrowthRate, model, sigma, scenarioMode
     } = params;
 
     let stack = btcHoldings;
@@ -97,7 +159,8 @@
     for (let i = 0; i < timeHorizonYears; i++) {
       const year = retirementYear + i;
       const date = new Date(year, 6, 1); // mid-year
-      const price = scenarioPrice(model, date, sigma, priceScenarioK);
+      const effectiveK = resolveScenarioK(scenarioMode, i);
+      const price = scenarioPrice(model, date, sigma, effectiveK);
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
 
@@ -109,7 +172,7 @@
       if (btcToSell >= stack) {
         ruinYear = year;
         results.push({
-          year, price, trend, multiple, annualSpend,
+          year, price, trend, multiple, effectiveK, annualSpend,
           btcSold: stack, btcBorrowed: 0, loanBalance: 0,
           interestPaid: 0, stackAfter: 0,
           portfolioValueUSD: 0,
@@ -120,7 +183,7 @@
         for (let j = i + 1; j < timeHorizonYears; j++) {
           const ry = retirementYear + j;
           results.push({
-            year: ry, price: 0, trend: 0, multiple: 0,
+            year: ry, price: 0, trend: 0, multiple: 0, effectiveK: 0,
             annualSpend: annualSpend * Math.pow(1 + m2GrowthRate, j - i),
             btcSold: 0, btcBorrowed: 0, loanBalance: 0,
             interestPaid: 0, stackAfter: 0,
@@ -135,7 +198,7 @@
       const swrPct = (annualSpend / (stackBefore * price)) * 100;
 
       results.push({
-        year, price, trend, multiple, annualSpend,
+        year, price, trend, multiple, effectiveK, annualSpend,
         btcSold: btcToSell, btcBorrowed: 0, loanBalance: 0,
         interestPaid: 0, stackAfter: stack,
         portfolioValueUSD: portfolioValue,
@@ -157,7 +220,7 @@
   function simulateWithLoans(params) {
     const {
       btcHoldings, annualSpendUSD, retirementYear,
-      timeHorizonYears, m2GrowthRate, model, sigma, priceScenarioK,
+      timeHorizonYears, m2GrowthRate, model, sigma, scenarioMode,
       loanLTV, loanInterestRate, loanThreshold
     } = params;
 
@@ -171,7 +234,8 @@
     for (let i = 0; i < timeHorizonYears; i++) {
       const year = retirementYear + i;
       const date = new Date(year, 6, 1);
-      const price = scenarioPrice(model, date, sigma, priceScenarioK);
+      const effectiveK = resolveScenarioK(scenarioMode, i);
+      const price = scenarioPrice(model, date, sigma, effectiveK);
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
 
@@ -260,7 +324,7 @@
       const swrPct = stackBefore > 0 ? (annualSpend / (stackBefore * price)) * 100 : 0;
 
       results.push({
-        year, price, trend, multiple, annualSpend,
+        year, price, trend, multiple, effectiveK, annualSpend,
         btcSold, btcBorrowed, loanBalance: outstandingLoan,
         interestPaid: interestThisYear,
         totalInterestPaid,
@@ -277,6 +341,7 @@
         for (let j = i + 1; j < timeHorizonYears; j++) {
           results.push({
             year: retirementYear + j, price: 0, trend: 0, multiple: 0,
+            effectiveK: 0,
             annualSpend: 0, btcSold: 0, btcBorrowed: 0, loanBalance: 0,
             interestPaid: 0, totalInterestPaid, liquidationPrice: 0,
             isLiquidationRisk: false, stackAfter: 0,
@@ -328,13 +393,15 @@
   // Run both modes across all scenarios and compare required stacks
   function compareStrategies(baseParams) {
     const scenarios = [
-      { label: 'Trend', sigmaK: 0 },
-      { label: 'Bear (−1σ)', sigmaK: -1 },
-      { label: 'Deep Bear (−2σ)', sigmaK: -2 }
+      { label: 'Smooth Trend', mode: 'smooth_trend' },
+      { label: 'Bear (flat −1σ)', mode: 'smooth_bear' },
+      { label: 'Deep Bear (flat −2σ)', mode: 'smooth_deep_bear' },
+      { label: 'Cyclical (±1σ)', mode: 'cyclical' },
+      { label: 'Bear Bias Cycles', mode: 'cyclical_bear' }
     ];
 
     const comparison = scenarios.map(s => {
-      const p = { ...baseParams, priceScenarioK: s.sigmaK };
+      const p = { ...baseParams, scenarioMode: s.mode };
 
       const sellMin = findMinimumStack(p, false);
       const loanMin = findMinimumStack(p, true);
@@ -347,7 +414,7 @@
 
       return {
         scenario: s.label,
-        sigmaK: s.sigmaK,
+        mode: s.mode,
         sellOnly: {
           minStack: sellMin.minStack,
           simulation: sellSim
@@ -399,6 +466,8 @@
     instantaneousCAGR,
     cagrDecayTable,
     scenarioPrice,
+    cyclicalSigmaK,
+    resolveScenarioK,
     scenarioLabel,
     simulateSellOnly,
     simulateWithLoans,

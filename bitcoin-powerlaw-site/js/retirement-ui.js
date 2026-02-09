@@ -27,7 +27,7 @@
       m2GrowthRate: parseFloat($('m2-growth').value) / 100,
       model: currentModel,
       sigma: calculatedSigma,
-      priceScenarioK: parseInt($('price-scenario').value),
+      scenarioMode: $('price-scenario').value,
       useLoans,
       loanLTV: parseFloat($('loan-ltv').value) / 100,
       loanInterestRate: parseFloat($('loan-interest').value) / 100,
@@ -114,6 +114,9 @@
     const result = simulate(params);
     const summary = R.simulationSummary(result);
     const cagrTable = R.cagrDecayTable(params.model, params.retirementYear, params.timeHorizonYears);
+
+    // Status banner first — visible without scrolling
+    renderStatusBanner(params, result, summary);
 
     renderCAGRChart(cagrTable);
     renderSummaryCards(params, result, summary);
@@ -346,7 +349,7 @@
       return;
     }
 
-    const scenarioName = R.scenarioLabel(params.priceScenarioK);
+    const scenarioName = R.scenarioLabel(params.scenarioMode);
     const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
 
     container.innerHTML = `
@@ -462,7 +465,7 @@
     if (!el) return;
 
     if (!summary) {
-      el.innerHTML = `With <strong>${params.btcHoldings} BTC</strong> and <strong>$${params.annualSpendUSD.toLocaleString()}/year</strong> spending, your stack would be depleted by <strong>${result.ruinYear}</strong> under the ${R.scenarioLabel(params.priceScenarioK)} scenario. Consider reducing spending, increasing holdings, or delaying retirement.`;
+      el.innerHTML = `With <strong>${params.btcHoldings} BTC</strong> and <strong>$${params.annualSpendUSD.toLocaleString()}/year</strong> spending, your stack would be depleted by <strong>${result.ruinYear}</strong> under the ${R.scenarioLabel(params.scenarioMode)} scenario. Consider reducing spending, increasing holdings, or delaying retirement.`;
       return;
     }
 
@@ -486,6 +489,115 @@
     text += `Your average withdrawal rate is <strong>${summary.avgSWR.toFixed(2)}%</strong> — a "dynamic SWR" where the dollar amount stays constant (adjusted for M2 inflation) but the percentage of your stack decreases as bitcoin appreciates.`;
 
     el.innerHTML = text;
+  }
+
+  // ── Status Banner ──────────────────────────────────────────
+  function classifyResult(params, result, summary) {
+    // RUIN
+    if (result.ruinYear !== null) {
+      return { status: 'red', ruinYear: result.ruinYear };
+    }
+
+    // TIGHT: stack drops below 5% of starting holdings
+    const threshold = params.btcHoldings * 0.05;
+    const nonRuin = result.results.filter(r => r.status !== 'RUIN');
+    const tightYear = nonRuin.find(r => r.stackAfter < threshold && r.stackAfter > 0);
+
+    if (tightYear) {
+      return {
+        status: 'amber',
+        tightYear: tightYear.year,
+        minStack: tightYear.stackAfter
+      };
+    }
+
+    // GREEN: comfortable survival
+    return {
+      status: 'green',
+      finalStack: summary.finalStack,
+      finalValue: summary.finalValue
+    };
+  }
+
+  function computeFixSuggestion(params) {
+    // 1. Find minimum stack needed
+    const minResult = R.findMinimumStack(params, params.useLoans);
+    const minStack = minResult.minStack;
+    const additionalBTC = minStack - params.btcHoldings;
+
+    // 2. Binary search for max safe annual spending
+    const simulate = params.useLoans ? R.simulateWithLoans : R.simulateSellOnly;
+    let loSpend = 1000;
+    let hiSpend = params.annualSpendUSD;
+    let iterations = 0;
+
+    while (hiSpend - loSpend > 500 && iterations < 30) {
+      const midSpend = Math.round((loSpend + hiSpend) / 2);
+      const testResult = simulate({ ...params, annualSpendUSD: midSpend });
+      if (testResult.ruinYear !== null) {
+        hiSpend = midSpend;
+      } else {
+        loSpend = midSpend;
+      }
+      iterations++;
+    }
+
+    const maxSafeSpend = loSpend;
+    const spendReduction = params.annualSpendUSD - maxSafeSpend;
+
+    let html = '';
+    if (additionalBTC > 0 && minStack !== Infinity) {
+      html += `Need <strong>${additionalBTC.toFixed(3)} more BTC</strong> (total ${minStack.toFixed(3)} BTC) to survive the full horizon`;
+    } else {
+      html += `Insufficient BTC for this scenario`;
+    }
+
+    if (spendReduction > 0 && maxSafeSpend >= 1000) {
+      html += `, or reduce spending by <strong>$${Math.round(spendReduction).toLocaleString()}/year</strong> to <strong>$${Math.round(maxSafeSpend).toLocaleString()}/year</strong>`;
+    }
+
+    html += '.';
+    return html;
+  }
+
+  function renderStatusBanner(params, result, summary) {
+    const banner = $('status-banner');
+    const icon = $('status-icon');
+    const headline = $('status-headline');
+    const detail = $('status-detail');
+
+    const classification = classifyResult(params, result, summary);
+
+    // Remove previous state classes
+    banner.classList.remove('status-green', 'status-amber', 'status-red');
+
+    if (classification.status === 'green') {
+      banner.classList.add('status-green');
+      icon.textContent = '\u2705';
+      headline.textContent = `You survive all ${params.timeHorizonYears} years`;
+      const fv = PL.formatPrice(classification.finalValue);
+      detail.innerHTML = `Ending with <strong>${classification.finalStack.toFixed(4)} BTC</strong> (${fv} portfolio value)`;
+
+    } else if (classification.status === 'amber') {
+      banner.classList.add('status-amber');
+      icon.textContent = '\u26A0\uFE0F';
+      headline.textContent = `Tight \u2014 you survive but barely`;
+      detail.innerHTML = `Stack drops below <strong>5% of starting holdings</strong> by year <strong>${classification.tightYear}</strong> (${classification.minStack.toFixed(4)} BTC minimum). Consider a small increase in holdings.`;
+
+    } else {
+      banner.classList.add('status-red');
+      icon.textContent = '\uD83D\uDED1';
+      headline.textContent = `Ruin in year ${classification.ruinYear}`;
+      detail.innerHTML = computeFixSuggestion(params);
+    }
+
+    // Re-trigger animation
+    banner.classList.remove('hidden');
+    banner.style.animation = 'none';
+    banner.offsetHeight; // force reflow
+    banner.style.animation = '';
+
+    show('status-banner');
   }
 
   // ── Start ────────────────────────────────────────────────────
