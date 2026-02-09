@@ -68,6 +68,17 @@
       if (el) el.addEventListener('input', () => {
         const display = $(s.display);
         if (display) display.textContent = el.value;
+        // Show warning when spending growth is 0%
+        if (s.input === 'm2-growth') {
+          const hint = $('spending-growth-hint');
+          if (hint) {
+            if (parseFloat(el.value) === 0) {
+              hint.classList.remove('hidden');
+            } else {
+              hint.classList.add('hidden');
+            }
+          }
+        }
       });
     });
   }

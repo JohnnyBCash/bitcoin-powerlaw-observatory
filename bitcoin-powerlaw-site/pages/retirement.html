@@ -72,8 +72,9 @@
 
           <div class="input-group">
             <label for="m2-growth">Annual Spending Growth (%)</label>
-            <input type="range" id="m2-growth" min="3" max="12" step="0.5" value="6.5">
+            <input type="range" id="m2-growth" min="0" max="12" step="0.5" value="6.5">
             <div class="slider-value"><span id="m2-value">6.5</span>%</div>
+            <div class="spending-growth-hint hidden" id="spending-growth-hint">0% means fixed spending — your purchasing power will decline over time as prices rise</div>
           </div>
 
           <div class="input-group">
@@ -470,6 +471,13 @@
 
     .status-detail strong {
       color: var(--black);
+    }
+
+    .spending-growth-hint {
+      font-size: 0.8125rem;
+      color: var(--orange);
+      margin-top: 2px;
+      line-height: 1.4;
     }
   </style>
 
