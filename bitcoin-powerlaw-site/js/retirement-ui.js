@@ -383,7 +383,7 @@
       <div class="card">
         <div class="card-label">Total Spent</div>
         <div class="card-value">$${Math.round(summary.totalSpent).toLocaleString()}</div>
-        <div class="card-sub">Adjusted for ${(params.m2GrowthRate * 100).toFixed(1)}% M2 inflation</div>
+        <div class="card-sub">At ${(params.m2GrowthRate * 100).toFixed(1)}% annual spending growth</div>
       </div>
       ${params.useLoans ? `
       <div class="card">
@@ -476,7 +476,7 @@
 
     let text = `On the power law model, expected annual returns decline from <strong>${(startCAGR * 100).toFixed(1)}%</strong> in ${params.retirementYear} to <strong>${(endCAGR * 100).toFixed(1)}%</strong> by ${params.retirementYear + params.timeHorizonYears}. `;
     text += `This is fundamentally different from stock-based retirement planning where CAGR is assumed constant. `;
-    text += `Your spending rises from <strong>$${spendStart.toLocaleString()}</strong> to <strong>$${Math.round(spendEnd).toLocaleString()}</strong> over ${params.timeHorizonYears} years at ${(params.m2GrowthRate * 100).toFixed(1)}% M2 growth. `;
+    text += `Your spending rises from <strong>$${spendStart.toLocaleString()}</strong> to <strong>$${Math.round(spendEnd).toLocaleString()}</strong> over ${params.timeHorizonYears} years at ${(params.m2GrowthRate * 100).toFixed(1)}% annual spending growth. `;
 
     if (summary.yearsBeforeRuin >= params.timeHorizonYears) {
       text += `Your stack of <strong>${params.btcHoldings} BTC</strong> survives the full ${params.timeHorizonYears}-year horizon, ending with <strong>${summary.finalStack.toFixed(4)} BTC</strong> worth <strong>$${Math.round(summary.finalValue).toLocaleString()}</strong>. `;
