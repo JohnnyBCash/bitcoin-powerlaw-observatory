@@ -273,7 +273,45 @@ main {
 }
 
 .sparkline-container h3 {
+  margin-bottom: 0;
+}
+
+.sparkline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+}
+
+.range-toggle {
+  display: flex;
+  gap: 4px;
+}
+
+.range-btn {
+  padding: 4px 10px;
+  border: 1px solid var(--gray-border);
+  border-radius: 4px;
+  background: var(--white);
+  font-family: var(--font-family);
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.range-btn:hover {
+  border-color: var(--gray);
+  color: var(--black);
+}
+
+.range-btn.active {
+  background: var(--black);
+  color: var(--white);
+  border-color: var(--black);
 }
 
 /* Chart container */

@@ -4,6 +4,7 @@ let historicalData = [];
 let sigmaCache = {};
 let currentModel = 'krueger';
 let sparklineChart = null;
+let chartRangeDays = 180;
 
 // DOM elements
 const elements = {
@@ -26,6 +27,7 @@ async function init() {
   await fetchLivePrice();
   initSparklineChart();
   setupModelToggle();
+  setupRangeToggle();
 
   // Update price every 60 seconds
   setInterval(fetchLivePrice, 60000);
@@ -126,12 +128,25 @@ function setupModelToggle() {
   });
 }
 
+// Setup chart range toggle buttons
+function setupRangeToggle() {
+  const buttons = document.querySelectorAll('.range-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      chartRangeDays = parseInt(btn.dataset.days);
+      updateSparklineData();
+    });
+  });
+}
+
 // Initialize sparkline chart
 function initSparklineChart() {
   const ctx = document.getElementById('sparkline-chart').getContext('2d');
 
   // Get last 365 days of data for sparkline
-  const recentData = historicalData.slice(-365);
+  const recentData = historicalData.slice(-chartRangeDays);
   const sigma = sigmaCache[currentModel].sigma;
 
   const labels = recentData.map(d => d.date);
@@ -260,24 +275,28 @@ function initSparklineChart() {
   });
 }
 
-// Update sparkline data when model changes
+// Update sparkline data when model or range changes
 function updateSparklineData() {
   if (!sparklineChart) return;
 
-  const recentData = historicalData.slice(-365);
+  const recentData = historicalData.slice(-chartRangeDays);
   const sigma = sigmaCache[currentModel].sigma;
 
+  const labels = recentData.map(d => d.date);
+  const prices = recentData.map(d => d.price);
   const trendPrices = recentData.map(d => PowerLaw.trendPrice(currentModel, new Date(d.date)));
   const upperBand1 = trendPrices.map(t => t * Math.pow(10, sigma));
   const lowerBand1 = trendPrices.map(t => t * Math.pow(10, -sigma));
   const upperBand2 = trendPrices.map(t => t * Math.pow(10, 2 * sigma));
   const lowerBand2 = trendPrices.map(t => t * Math.pow(10, -2 * sigma));
 
+  sparklineChart.data.labels = labels;
   sparklineChart.data.datasets[0].data = upperBand2;
   sparklineChart.data.datasets[1].data = upperBand1;
   sparklineChart.data.datasets[2].data = trendPrices;
   sparklineChart.data.datasets[3].data = lowerBand1;
   sparklineChart.data.datasets[4].data = lowerBand2;
+  sparklineChart.data.datasets[5].data = prices;
 
   sparklineChart.update();
 }

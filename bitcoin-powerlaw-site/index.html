@@ -78,7 +78,16 @@
 
       <!-- Mini chart showing position -->
       <div class="sparkline-container">
-        <h3>Current Position on Power Law Curve</h3>
+        <div class="sparkline-header">
+          <h3>Current Position on Power Law Curve</h3>
+          <div class="range-toggle" role="group" aria-label="Chart time range">
+            <button class="range-btn" data-days="7">1W</button>
+            <button class="range-btn" data-days="30">1M</button>
+            <button class="range-btn" data-days="90">3M</button>
+            <button class="range-btn active" data-days="180">6M</button>
+            <button class="range-btn" data-days="365">1Y</button>
+          </div>
+        </div>
         <div class="chart-container">
           <canvas id="sparkline-chart" aria-label="Bitcoin price position relative to power law trend" role="img"></canvas>
         </div>
