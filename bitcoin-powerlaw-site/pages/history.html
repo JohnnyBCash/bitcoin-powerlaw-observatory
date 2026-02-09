@@ -35,12 +35,6 @@
         <p>Bitcoin's price history plotted on a log-log scale reveals a remarkably consistent power law relationship. Deviations from the trend are dramatic but statistically ordinary.</p>
       </section>
 
-      <!-- Model Toggle -->
-      <div class="model-toggle" role="group" aria-label="Select power law model">
-        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
-        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
-      </div>
-
       <!-- Main Chart -->
       <div class="chart-container" style="height: 500px;">
         <canvas id="history-chart" aria-label="Bitcoin historical price on log-log scale with power law trend" role="img"></canvas>
@@ -281,8 +275,8 @@
           <p>Historical: Bitstamp, CryptoDataDownload<br>Combined dataset from July 2010</p>
         </div>
         <div class="footer-section">
-          <h4>Models</h4>
-          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+          <h4>Model</h4>
+          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
         </div>
       </div>
       <div class="footer-bottom">

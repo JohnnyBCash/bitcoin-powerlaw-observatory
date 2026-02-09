@@ -17,7 +17,7 @@
   /* -------------------------------------------------------- state ---------------------------------------------------------- */
   let weeklyData   = [];     // [{date: Date, price: number}]  – shared, loaded by price-chart.js first
   let ttChart      = null;
-  let currentModel = 'krueger';
+  let currentModel = 'santostasi';
   let sigma        = 0;
   let ageMultiplier = 1.0;
   let playing      = false;
@@ -414,16 +414,6 @@
       updateChart();
     });
 
-    // Model toggle (scoped to the time-travel section)
-    document.querySelectorAll('.tt-model-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tt-model-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentModel = btn.dataset.model;
-        computeSigma();
-        updateChart();
-      });
-    });
   }
 
   /* -------------------------------------------------------- init ---------------------------------------------------------------- */

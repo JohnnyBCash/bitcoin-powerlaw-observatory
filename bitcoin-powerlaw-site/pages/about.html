@@ -66,39 +66,24 @@
         </div>
       </section>
 
-      <!-- The Models -->
+      <!-- The Model -->
       <section style="margin-bottom: var(--spacing-xxl);">
-        <h2>The Models</h2>
-
-        <div class="card" style="margin-bottom: var(--spacing-lg);">
-          <h3 style="color: var(--orange);">Krueger/Sigman Model</h3>
-          <p style="margin-bottom: var(--spacing-sm);"><strong>Source:</strong> <em>Bitcoin One Million: The Final Chapter of Fiat</em> by Fred Krueger & Ben Sigman (2025)</p>
-
-          <div class="info-box" style="font-family: monospace; margin: var(--spacing-md) 0;">
-            trend_price = 10<sup>-1.847796462</sup> &times; years<sup>5.616314045</sup>
-          </div>
-
-          <p>This model uses years since genesis (January 3, 2009) as the time variable. Key characteristics:</p>
-          <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
-            <li>&beta; = 5.616 (exponent)</li>
-            <li>R&sup2; &asymp; 95.65%</li>
-            <li>Projects $1M trend around January 2034</li>
-          </ul>
-        </div>
+        <h2>The Model</h2>
 
         <div class="card">
-          <h3 style="color: var(--orange);">Perrenod/Santostasi Model</h3>
-          <p style="margin-bottom: var(--spacing-sm);"><strong>Source:</strong> Giovanni Santostasi's original Bitcoin Power Law Theory research</p>
+          <h3 style="color: var(--orange);">Santostasi/Perrenod Power Law Model</h3>
+          <p style="margin-bottom: var(--spacing-sm);"><strong>Source:</strong> Giovanni Santostasi's Bitcoin Power Law Theory research. Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
 
           <div class="info-box" style="font-family: monospace; margin: var(--spacing-md) 0;">
-            trend_price = 10<sup>-17</sup> &times; days<sup>5.8</sup>
+            trend_price = 10<sup>-16.493</sup> &times; days<sup>5.688</sup>
           </div>
 
-          <p>This model uses days since genesis directly (without converting to years). Key characteristics:</p>
+          <p>This model uses days since genesis (January 3, 2009) as the time variable. Key characteristics:</p>
           <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
-            <li>&beta; = 5.8 (exponent)</li>
-            <li>Slightly steeper curve than Krueger/Sigman</li>
-            <li>Generally projects milestones slightly earlier</li>
+            <li>&beta; = 5.688 (exponent)</li>
+            <li>log<sub>10</sub>(A) = -16.493 (intercept)</li>
+            <li>R&sup2; &asymp; 95%</li>
+            <li>Current trend value ~$130K (February 2026)</li>
           </ul>
         </div>
       </section>
@@ -179,15 +164,15 @@
         <h2>Further Reading</h2>
 
         <div class="card" style="margin-bottom: var(--spacing-md);">
-          <h4>Bitcoin One Million: The Final Chapter of Fiat</h4>
-          <p style="color: var(--gray);">Fred Krueger & Ben Sigman (2025)</p>
-          <p>Comprehensive exploration of the power law model, network effects, and Bitcoin's potential role in replacing fiat currency.</p>
-        </div>
-
-        <div class="card" style="margin-bottom: var(--spacing-md);">
           <h4>Giovanni Santostasi's Power Law Research</h4>
           <p style="color: var(--gray);">Original academic work on Bitcoin's power law behavior</p>
           <p>The foundational research establishing the mathematical framework for Bitcoin's power law price dynamics.</p>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-md);">
+          <h4><a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></h4>
+          <p style="color: var(--gray);">Santostasi's official Bitcoin Power Law site</p>
+          <p>Interactive tool with the latest regression parameters. This site uses those parameters (logA=-16.493, beta=5.688).</p>
         </div>
 
         <div class="card">
@@ -206,13 +191,9 @@
 // Genesis block
 const GENESIS = new Date('2009-01-03T00:00:00Z');
 
-// Krueger/Sigman Model
+// Santostasi/Perrenod Model (from bitcoinpower.law)
 const daysSinceGenesis = (Date.now() - GENESIS.getTime()) / (1000 * 60 * 60 * 24);
-const yearsSinceGenesis = daysSinceGenesis / 365.25;
-const trendPrice = Math.pow(10, -1.847796462) * Math.pow(yearsSinceGenesis, 5.616314045);
-
-// Perrenod/Santostasi Model
-const trendPriceAlt = 1e-17 * Math.pow(daysSinceGenesis, 5.8);
+const trendPrice = Math.pow(10, -16.493) * Math.pow(daysSinceGenesis, 5.688);
 
 // Sigma bands (where sigma is calculated from historical log residuals)
 const upperBand = trendPrice * Math.pow(10, sigma);
@@ -232,7 +213,7 @@ const lowerBand = trendPrice * Math.pow(10, -sigma);
         </div>
         <div class="footer-section">
           <h4>Attribution</h4>
-          <p>Models based on work by Krueger, Sigman, Santostasi, and Perrenod</p>
+          <p>Model based on work by Giovanni Santostasi and Harold Christopher Burger (Perrenod)</p>
         </div>
         <div class="footer-section">
           <h4>Open Source</h4>

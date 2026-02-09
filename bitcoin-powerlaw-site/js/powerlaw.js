@@ -4,16 +4,10 @@ const GENESIS = new Date('2009-01-03T00:00:00Z');
 
 // Model parameters
 const MODELS = {
-  krueger: {
-    name: 'Krueger/Sigman',
-    beta: 5.616314045,
-    logA: -1.847796462,
-    useYears: true
-  },
   santostasi: {
-    name: 'Perrenod/Santostasi',
-    beta: 5.8,
-    logA: -17,
+    name: 'Santostasi',
+    beta: 5.688,
+    logA: -16.493,
     useYears: false
   }
 };

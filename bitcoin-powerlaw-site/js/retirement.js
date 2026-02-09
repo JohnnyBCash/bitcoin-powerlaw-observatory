@@ -14,7 +14,7 @@
     retirementYear: 2030,
     timeHorizonYears: 30,
     m2GrowthRate: 0.065,       // 6.5% annual M2 inflation
-    model: 'krueger',
+    model: 'santostasi',
     sigma: 0.3,                // will be recalculated from data
     // Loan parameters
     useLoans: false,

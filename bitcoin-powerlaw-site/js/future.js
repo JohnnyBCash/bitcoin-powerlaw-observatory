@@ -2,7 +2,7 @@
 
 let historicalData = [];
 let sigmaCache = {};
-let currentModel = 'krueger';
+let currentModel = 'santostasi';
 let projectionChart = null;
 
 // Key dates and milestones
@@ -47,9 +47,8 @@ async function loadHistoricalData() {
   }
 }
 
-// Calculate sigma for both models
+// Calculate sigma for the model
 function calculateSigmas() {
-  sigmaCache.krueger = PowerLaw.calculateSigma(historicalData, 'krueger');
   sigmaCache.santostasi = PowerLaw.calculateSigma(historicalData, 'santostasi');
 }
 
@@ -108,14 +107,12 @@ function populateProjectionTable() {
   });
 
   for (const row of filteredRows) {
-    const kruegerPrice = PowerLaw.trendPrice('krueger', row.date);
-    const santPrice = PowerLaw.trendPrice('santostasi', row.date);
+    const trendPrice = PowerLaw.trendPrice('santostasi', row.date);
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>${PowerLaw.formatDate(row.date)}</td>
-      <td>${PowerLaw.formatPrice(kruegerPrice)}</td>
-      <td>${PowerLaw.formatPrice(santPrice)}</td>
+      <td>${PowerLaw.formatPrice(trendPrice)}</td>
       <td>${row.note}</td>
     `;
     tbody.appendChild(tr);
@@ -128,14 +125,12 @@ function populateMilestoneTable() {
   tbody.innerHTML = '';
 
   for (const price of MILESTONE_PRICES) {
-    const kruegerDate = PowerLaw.milestoneDateForPrice(price, 'krueger');
-    const santDate = PowerLaw.milestoneDateForPrice(price, 'santostasi');
+    const milestoneDate = PowerLaw.milestoneDateForPrice(price, 'santostasi');
 
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td><strong>${PowerLaw.formatPrice(price)}</strong></td>
-      <td>${PowerLaw.formatDate(kruegerDate)}</td>
-      <td>${PowerLaw.formatDate(santDate)}</td>
+      <td>${PowerLaw.formatDate(milestoneDate)}</td>
     `;
     tbody.appendChild(tr);
   }
@@ -307,17 +302,6 @@ function prepareProjectionData(model, sigma, years) {
 
 // Setup controls
 function setupControls() {
-  // Model toggle
-  const buttons = document.querySelectorAll('.toggle-btn[data-model]');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentModel = btn.dataset.model;
-      updateAll();
-    });
-  });
-
   // Date slider
   const slider = document.getElementById('date-slider');
   slider.addEventListener('input', updateSliderDisplay);

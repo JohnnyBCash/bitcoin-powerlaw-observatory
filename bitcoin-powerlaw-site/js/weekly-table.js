@@ -1,6 +1,6 @@
 // Bitcoin Power Law Observatory - Weekly History Table
 // Displays weekly historical data with intuitive log deviation visualization
-// Supports toggle between Santostasi/Perrenod and Krueger/Sigman models
+// Uses Santostasi/Perrenod power law model
 
 (function() {
   'use strict';
@@ -13,7 +13,7 @@
   };
 
   // Current model selection
-  let currentModel = 'santostasi'; // 'santostasi' or 'krueger'
+  let currentModel = 'santostasi';
 
   // Log deviation thresholds and labels
   const LOG_DEV_ZONES = [
@@ -73,34 +73,13 @@
     return date >= weekAgo && date <= now;
   }
 
-  // Calculate values for a given model
+  // Get model values (Santostasi/Perrenod pre-calculated from JSON)
   function getModelValues(item) {
-    if (currentModel === 'santostasi') {
-      // Use pre-calculated values from JSON
-      return {
-        trend: item.trend_sp,
-        multiple: item.multiple_sp,
-        logDev: item.log_dev_sp
-      };
-    } else {
-      // Calculate Krueger/Sigman values on-the-fly
-      if (window.PowerLaw) {
-        const trend = window.PowerLaw.trendPrice('krueger', new Date(item.date + 'T00:00:00Z'));
-        const multiple = item.close / trend;
-        const logDev = Math.log10(item.close / trend);
-        return {
-          trend: Math.round(trend * 100) / 100,
-          multiple: Math.round(multiple * 1000) / 1000,
-          logDev: Math.round(logDev * 1000) / 1000
-        };
-      }
-      // Fallback to Santostasi if PowerLaw not loaded
-      return {
-        trend: item.trend_sp,
-        multiple: item.multiple_sp,
-        logDev: item.log_dev_sp
-      };
-    }
+    return {
+      trend: item.trend_sp,
+      multiple: item.multiple_sp,
+      logDev: item.log_dev_sp
+    };
   }
 
   // Render a single row
@@ -170,22 +149,9 @@
       // Get unique years for quick jump
       const years = [...new Set(data.map(d => d.date.substring(0, 4)))].sort().reverse();
 
-      // Get model display name
-      function getModelName() {
-        return currentModel === 'santostasi' ? 'Perrenod/Santostasi' : 'Krueger/Sigman';
-      }
-
-      function getModelShortName() {
-        return currentModel === 'santostasi' ? 'S/P' : 'K/S';
-      }
-
       // Render controls
       const controlsHtml = `
         <div class="weekly-table-controls">
-          <div class="model-toggle" id="weekly-model-toggle">
-            <button class="toggle-btn ${currentModel === 'santostasi' ? 'active' : ''}" data-model="santostasi">Perrenod/Santostasi</button>
-            <button class="toggle-btn ${currentModel === 'krueger' ? 'active' : ''}" data-model="krueger">Krueger/Sigman</button>
-          </div>
           <input type="text" class="weekly-table-search" id="weekly-search"
                  placeholder="Search by date or price...">
           <div class="quick-jump-btns">
@@ -204,7 +170,7 @@
               <tr>
                 <th>Week Ending</th>
                 <th>Close</th>
-                <th id="trend-header">Trend (${getModelShortName()})</th>
+                <th id="trend-header">Trend</th>
                 <th>Multiple</th>
                 <th>
                   Log Deviation
@@ -234,26 +200,12 @@
         let filtered = filterByYear(data, currentYear);
         filtered = searchData(filtered, searchInput.value);
         tbody.innerHTML = filtered.map((item, i) => renderRow(item, i === 0 && currentYear === 'all')).join('');
-        // Update header to reflect current model
-        if (trendHeader) {
-          trendHeader.textContent = `Trend (${getModelShortName()})`;
-        }
       }
 
       // Initial table population
       updateTable();
 
       searchInput.addEventListener('input', updateTable);
-
-      // Model toggle event listeners
-      document.querySelectorAll('#weekly-model-toggle .toggle-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.querySelectorAll('#weekly-model-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentModel = btn.dataset.model;
-          updateTable();
-        });
-      });
 
       document.querySelectorAll('.quick-jump-btn').forEach(btn => {
         btn.addEventListener('click', () => {

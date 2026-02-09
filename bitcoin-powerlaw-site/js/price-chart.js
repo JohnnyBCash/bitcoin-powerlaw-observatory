@@ -11,7 +11,7 @@
   let chart       = null;
   let xScale      = 'linear';    // 'linear' | 'logarithmic'
   let yScale      = 'linear';
-  let currentModel = 'krueger';  // 'krueger' | 'santostasi'
+  let currentModel = 'santostasi';
   let sigma       = 0;           // computed once data is loaded
 
   /* -------------------------------------------------- load CSV --------------------------------------------------- */
@@ -325,17 +325,6 @@
         if (axis === 'x') xScale = scale;
         else              yScale = scale;
 
-        updateChart();
-      });
-    });
-
-    // Model toggle buttons
-    document.querySelectorAll('.toggle-btn[data-model]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-btn[data-model]').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentModel = btn.dataset.model;
-        computeSigma();
         updateChart();
       });
     });

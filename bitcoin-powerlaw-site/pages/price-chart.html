@@ -259,12 +259,6 @@
         <p>Weekly closing prices from 2014 to present. Toggle each axis independently between linear and logarithmic scale.</p>
       </section>
 
-      <!-- Model toggle -->
-      <div class="model-toggle" role="group" aria-label="Select power law model">
-        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
-        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
-      </div>
-
       <!-- Axis scale toggles + band checkboxes -->
       <div class="scale-toggles">
         <div class="scale-group">
@@ -346,12 +340,6 @@
         <h2>Time Travel</h2>
         <p>Bitcoin is <strong>17 years old</strong>. What does the power law predict if it ages 50% more? What if the age doubles? Drag the slider — or hit Play — to watch the trend and corridor extend into the future.</p>
 
-        <!-- model toggle -->
-        <div class="tt-model-toggle">
-          <button class="tt-model-btn active" data-model="krueger">Krueger/Sigman</button>
-          <button class="tt-model-btn"        data-model="santostasi">Perrenod/Santostasi</button>
-        </div>
-
         <!-- quick-jump buttons -->
         <div class="tt-quick-ages">
           <button class="tt-age-btn active" data-age="1.0">Now (1×)</button>
@@ -408,7 +396,7 @@
         <!-- explainer -->
         <div class="info-box" style="margin-top: var(--spacing-lg);">
           <h4>Why does this matter?</h4>
-          <p>Power laws have an unusual property: <strong>the older the network, the faster the trend grows in absolute dollars</strong>. Every additional year of age adds more to the trend price than the last. Doubling Bitcoin's age doesn't double the trend — it multiplies it by <strong>2<sup>β</sup></strong> (roughly 49× for Krueger's model). That's the compounding engine behind Bitcoin's long-term trajectory. The ±σ corridor shows the historically normal range price has oscillated within — it widens in dollar terms over time, but stays statistically tight on a log scale.</p>
+          <p>Power laws have an unusual property: <strong>the older the network, the faster the trend grows in absolute dollars</strong>. Every additional year of age adds more to the trend price than the last. Doubling Bitcoin's age doesn't double the trend — it multiplies it by <strong>2<sup>β</sup></strong> (roughly 52× for the Santostasi model with β=5.688). That's the compounding engine behind Bitcoin's long-term trajectory. The ±σ corridor shows the historically normal range price has oscillated within — it widens in dollar terms over time, but stays statistically tight on a log scale.</p>
         </div>
       </section>
     </div>
@@ -422,8 +410,8 @@
           <p>Weekly closes derived from Bitstamp daily data via CryptoDataDownload</p>
         </div>
         <div class="footer-section">
-          <h4>Models</h4>
-          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+          <h4>Model</h4>
+          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
         </div>
       </div>
       <div class="footer-bottom">

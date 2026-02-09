@@ -2,7 +2,7 @@
 
 let historicalData = [];
 let sigmaCache = {};
-let currentModel = 'krueger';
+let currentModel = 'santostasi';
 let sparklineChart = null;
 let chartRangeDays = 180;
 
@@ -26,7 +26,6 @@ async function init() {
   calculateSigmas();
   await fetchLivePrice();
   initSparklineChart();
-  setupModelToggle();
   setupRangeToggle();
 
   // Update price every 60 seconds
@@ -44,9 +43,8 @@ async function loadHistoricalData() {
   }
 }
 
-// Calculate sigma for both models
+// Calculate sigma for the model
 function calculateSigmas() {
-  sigmaCache.krueger = PowerLaw.calculateSigma(historicalData, 'krueger');
   sigmaCache.santostasi = PowerLaw.calculateSigma(historicalData, 'santostasi');
 }
 
@@ -111,22 +109,7 @@ function updateDashboard(price, change24h) {
   }
 }
 
-// Setup model toggle buttons
-function setupModelToggle() {
-  const buttons = document.querySelectorAll('.toggle-btn');
-
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentModel = btn.dataset.model;
-
-      // Re-fetch and update
-      fetchLivePrice();
-      updateSparklineData();
-    });
-  });
-}
+// Model toggle removed — single model (Santostasi)
 
 // Setup chart range toggle buttons
 function setupRangeToggle() {

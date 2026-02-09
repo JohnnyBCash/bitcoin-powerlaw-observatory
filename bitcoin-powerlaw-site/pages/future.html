@@ -40,12 +40,6 @@
         <p><strong>Important:</strong> These projections represent the power law trend line only. Actual prices oscillate around the trend, often dramatically. This is not financial advice or a price guarantee. Focus on the long-term adoption math, not short-term speculation.</p>
       </div>
 
-      <!-- Model Toggle -->
-      <div class="model-toggle" role="group" aria-label="Select power law model">
-        <button class="toggle-btn active" data-model="krueger">Krueger/Sigman</button>
-        <button class="toggle-btn" data-model="santostasi">Perrenod/Santostasi</button>
-      </div>
-
       <!-- Interactive Date Slider -->
       <div class="card" style="margin: var(--spacing-xl) 0;">
         <h3>Explore Future Dates</h3>
@@ -81,15 +75,14 @@
         <!-- Populated by JS -->
       </div>
 
-      <!-- Comparison Table -->
-      <h2 style="margin-top: var(--spacing-xl);">Model Comparison</h2>
+      <!-- Projection Table -->
+      <h2 style="margin-top: var(--spacing-xl);">Trend Projections</h2>
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>Date</th>
-              <th>Krueger/Sigman</th>
-              <th>Perrenod/Santostasi</th>
+              <th>Trend Price</th>
               <th>Notes</th>
             </tr>
           </thead>
@@ -110,8 +103,7 @@
           <thead>
             <tr>
               <th>Target Price</th>
-              <th>Krueger/Sigman Date</th>
-              <th>Perrenod/Santostasi Date</th>
+              <th>Estimated Date</th>
             </tr>
           </thead>
           <tbody id="milestone-table">
@@ -144,8 +136,8 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Models</h4>
-          <p>Krueger/Sigman: <em>Bitcoin One Million</em> (2025)<br>Santostasi/Perrenod: Power Law Theory</p>
+          <h4>Model</h4>
+          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>

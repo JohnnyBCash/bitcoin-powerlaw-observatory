@@ -5,7 +5,7 @@
   const PL = window.PowerLaw;
   const R = window.Retirement;
 
-  let currentModel = 'krueger';
+  let currentModel = 'santostasi';
   let cagrChart = null;
   let stackChart = null;
   let historicalData = [];
@@ -39,7 +39,6 @@
   async function init() {
     await loadHistoricalData();
     setupSliders();
-    setupModelToggle();
     setupLoanToggle();
     setupButtons();
   }
@@ -83,18 +82,7 @@
     });
   }
 
-  function setupModelToggle() {
-    document.querySelectorAll('.toggle-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentModel = btn.dataset.model;
-        if (historicalData.length) {
-          calculatedSigma = PL.calculateSigma(historicalData, currentModel).sigma;
-        }
-      });
-    });
-  }
+  // Model toggle removed — single model (Santostasi)
 
   function setupLoanToggle() {
     const toggle = $('use-loans');

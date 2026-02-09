@@ -2,7 +2,7 @@
 
 let historicalData = [];
 let sigmaCache = {};
-let currentModel = 'krueger';
+let currentModel = 'santostasi';
 let historyChart = null;
 let bellCurveChart = null;
 
@@ -27,9 +27,8 @@ async function loadHistoricalData() {
   }
 }
 
-// Calculate sigma for both models
+// Calculate sigma for the model
 function calculateSigmas() {
-  sigmaCache.krueger = PowerLaw.calculateSigma(historicalData, 'krueger');
   sigmaCache.santostasi = PowerLaw.calculateSigma(historicalData, 'santostasi');
 }
 
@@ -296,19 +295,6 @@ function filterDataByRange(data, range) {
 
 // Setup controls
 function setupControls() {
-  // Model toggle
-  const buttons = document.querySelectorAll('.toggle-btn[data-model]');
-  buttons.forEach(btn => {
-    btn.addEventListener('click', () => {
-      buttons.forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      currentModel = btn.dataset.model;
-      updateChart();
-      updateStatistics();
-      updateBellCurve();
-    });
-  });
-
   // Date range
   document.getElementById('date-range').addEventListener('change', updateChart);
 
