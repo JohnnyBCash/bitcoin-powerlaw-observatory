@@ -8,6 +8,8 @@ let bellCurveChart = null;
 let bellCurveTodayResidual = 0;
 let bellCurveTodayMultiplier = 1;
 let bellCurveLnSigma = 0.7;
+let bellCurveBins = [];
+let bellCurveResiduals = [];
 let livePrice = null;
 
 // Initialize
@@ -637,12 +639,15 @@ function initBellCurve() {
 
   // Compute natural-log residuals
   const residuals = computeLogResiduals(currentModel);
+  bellCurveResiduals = residuals;
   const lnMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
   const lnSigma = Math.sqrt(residuals.reduce((s, r) => s + Math.pow(r - lnMean, 2), 0) / residuals.length);
   bellCurveLnSigma = lnSigma;
 
   // Bin the residuals (20 bins for cleaner look)
   const bins = binResiduals(residuals, 20, lnSigma);
+  bellCurveBins = bins;
+  const totalYears = residuals.length / 365.25;
 
   // Get today's residual
   const latestData = historicalData[historicalData.length - 1];
@@ -757,9 +762,14 @@ function initBellCurve() {
             label: function(context) {
               if (context.dataset.type === 'bar') {
                 const binIndex = context.dataIndex;
-                const bin = bins[binIndex];
-                const dpy = (bin.count / residuals.length * 365.25).toFixed(1);
-                return `~${dpy} days per year at this level`;
+                const bin = bellCurveBins[binIndex];
+                const dpy = bin.count / bellCurveResiduals.length * 365.25;
+                if (dpy < 1) {
+                  // For rare events, show total count instead
+                  const years = (bellCurveResiduals.length / 365.25).toFixed(1);
+                  return `Occurred ${bin.count} time${bin.count !== 1 ? 's' : ''} in ${years} years`;
+                }
+                return `~${dpy.toFixed(1)} days per year at this level`;
               }
               return context.dataset.label;
             }
@@ -777,12 +787,14 @@ function updateBellCurve() {
 
   // Recompute natural-log residuals and sigma
   const residuals = computeLogResiduals(currentModel);
+  bellCurveResiduals = residuals;
   const lnMean = residuals.reduce((a, b) => a + b, 0) / residuals.length;
   const lnSigma = Math.sqrt(residuals.reduce((s, r) => s + Math.pow(r - lnMean, 2), 0) / residuals.length);
   bellCurveLnSigma = lnSigma;
 
   // Rebin (20 bins)
   const bins = binResiduals(residuals, 20, lnSigma);
+  bellCurveBins = bins;
 
   // Get today's residual
   const latestData = historicalData[historicalData.length - 1];
