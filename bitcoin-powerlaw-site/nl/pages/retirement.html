@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Retirement Calculator - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Plan retirement on a Bitcoin standard using power law projections with optional bitcoin-backed loans.">
-  <link rel="stylesheet" href="../css/style.css">
+  <title>Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Plan je pensioen op een Bitcoin-standaard met machtswetprojecties en optionele bitcoin-gedekte leningen.">
+  <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,21 +15,21 @@
     <div class="container">
       <a href="../index.html" class="logo">
         <span class="logo-icon">&#x20BF;</span>
-        Power Law Observatory
+        Machtswet Observatorium
       </a>
-      <nav class="nav" aria-label="Main navigation">
+      <nav class="nav" aria-label="Hoofdnavigatie">
         <a href="../index.html">Dashboard</a>
-        <a href="history.html">History</a>
-        <a href="price-chart.html">Price Chart</a>
-        <a href="future.html">Future</a>
-        <a href="retirement.html" class="active">Retirement</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="price-chart.html">Prijsgrafiek</a>
+        <a href="future.html">Toekomst</a>
+        <a href="retirement.html" class="active">Pensioen</a>
         <a href="dca.html">DCA</a>
-        <a href="about.html">About</a>
+        <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
-        <a href="retirement.html" class="lang-link active">EN</a>
+        <a href="../../pages/retirement.html" class="lang-link">EN</a>
         <span class="lang-sep">|</span>
-        <a href="../nl/pages/retirement.html" class="lang-link">NL</a>
+        <a href="retirement.html" class="lang-link active">NL</a>
       </div>
     </div>
   </header>
@@ -37,115 +37,115 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Bitcoin Retirement Calculator</h1>
-        <p>How much bitcoin do you need to retire? Explore the math behind withdrawing from a power law asset, with or without bitcoin-backed loans.</p>
+        <h1>Bitcoin Pensioenrekentool</h1>
+        <p>Hoeveel bitcoin heb je nodig om met pensioen te gaan? Ontdek de wiskunde achter het opnemen van een machtswet-asset, met of zonder bitcoin-gedekte leningen.</p>
       </section>
 
       <div class="disclaimer">
-        <p><strong>Important:</strong> This is an educational tool based on power law models, not financial advice. The model assumes the power law continues to hold. Real outcomes will vary. Always do your own research and consult professionals.</p>
+        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetwetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken. Doe altijd je eigen onderzoek en raadpleeg professionals.</p>
       </div>
 
-      <!-- ── Input Section ──────────────────────────────── -->
+      <!-- ── Invoer Sectie ──────────────────────────────── -->
       <div class="card" id="input-section">
-        <h3>Your Parameters</h3>
+        <h3>Jouw Parameters</h3>
 
         <div class="input-grid">
           <div class="input-group">
-            <label for="btc-holdings">Bitcoin Holdings (BTC)</label>
+            <label for="btc-holdings">Bitcoin Bezit (BTC)</label>
             <input type="number" id="btc-holdings" value="1.0" min="0.01" step="0.01">
           </div>
 
           <div class="input-group">
-            <label for="currency">Currency</label>
+            <label for="currency">Valuta</label>
             <select id="currency">
               <option value="USD" selected>$ USD</option>
-              <option value="EUR">€ EUR</option>
+              <option value="EUR">&euro; EUR</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label for="annual-spend">Annual Spending (<span id="currency-label">USD</span>)</label>
+            <label for="annual-spend">Jaarlijkse Uitgaven (<span id="currency-label">USD</span>)</label>
             <input type="number" id="annual-spend" value="50000" min="1000" step="1000">
           </div>
 
           <div class="input-group">
-            <label for="retirement-year">Retirement Start Year</label>
+            <label for="retirement-year">Startjaar Pensioen</label>
             <div class="year-input-row">
               <input type="number" id="retirement-year" value="2030" min="2024" max="2060" step="1">
-              <button type="button" class="now-btn" id="start-now-btn" title="Start retirement this year">Now</button>
+              <button type="button" class="now-btn" id="start-now-btn" title="Start pensioen dit jaar">Nu</button>
             </div>
           </div>
 
           <div class="input-group">
-            <label for="time-horizon">Time Horizon (years)</label>
+            <label for="time-horizon">Tijdshorizon (jaren)</label>
             <input type="number" id="time-horizon" value="30" min="5" max="50" step="1">
           </div>
 
           <div class="input-group">
-            <label for="m2-growth">Annual Spending Growth (%)</label>
+            <label for="m2-growth">Jaarlijkse Uitgavengroei (%)</label>
             <input type="range" id="m2-growth" min="0" max="12" step="0.5" value="6.5">
             <div class="slider-value"><span id="m2-value">6.5</span>%</div>
-            <div class="spending-growth-hint hidden" id="spending-growth-hint">0% means fixed spending — your purchasing power will decline over time as prices rise</div>
+            <div class="spending-growth-hint hidden" id="spending-growth-hint">0% betekent vaste uitgaven — je koopkracht daalt na verloop van tijd naarmate prijzen stijgen</div>
           </div>
 
           <div class="input-group">
-            <label for="price-scenario">Price Scenario</label>
+            <label for="price-scenario">Prijsscenario</label>
             <select id="price-scenario">
-              <option value="cyclical" selected>Cyclical (±1σ, lengthening periods)</option>
-              <option value="cyclical_bear">Bear Bias Cycles (60% below trend)</option>
-              <option value="smooth_trend">Smooth Trend (flat on trend)</option>
-              <option value="smooth_bear">Bear (flat −1σ below trend)</option>
-              <option value="smooth_deep_bear">Deep Bear (flat −2σ below trend)</option>
+              <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde periodes)</option>
+              <option value="cyclical_bear">Bear Bias Cycli (60% onder trend)</option>
+              <option value="smooth_trend">Vlakke Trend (op trendlijn)</option>
+              <option value="smooth_bear">Bear (vlak &minus;1&sigma; onder trend)</option>
+              <option value="smooth_deep_bear">Diepe Bear (vlak &minus;2&sigma; onder trend)</option>
             </select>
           </div>
         </div>
 
-        <!-- ── Loans Toggle ──────────────────────────────── -->
+        <!-- ── Leningen Toggle ──────────────────────────────── -->
         <div class="loans-toggle-section">
-          <h3>Bitcoin-Backed Loans</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">When bitcoin is below the trend line, borrow against your stack instead of selling at unfavorable prices. This preserves your BTC but adds interest cost and liquidation risk.</p>
+          <h3>Bitcoin-Gedekte Leningen</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Wanneer bitcoin onder de trendlijn staat, leen je tegen je stack in plaats van te verkopen tegen ongunstige prijzen. Dit behoudt je BTC maar brengt rentekosten en liquidatierisico met zich mee.</p>
 
           <div class="toggle-switch-row">
             <label class="toggle-switch">
               <input type="checkbox" id="use-loans">
               <span class="toggle-slider"></span>
             </label>
-            <span class="toggle-label" id="loans-label">Loans: OFF — Sell only</span>
+            <span class="toggle-label" id="loans-label">Leningen: UIT — Alleen verkopen</span>
           </div>
 
           <div id="loan-params" class="loan-params hidden">
             <div class="input-grid">
               <div class="input-group">
-                <label for="loan-ltv">Loan-to-Value (%)</label>
+                <label for="loan-ltv">Lening-tot-Waarde (%)</label>
                 <input type="range" id="loan-ltv" min="20" max="50" step="5" value="40">
                 <div class="slider-value"><span id="ltv-value">40</span>%</div>
               </div>
 
               <div class="input-group">
-                <label for="loan-interest">Annual Interest Rate (%)</label>
+                <label for="loan-interest">Jaarlijkse Rente (%)</label>
                 <input type="range" id="loan-interest" min="3" max="15" step="0.5" value="8">
                 <div class="slider-value"><span id="interest-value">8</span>%</div>
               </div>
 
               <div class="input-group">
-                <label for="loan-threshold">Borrow when price/trend below</label>
+                <label for="loan-threshold">Lenen wanneer prijs/trend onder</label>
                 <input type="range" id="loan-threshold" min="0.5" max="1.5" step="0.1" value="1.0">
-                <div class="slider-value"><span id="threshold-value">1.0</span>×</div>
+                <div class="slider-value"><span id="threshold-value">1.0</span>&times;</div>
               </div>
             </div>
           </div>
         </div>
 
-        <button class="calculate-btn" id="calculate-btn">Calculate Retirement Plan</button>
-        <button class="calculate-btn secondary" id="compare-btn">Compare: Loans vs No Loans</button>
+        <button class="calculate-btn" id="calculate-btn">Bereken Pensioenplan</button>
+        <button class="calculate-btn secondary" id="compare-btn">Vergelijk: Leningen vs Zonder Leningen</button>
 
-        <!-- Action buttons — shown after first calculation -->
+        <!-- Actieknoppen — getoond na eerste berekening -->
         <div class="action-buttons hidden" id="action-buttons">
-          <button class="calculate-btn secondary" id="export-pdf-btn">&#128196; Save as PDF</button>
-          <button class="calculate-btn secondary" id="reset-defaults-btn">&#8634; Reset Defaults</button>
+          <button class="calculate-btn secondary" id="export-pdf-btn">&#128196; Opslaan als PDF</button>
+          <button class="calculate-btn secondary" id="reset-defaults-btn">&#8634; Standaardwaarden Herstellen</button>
         </div>
 
-        <!-- Status Banner - appears in-place after calculation -->
+        <!-- Statusbanner - verschijnt na berekening -->
         <div id="status-banner" class="status-banner hidden">
           <div class="status-icon" id="status-icon"></div>
           <div class="status-content">
@@ -156,37 +156,37 @@
       </div>
 
 
-      <!-- ── CAGR Decay Section ─────────────────────────── -->
+      <!-- ── CAGR Verval Sectie ─────────────────────────── -->
       <section id="cagr-section" class="hidden">
-        <h2>Expected Return Decay</h2>
-        <p>Power law assets have decreasing annual returns over time. Unlike exponential growth (constant CAGR), the power law's CAGR declines — which fundamentally changes retirement math.</p>
+        <h2>Verwacht Rendementverval</h2>
+        <p>Machtswet-assets hebben afnemende jaarlijkse rendementen over tijd. In tegenstelling tot exponentiële groei (constante CAGR), daalt de CAGR van de machtswet — wat de pensioenberekening fundamenteel verandert.</p>
         <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="cagr-chart" aria-label="CAGR decay over time"></canvas>
+          <canvas id="cagr-chart" aria-label="CAGR-verval over tijd"></canvas>
         </div>
       </section>
 
-      <!-- ── Summary Cards ──────────────────────────────── -->
+      <!-- ── Samenvattingskaarten ──────────────────────────────── -->
       <section id="results-section" class="hidden">
-        <h2>Retirement Summary</h2>
+        <h2>Pensioen Samenvatting</h2>
         <div class="dashboard" id="summary-cards">
-          <!-- Populated by JS -->
+          <!-- Gevuld door JS -->
         </div>
       </section>
 
-      <!-- ── Comparison Section ─────────────────────────── -->
+      <!-- ── Vergelijkingssectie ─────────────────────────── -->
       <section id="comparison-section" class="hidden">
-        <h2>Loans vs Sell-Only: Required Stack</h2>
-        <p>How much bitcoin you need to survive your full retirement horizon under each scenario.</p>
+        <h2>Leningen vs Alleen Verkopen: Benodigde Stack</h2>
+        <p>Hoeveel bitcoin je nodig hebt om je volledige pensioenhorizon te overleven onder elk scenario.</p>
         <div class="table-container">
           <table id="comparison-table">
             <thead>
               <tr>
                 <th>Scenario</th>
-                <th>Sell Only (BTC needed)</th>
-                <th>With Loans (BTC needed)</th>
-                <th>BTC Saved</th>
-                <th>Savings %</th>
-                <th>Total Interest Paid</th>
+                <th>Alleen Verkopen (BTC nodig)</th>
+                <th>Met Leningen (BTC nodig)</th>
+                <th>BTC Bespaard</th>
+                <th>Besparing %</th>
+                <th>Totaal Rente Betaald</th>
               </tr>
             </thead>
             <tbody id="comparison-body">
@@ -196,31 +196,31 @@
       </section>
 
 
-      <!-- ── Stack Over Time Chart ──────────────────────── -->
+      <!-- ── Stack Over Tijd Grafiek ──────────────────────── -->
       <section id="stack-chart-section" class="hidden">
-        <h2>Stack & Spending Over Time</h2>
+        <h2>Stack & Uitgaven over Tijd</h2>
         <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="stack-chart" aria-label="BTC stack and spending over time"></canvas>
+          <canvas id="stack-chart" aria-label="BTC stack en uitgaven over tijd"></canvas>
         </div>
       </section>
 
-      <!-- ── Year-by-Year Table ─────────────────────────── -->
+      <!-- ── Jaar-voor-Jaar Tabel ─────────────────────────── -->
       <section id="table-section" class="hidden">
-        <h2>Year-by-Year Breakdown</h2>
+        <h2>Jaar-voor-Jaar Overzicht</h2>
         <div class="table-container">
           <div class="weekly-table-wrapper" style="max-height: 500px;">
             <table>
               <thead>
                 <tr>
-                  <th>Year</th>
-                  <th>BTC Price</th>
+                  <th>Jaar</th>
+                  <th>BTC Prijs</th>
                   <th>Trend</th>
-                  <th>Multiple</th>
-                  <th>Spending</th>
-                  <th>BTC Sold</th>
-                  <th>Loan Balance</th>
+                  <th>Veelvoud</th>
+                  <th>Uitgaven</th>
+                  <th>BTC Verkocht</th>
+                  <th>Leningsaldo</th>
                   <th>Stack</th>
-                  <th>Portfolio Value</th>
+                  <th>Portfoliowaarde</th>
                   <th>SWR %</th>
                   <th>Status</th>
                 </tr>
@@ -232,10 +232,10 @@
         </div>
       </section>
 
-      <!-- ── Key Insight ────────────────────────────────── -->
+      <!-- ── Kernpunt ────────────────────────────────── -->
       <section id="insight-section" class="hidden">
         <div class="info-box">
-          <h4>Why This Matters</h4>
+          <h4>Waarom Dit Belangrijk Is</h4>
           <p id="insight-text"></p>
         </div>
       </section>
@@ -248,21 +248,21 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Methodology</h4>
-          <p>Power law trend: expected growth path. M2 growth: real inflation proxy. Loans: borrow below trend to preserve stack. SWR: dynamic, decreasing with power law CAGR.</p>
+          <h4>Methodologie</h4>
+          <p>Machtswettrend: verwacht groeipad. M2-groei: proxy voor reële inflatie. Leningen: lenen onder trend om stack te behouden. SWR: dynamisch, afnemend met machtswet-CAGR.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
-          <p>Not financial advice. For educational purposes only.</p>
+          <p>Geen financieel advies. Alleen voor educatieve doeleinden.</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>Historical model fit does not guarantee future performance. Always do your own research.</p>
+        <p>Historische modelfit garandeert geen toekomstige prestaties. Doe altijd je eigen onderzoek.</p>
       </div>
     </div>
   </footer>
 
-  <!-- Page-specific styles -->
+  <!-- Paginaspecifieke stijlen -->
   <style>
     /* Override global canvas height to respect container */
     .chart-container canvas {
@@ -550,8 +550,8 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="../js/powerlaw.js"></script>
-  <script src="../js/retirement.js"></script>
+  <script src="../../js/powerlaw.js"></script>
+  <script src="../../js/retirement.js"></script>
   <script src="../js/retirement-ui.js"></script>
 </body>
 </html>

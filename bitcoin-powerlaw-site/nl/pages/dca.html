@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DCA Calculator - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Simulate dollar-cost averaging and lump sum Bitcoin purchases using power law price projections. See your stack and portfolio grow over time.">
-  <link rel="stylesheet" href="../css/style.css">
+  <title>DCA Rekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Simuleer dollar-cost averaging en eenmalige Bitcoin-aankopen met machtswetprijsprojecties. Zie hoe je stack en portfolio groeien in de tijd.">
+  <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,21 +15,21 @@
     <div class="container">
       <a href="../index.html" class="logo">
         <span class="logo-icon">&#x20BF;</span>
-        Power Law Observatory
+        Machtswet Observatorium
       </a>
-      <nav class="nav" aria-label="Main navigation">
+      <nav class="nav" aria-label="Hoofdnavigatie">
         <a href="../index.html">Dashboard</a>
-        <a href="history.html">History</a>
-        <a href="price-chart.html">Price Chart</a>
-        <a href="future.html">Future</a>
-        <a href="retirement.html">Retirement</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="price-chart.html">Prijsgrafiek</a>
+        <a href="future.html">Toekomst</a>
+        <a href="retirement.html">Pensioen</a>
         <a href="dca.html" class="active">DCA</a>
-        <a href="about.html">About</a>
+        <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
-        <a href="dca.html" class="lang-link active">EN</a>
+        <a href="../../pages/dca.html" class="lang-link">EN</a>
         <span class="lang-sep">|</span>
-        <a href="../nl/pages/dca.html" class="lang-link">NL</a>
+        <a href="dca.html" class="lang-link active">NL</a>
       </div>
     </div>
   </header>
@@ -37,33 +37,33 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>DCA Calculator</h1>
-        <p>What happens when you buy Bitcoin &mdash; as a lump sum, a monthly DCA, or both? See how your stack and portfolio value grow under power law projections.</p>
+        <h1>DCA Rekentool</h1>
+        <p>Wat gebeurt er als je Bitcoin koopt &mdash; als eenmalige investering, maandelijkse DCA, of beide? Zie hoe je stack en portfoliowaarde groeien onder machtswetprojecties.</p>
       </section>
 
       <div class="disclaimer">
-        <p><strong>Important:</strong> This is an educational tool based on power law models, not financial advice. The model assumes the power law continues to hold. Real outcomes will vary. Always do your own research.</p>
+        <p><strong>Belangrijk:</strong> Dit is een educatieve tool gebaseerd op machtswetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken. Doe altijd je eigen onderzoek.</p>
       </div>
 
-      <!-- ── Input Section ──────────────────────────────── -->
+      <!-- ── Invoersectie ──────────────────────────────── -->
       <div class="card" id="dca-input-section">
-        <h3>Your DCA Parameters</h3>
+        <h3>Jouw DCA Parameters</h3>
 
         <div class="input-grid">
           <div class="input-group">
-            <label for="dca-lump-sum">Lump Sum (<span id="dca-currency-label">USD</span>)</label>
+            <label for="dca-lump-sum">Eenmalige Investering (<span id="dca-currency-label">USD</span>)</label>
             <input type="number" id="dca-lump-sum" value="10000" min="0" step="100">
-            <span class="input-hint">One-time initial purchase (0 = none)</span>
+            <span class="input-hint">Eenmalige aankoop (0 = geen)</span>
           </div>
 
           <div class="input-group">
-            <label for="dca-monthly">Monthly DCA (<span id="dca-currency-label2">USD</span>)</label>
+            <label for="dca-monthly">Maandelijkse DCA (<span id="dca-currency-label2">USD</span>)</label>
             <input type="number" id="dca-monthly" value="500" min="0" step="50">
-            <span class="input-hint">Recurring monthly buy (0 = none)</span>
+            <span class="input-hint">Terugkerende maandelijkse aankoop (0 = geen)</span>
           </div>
 
           <div class="input-group">
-            <label for="dca-currency">Currency</label>
+            <label for="dca-currency">Valuta</label>
             <select id="dca-currency">
               <option value="USD" selected>$ USD</option>
               <option value="EUR">&euro; EUR</option>
@@ -71,58 +71,58 @@
           </div>
 
           <div class="input-group">
-            <label for="dca-start-year">Start Year</label>
+            <label for="dca-start-year">Startjaar</label>
             <div class="year-input-row">
               <input type="number" id="dca-start-year" value="2025" min="2024" max="2060" step="1">
-              <button type="button" class="now-btn" id="dca-start-now-btn" title="Start this year">Now</button>
+              <button type="button" class="now-btn" id="dca-start-now-btn" title="Start dit jaar">Nu</button>
             </div>
           </div>
 
           <div class="input-group">
-            <label for="dca-start-month">Start Month</label>
+            <label for="dca-start-month">Startmaand</label>
             <select id="dca-start-month">
-              <option value="1">January</option>
-              <option value="2">February</option>
-              <option value="3">March</option>
+              <option value="1">Januari</option>
+              <option value="2">Februari</option>
+              <option value="3">Maart</option>
               <option value="4">April</option>
-              <option value="5">May</option>
-              <option value="6">June</option>
-              <option value="7">July</option>
-              <option value="8">August</option>
+              <option value="5">Mei</option>
+              <option value="6">Juni</option>
+              <option value="7">Juli</option>
+              <option value="8">Augustus</option>
               <option value="9">September</option>
-              <option value="10">October</option>
+              <option value="10">Oktober</option>
               <option value="11">November</option>
               <option value="12">December</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label for="dca-horizon">Time Horizon (years)</label>
+            <label for="dca-horizon">Tijdshorizon (jaren)</label>
             <input type="number" id="dca-horizon" value="10" min="1" max="30" step="1">
           </div>
 
           <div class="input-group">
-            <label for="dca-scenario">Price Scenario</label>
+            <label for="dca-scenario">Prijsscenario</label>
             <select id="dca-scenario">
-              <option value="cyclical" selected>Cyclical (&plusmn;1&sigma;, lengthening periods)</option>
-              <option value="cyclical_bear">Bear Bias Cycles (60% below trend)</option>
-              <option value="smooth_trend">Smooth Trend (flat on trend)</option>
-              <option value="smooth_bear">Bear (flat &minus;1&sigma; below trend)</option>
-              <option value="smooth_deep_bear">Deep Bear (flat &minus;2&sigma; below trend)</option>
+              <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde periodes)</option>
+              <option value="cyclical_bear">Bear Bias Cycli (60% onder trend)</option>
+              <option value="smooth_trend">Vlakke Trend (vlak op trend)</option>
+              <option value="smooth_bear">Bear (vlak &minus;1&sigma; onder trend)</option>
+              <option value="smooth_deep_bear">Diepe Bear (vlak &minus;2&sigma; onder trend)</option>
             </select>
           </div>
         </div>
 
-        <button class="calculate-btn" id="dca-calculate-btn">Calculate DCA</button>
-        <button class="calculate-btn secondary" id="dca-compare-btn">Compare: Lump Sum vs DCA vs Combined</button>
+        <button class="calculate-btn" id="dca-calculate-btn">Bereken DCA</button>
+        <button class="calculate-btn secondary" id="dca-compare-btn">Vergelijk: Eenmalig vs DCA vs Gecombineerd</button>
 
-        <!-- Action buttons — shown after first calculation -->
+        <!-- Actieknoppen — getoond na eerste berekening -->
         <div class="action-buttons hidden" id="dca-action-buttons">
-          <button class="calculate-btn secondary" id="dca-export-pdf-btn">&#128196; Save as PDF</button>
-          <button class="calculate-btn secondary" id="dca-reset-btn">&#8634; Reset Defaults</button>
+          <button class="calculate-btn secondary" id="dca-export-pdf-btn">&#128196; Opslaan als PDF</button>
+          <button class="calculate-btn secondary" id="dca-reset-btn">&#8634; Standaardwaarden Herstellen</button>
         </div>
 
-        <!-- Status Banner -->
+        <!-- Statusbanner -->
         <div id="dca-status-banner" class="status-banner hidden">
           <div class="status-icon" id="dca-status-icon"></div>
           <div class="status-content">
@@ -132,50 +132,50 @@
         </div>
       </div>
 
-      <!-- ── Summary Cards ──────────────────────────────── -->
+      <!-- ── Samenvattingskaarten ──────────────────────────────── -->
       <section id="dca-results-section" class="hidden">
-        <h2>DCA Summary</h2>
+        <h2>DCA Samenvatting</h2>
         <div class="dashboard" id="dca-summary-cards">
-          <!-- Populated by JS -->
+          <!-- Gevuld door JS -->
         </div>
       </section>
 
-      <!-- ── Growth Chart: Portfolio Value vs Invested ──── -->
+      <!-- ── Groeigrafiek: Portfoliowaarde vs Geïnvesteerd ──── -->
       <section id="dca-growth-section" class="hidden">
-        <h2>Portfolio Value vs Total Invested</h2>
-        <p>The green area above the orange line represents your unrealised gains.</p>
+        <h2>Portfoliowaarde vs Totaal Geïnvesteerd</h2>
+        <p>Het groene gebied boven de oranje lijn vertegenwoordigt je ongerealiseerde winst.</p>
         <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="dca-growth-chart" aria-label="Portfolio value vs total invested over time"></canvas>
+          <canvas id="dca-growth-chart" aria-label="Portfoliowaarde versus totaal geïnvesteerd in de tijd"></canvas>
         </div>
       </section>
 
-      <!-- ── Accumulation Chart: BTC Stack ──────────────── -->
+      <!-- ── Accumulatiegrafiek: BTC Stack ──────────────── -->
       <section id="dca-accumulation-section" class="hidden">
-        <h2>Bitcoin Accumulation</h2>
-        <p>Your BTC stack growing month by month.</p>
+        <h2>Bitcoin Accumulatie</h2>
+        <p>Je BTC stack groeit maand na maand.</p>
         <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="dca-accumulation-chart" aria-label="BTC accumulation over time"></canvas>
+          <canvas id="dca-accumulation-chart" aria-label="BTC accumulatie in de tijd"></canvas>
         </div>
       </section>
 
-      <!-- ── Comparison Section ─────────────────────────── -->
+      <!-- ── Vergelijkingssectie ─────────────────────────── -->
       <section id="dca-comparison-section" class="hidden">
-        <h2>Strategy Comparison</h2>
-        <p>Lump sum only vs monthly DCA only vs combined approach.</p>
+        <h2>Strategievergelijking</h2>
+        <p>Alleen eenmalig vs alleen maandelijkse DCA vs gecombineerde aanpak.</p>
         <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="dca-comparison-chart" aria-label="Strategy comparison chart"></canvas>
+          <canvas id="dca-comparison-chart" aria-label="Strategievergelijkingsgrafiek"></canvas>
         </div>
         <div class="table-container" style="margin-top: var(--spacing-lg);">
           <table>
             <thead>
               <tr>
-                <th>Strategy</th>
-                <th>Total Invested</th>
-                <th>BTC Accumulated</th>
-                <th>Final Value</th>
-                <th>Gain / Loss</th>
+                <th>Strategie</th>
+                <th>Totaal Geïnvesteerd</th>
+                <th>BTC Geaccumuleerd</th>
+                <th>Eindwaarde</th>
+                <th>Winst / Verlies</th>
                 <th>ROI %</th>
-                <th>Avg Cost Basis</th>
+                <th>Gem. Kostprijs</th>
               </tr>
             </thead>
             <tbody id="dca-comparison-body"></tbody>
@@ -183,22 +183,22 @@
         </div>
       </section>
 
-      <!-- ── Monthly Table ──────────────────────────────── -->
+      <!-- ── Maandelijkse Tabel ──────────────────────────────── -->
       <section id="dca-table-section" class="hidden">
-        <h2>Month-by-Month Breakdown</h2>
-        <button class="calculate-btn secondary" id="dca-table-toggle-btn" style="margin-bottom: var(--spacing-md); margin-top:0;">Show All Months</button>
+        <h2>Maandelijks Overzicht</h2>
+        <button class="calculate-btn secondary" id="dca-table-toggle-btn" style="margin-bottom: var(--spacing-md); margin-top:0;">Toon Alle Maanden</button>
         <div class="table-container">
           <div class="weekly-table-wrapper" style="max-height: 500px;">
             <table>
               <thead>
                 <tr>
-                  <th>Date</th>
-                  <th>BTC Price</th>
-                  <th>Monthly Buy</th>
-                  <th>BTC Bought</th>
-                  <th>Cumulative BTC</th>
-                  <th>Total Invested</th>
-                  <th>Portfolio Value</th>
+                  <th>Datum</th>
+                  <th>BTC Prijs</th>
+                  <th>Maandelijkse Aankoop</th>
+                  <th>BTC Gekocht</th>
+                  <th>Cumulatief BTC</th>
+                  <th>Totaal Geïnvesteerd</th>
+                  <th>Portfoliowaarde</th>
                   <th>ROI %</th>
                 </tr>
               </thead>
@@ -208,10 +208,10 @@
         </div>
       </section>
 
-      <!-- ── Insight ────────────────────────────────────── -->
+      <!-- ── Inzicht ────────────────────────────────────── -->
       <section id="dca-insight-section" class="hidden">
         <div class="info-box">
-          <h4>DCA Insight</h4>
+          <h4>DCA Inzicht</h4>
           <p id="dca-insight-text"></p>
         </div>
       </section>
@@ -223,21 +223,21 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Methodology</h4>
-          <p>Power law trend: expected growth path. Scenario engine models cyclical deviation around trend. Dollar-cost averaging buys at each month's scenario price.</p>
+          <h4>Methodologie</h4>
+          <p>Machtswettrend: verwacht groeipad. Scenario-engine modelleert cyclische afwijking rond de trend. Dollar-cost averaging koopt tegen de scenarioprijs van elke maand.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
-          <p>Not financial advice. For educational purposes only.</p>
+          <p>Geen financieel advies. Alleen voor educatieve doeleinden.</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>Historical model fit does not guarantee future performance. Always do your own research.</p>
+        <p>Historische modelfit garandeert geen toekomstige prestaties. Doe altijd je eigen onderzoek.</p>
       </div>
     </div>
   </footer>
 
-  <!-- Page-specific styles -->
+  <!-- Paginaspecifieke stijlen -->
   <style>
     .chart-container canvas {
       width: 100% !important;
@@ -365,7 +365,7 @@
       flex-wrap: wrap;
     }
 
-    /* Status Banner */
+    /* Statusbanner */
     .status-banner {
       display: flex;
       align-items: flex-start;
@@ -443,9 +443,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="../js/powerlaw.js"></script>
-  <script src="../js/retirement.js"></script>
-  <script src="../js/dca.js"></script>
+  <script src="../../js/powerlaw.js"></script>
+  <script src="../../js/retirement.js"></script>
+  <script src="../../js/dca.js"></script>
   <script src="../js/dca-ui.js"></script>
 </body>
 </html>

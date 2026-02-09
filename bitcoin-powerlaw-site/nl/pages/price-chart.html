@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BTC Price Chart - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Interactive Bitcoin price chart with toggleable linear and logarithmic scales on both axes.">
-  <link rel="stylesheet" href="../css/style.css">
+  <title>BTC Prijsgrafiek - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Interactieve Bitcoin prijsgrafiek met schakelbare lineaire en logaritmische schalen op beide assen.">
+  <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -103,21 +103,21 @@
     <div class="container">
       <a href="../index.html" class="logo">
         <span class="logo-icon">&#x20BF;</span>
-        Power Law Observatory
+        Machtswet Observatorium
       </a>
-      <nav class="nav" aria-label="Main navigation">
+      <nav class="nav" aria-label="Hoofdnavigatie">
         <a href="../index.html">Dashboard</a>
-        <a href="history.html">History</a>
-        <a href="price-chart.html" class="active">Price Chart</a>
-        <a href="future.html">Future</a>
-        <a href="retirement.html">Retirement</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="price-chart.html" class="active">Prijsgrafiek</a>
+        <a href="future.html">Toekomst</a>
+        <a href="retirement.html">Pensioen</a>
         <a href="dca.html">DCA</a>
-        <a href="about.html">About</a>
+        <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
-        <a href="price-chart.html" class="lang-link active">EN</a>
+        <a href="../../pages/price-chart.html" class="lang-link">EN</a>
         <span class="lang-sep">|</span>
-        <a href="../nl/pages/price-chart.html" class="lang-link">NL</a>
+        <a href="price-chart.html" class="lang-link active">NL</a>
       </div>
     </div>
   </header>
@@ -125,24 +125,24 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>BTC Price Chart</h1>
-        <p>Weekly closing prices from 2014 to present. Toggle each axis independently between linear and logarithmic scale.</p>
+        <h1>BTC Prijsgrafiek</h1>
+        <p>Wekelijkse slotkoersen van 2014 tot heden. Schakel elke as afzonderlijk tussen lineaire en logaritmische schaal.</p>
       </section>
 
-      <!-- Axis scale toggles + band checkboxes -->
+      <!-- Asschaal-knoppen + band-selectievakjes -->
       <div class="scale-toggles">
         <div class="scale-group">
-          <span class="scale-group-label">Time</span>
-          <div class="pill-group" role="group" aria-label="Time axis scale">
-            <button class="pill-btn active" data-axis="x" data-scale="linear">Linear</button>
+          <span class="scale-group-label">Tijd</span>
+          <div class="pill-group" role="group" aria-label="Tijdas schaal">
+            <button class="pill-btn active" data-axis="x" data-scale="linear">Lineair</button>
             <button class="pill-btn"        data-axis="x" data-scale="logarithmic">Log</button>
           </div>
         </div>
 
         <div class="scale-group">
-          <span class="scale-group-label">Price</span>
-          <div class="pill-group" role="group" aria-label="Price axis scale">
-            <button class="pill-btn active" data-axis="y" data-scale="linear">Linear</button>
+          <span class="scale-group-label">Prijs</span>
+          <div class="pill-group" role="group" aria-label="Prijsas schaal">
+            <button class="pill-btn active" data-axis="y" data-scale="linear">Lineair</button>
             <button class="pill-btn"        data-axis="y" data-scale="logarithmic">Log</button>
           </div>
         </div>
@@ -160,47 +160,47 @@
         </div>
       </div>
 
-      <!-- Chart -->
+      <!-- Grafiek -->
       <div class="chart-container" style="height: 520px;">
-        <canvas id="price-chart" aria-label="Bitcoin weekly price chart" role="img"></canvas>
+        <canvas id="price-chart" aria-label="Bitcoin wekelijkse prijsgrafiek" role="img"></canvas>
       </div>
 
-      <!-- Stats beneath chart -->
+      <!-- Statistieken onder de grafiek -->
       <div class="stats-row" id="stats-row">
         <div class="stat-item">
-          <div class="stat-label">Latest Price</div>
+          <div class="stat-label">Laatste Prijs</div>
           <div class="stat-value" id="stat-latest">--</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">All-Time High</div>
+          <div class="stat-label">Historisch Hoogtepunt</div>
           <div class="stat-value" id="stat-ath">--</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">ATH Date</div>
+          <div class="stat-label">ATH Datum</div>
           <div class="stat-value" id="stat-ath-date" style="font-size: 0.95rem;">--</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">All-Time Low</div>
+          <div class="stat-label">Historisch Dieptepunt</div>
           <div class="stat-value" id="stat-atl">--</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">ATL Date</div>
+          <div class="stat-label">ATL Datum</div>
           <div class="stat-value" id="stat-atl-date" style="font-size: 0.95rem;">--</div>
         </div>
         <div class="stat-item">
-          <div class="stat-label">Weeks of Data</div>
+          <div class="stat-label">Weken Data</div>
           <div class="stat-value" id="stat-weeks">--</div>
         </div>
       </div>
 
-      <!-- Info box -->
+      <!-- Informatievak -->
       <div class="info-box" style="margin-top: var(--spacing-xl);">
-        <h4>How to read this chart</h4>
-        <p><strong>Linear + Linear</strong> shows the explosive recent growth in raw dollar terms — early years are flattened near zero.<br>
-           <strong>Linear + Log (price)</strong> spreads out the early history so you can see every cycle clearly.<br>
-           <strong>Log + Log</strong> is the classic power-law view: if BTC follows a power law, the trend becomes a straight line.<br>
-           <strong>Log time + Linear price</strong> compresses the early quiet years while keeping dollar moves intuitive.</p>
-        <p style="margin-top: var(--spacing-sm);"><strong>Trend</strong> is the power-law fair-value curve. The <strong>σ bands</strong> show one and two standard deviations above and below — historically price has always reverted back inside these bounds.</p>
+        <h4>Hoe lees je deze grafiek</h4>
+        <p><strong>Lineair + Lineair</strong> toont de explosieve recente groei in ruwe dollarwaarden — de vroege jaren worden bij nul afgevlakt.<br>
+           <strong>Lineair + Log (prijs)</strong> spreidt de vroege geschiedenis uit zodat je elke cyclus duidelijk kunt zien.<br>
+           <strong>Log + Log</strong> is de klassieke machtswetweergave: als BTC een machtswet volgt, wordt de trend een rechte lijn.<br>
+           <strong>Log tijd + Lineaire prijs</strong> comprimeert de vroege rustige jaren terwijl dollarbewegingen intuïtief blijven.</p>
+        <p style="margin-top: var(--spacing-sm);"><strong>Trend</strong> is de machtswet-reëlewaardelijn. De <strong>σ-banden</strong> tonen een en twee standaardafwijkingen boven en onder — historisch gezien is de prijs altijd teruggekeerd binnen deze grenzen.</p>
       </div>
 
     </div>
@@ -210,23 +210,23 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Data Source</h4>
-          <p>Weekly closes derived from Bitstamp daily data via CryptoDataDownload</p>
+          <h4>Gegevensbron</h4>
+          <p>Wekelijkse slotkoersen afgeleid van Bitstamp dagelijkse data via CryptoDataDownload</p>
         </div>
         <div class="footer-section">
           <h4>Model</h4>
-          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+          <p>Santostasi/Perrenod Machtswettheorie<br>Parameters van <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>This is not financial advice. Historical model fit does not guarantee future performance.</p>
+        <p>Dit is geen financieel advies. Historische modelfit garandeert geen toekomstige prestaties.</p>
       </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="../js/powerlaw.js"></script>
+  <script src="../../js/powerlaw.js"></script>
   <script src="../js/price-chart.js"></script>
 </body>
 </html>

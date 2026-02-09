@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Volg de Bitcoin-prijs door de machtswetlens - huidige waardering, historische context en langetermijnprojecties.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Machtswet Observatorium
+      </a>
+      <nav class="nav" aria-label="Hoofdnavigatie">
+        <a href="index.html" class="active">Dashboard</a>
+        <a href="pages/history.html">Geschiedenis</a>
+        <a href="pages/price-chart.html">Prijsgrafiek</a>
+        <a href="pages/future.html">Toekomst</a>
+        <a href="pages/retirement.html">Pensioen</a>
+        <a href="pages/dca.html">DCA</a>
+        <a href="pages/about.html">Over</a>
+      </nav>
+      <div class="lang-toggle">
+        <a href="../index.html" class="lang-link">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="index.html" class="lang-link active">NL</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Bitcoin Machtswet</h1>
+        <p>Bitcoin's prijs bekeken door de lens van wiskundige consistentie. Machtswetmodellen suggereren dat Bitcoin voorspelbare langetermijngroeipatronen volgt, aangedreven door netwerkadoptie.</p>
+      </section>
+
+      <!-- Dashboard Kaarten -->
+      <div class="dashboard">
+        <div class="card">
+          <div class="card-label">Huidige Prijs</div>
+          <div class="card-value large" id="current-price">--</div>
+          <div class="card-sub" id="price-change">Laden...</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Model Trendwaarde</div>
+          <div class="card-value" id="trend-price">--</div>
+          <div class="card-sub" id="model-name">Santostasi-model</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Prijs / Trend</div>
+          <div class="card-value" id="multiplier">--</div>
+          <div class="card-sub">
+            <span class="valuation-badge" id="valuation-badge">--</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Dagen Sinds Genesis</div>
+          <div class="card-value" id="days-count">--</div>
+          <div class="card-sub" id="genesis-date">Sinds 3 jan 2009</div>
+        </div>
+      </div>
+
+      <!-- Info tooltip -->
+      <div class="info-box">
+        <h4>Wat betekent dit?</h4>
+        <p>De machtswet bekijkt de Bitcoin-prijs als een functie van adoptiegroei in de tijd, vergelijkbaar met netwerkeffecten beschreven door de Wet van Metcalfe. Een vermenigvuldiger onder 1,0 suggereert dat de huidige prijs onder de langetermijntrend ligt; boven 1,0 suggereert dat de prijs boven de trend ligt. Historisch gezien heeft de prijs rond deze trendlijn geschommeld en is altijd teruggekeerd naar de trend.</p>
+      </div>
+
+      <!-- Mini grafiek met positie -->
+      <div class="sparkline-container">
+        <div class="sparkline-header">
+          <h3>Huidige Positie op de Machtswetcurve</h3>
+          <div class="range-toggle" role="group" aria-label="Tijdsbereik grafiek">
+            <button class="range-btn" data-days="7">1W</button>
+            <button class="range-btn" data-days="30">1M</button>
+            <button class="range-btn" data-days="90">3M</button>
+            <button class="range-btn active" data-days="180">6M</button>
+            <button class="range-btn" data-days="365">1J</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="sparkline-chart" aria-label="Bitcoin-prijspositie ten opzichte van de machtswettrend" role="img"></canvas>
+        </div>
+      </div>
+
+      <!-- Statistieken -->
+      <div class="dashboard" style="margin-top: var(--spacing-xl);">
+        <div class="card">
+          <div class="card-label">Model R-kwadraat</div>
+          <div class="card-value" id="r-squared">~95,6%</div>
+          <div class="card-sub">Historische fitscore</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Log Volatiliteit (1&sigma;)</div>
+          <div class="card-value" id="sigma-value">--</div>
+          <div class="card-sub">Standaardafwijking van logresiduen</div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Datapunten</div>
+          <div class="card-value" id="data-points">--</div>
+          <div class="card-sub">Dagelijkse slotkoersen sinds juli 2010</div>
+        </div>
+      </div>
+
+      <!-- Historische Hoogtepunten Sectie -->
+      <section id="historical-highlights" style="margin-top: var(--spacing-xxl);">
+        <h2>Historische Hoogtepunten: Belangrijke Afwijkingsgebeurtenissen</h2>
+        <div class="info-box">
+          <p>Bekijk eerdere cycli om te begrijpen hoe de prijs historisch is teruggekeerd naar de machtswettrend. Nuttig voor beslissingen zoals lenen bij diepe onderwaardering of winst nemen bij extreme overwaardering.</p>
+        </div>
+        <div class="table-container">
+          <table id="highlights-table">
+            <thead>
+              <tr>
+                <th>Datum</th>
+                <th>Gebeurtenis</th>
+                <th>Prijs</th>
+                <th>Trend</th>
+                <th>Afwijking</th>
+                <th>Uitkomst</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Gevuld door highlights.js -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Databronnen</h4>
+          <p>Live prijs: CoinGecko API<br>Historisch: Bitstamp, CryptoDataDownload</p>
+        </div>
+        <div class="footer-section">
+          <h4>Model</h4>
+          <p>Santostasi/Perrenod Machtswettheorie<br>Parameters van <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+        </div>
+        <div class="footer-section">
+          <h4>Links</h4>
+          <p><a href="pages/about.html">Over & Methodologie</a></p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Dit is geen financieel advies. Historische modelpassing garandeert geen toekomstige prestaties. Alleen voor educatieve doeleinden.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../js/powerlaw.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/highlights.js"></script>
+</body>
+</html>

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Over - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Inzicht in het Bitcoin-machtswetmodel, de oorsprong, methodologie en beperkingen.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Machtswet Observatorium
+      </a>
+      <nav class="nav" aria-label="Hoofdnavigatie">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="price-chart.html">Prijsgrafiek</a>
+        <a href="future.html">Toekomst</a>
+        <a href="retirement.html">Pensioen</a>
+        <a href="dca.html">DCA</a>
+        <a href="about.html" class="active">Over</a>
+      </nav>
+      <div class="lang-toggle">
+        <a href="../../pages/about.html" class="lang-link">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="about.html" class="lang-link active">NL</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Over de Machtswet</h1>
+        <p>Een wiskundig kader om het langetermijnprijsgedrag van Bitcoin te begrijpen door de lens van netwerkadoptie.</p>
+      </section>
+
+      <!-- Wat is een Machtswet -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Wat is een Machtswet?</h2>
+        <p>Een machtswet is een wiskundige relatie waarbij de ene grootheid varieert als een macht van de andere:</p>
+
+        <div class="info-box" style="font-family: monospace; font-size: 1.1rem; text-align: center;">
+          y = A &times; x<sup>&beta;</sup>
+        </div>
+
+        <p>Machtswetten komen overal in de natuur en menselijke systemen voor:</p>
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li><strong>Stadsgrootten</strong> volgen een machtswetdistributie (Wet van Zipf)</li>
+          <li><strong>Aardbevingsmagnitudes</strong> volgen de Gutenberg-Richter-wet</li>
+          <li><strong>Woordfrequenties</strong> in talen volgen machtswetdistributies</li>
+          <li><strong>Netwerkeffecten</strong> vertonen vaak machtswetgroei (Wet van Metcalfe)</li>
+        </ul>
+
+        <p style="margin-top: var(--spacing-md);">Op een log-log schaal verschijnen machtswetrelaties als rechte lijnen. Dit is precies wat we waarnemen bij de prijs van Bitcoin door de tijd heen.</p>
+      </section>
+
+      <!-- Het Machtswetgedrag van Bitcoin -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Het Machtswetgedrag van Bitcoin</h2>
+        <p>Sinds het ontstaan heeft de prijs van Bitcoin een opmerkelijk consistente machtswetrelatie met tijd gevolgd. Wanneer log(prijs) wordt uitgezet tegen log(tijd sinds genesis), vormen de gegevens een bijna rechte lijn met een R-kwadraat van ongeveer 95%.</p>
+
+        <div class="info-box">
+          <h4>Waarom zou dit voorkomen?</h4>
+          <p>De machtswetrelatie ontstaat waarschijnlijk door de netwerkeffecten van Bitcoin. Naarmate meer mensen Bitcoin adopteren, wordt het netwerk waardevoller (vergelijkbaar met de Wet van Metcalfe, waarbij de netwerkwaarde schaalt met het kwadraat van het aantal gebruikers). Het consistente groeitempo suggereert dat adoptie voorspelbare patronen volgt over lange tijdschalen.</p>
+        </div>
+      </section>
+
+      <!-- Het Model -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Het Model</h2>
+
+        <div class="card">
+          <h3 style="color: var(--orange);">Santostasi/Perrenod Machtswetmodel</h3>
+          <p style="margin-bottom: var(--spacing-sm);"><strong>Bron:</strong> Giovanni Santostasi's onderzoek naar de Bitcoin Machtswet Theorie. Parameters van <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+
+          <div class="info-box" style="font-family: monospace; margin: var(--spacing-md) 0;">
+            trendprijs = 10<sup>-16,493</sup> &times; dagen<sup>5,688</sup>
+          </div>
+
+          <p>Dit model gebruikt dagen sinds genesis (3 januari 2009) als tijdsvariabele. Belangrijkste kenmerken:</p>
+          <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+            <li>&beta; = 5,688 (exponent)</li>
+            <li>log<sub>10</sub>(A) = -16,493 (snijpunt)</li>
+            <li>R&sup2; &asymp; 95%</li>
+            <li>Huidige trendwaarde ~$130K (februari 2026)</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Terugkeer naar het Gemiddelde -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Terugkeer naar het Gemiddelde</h2>
+        <p>Een van de belangrijkste aspecten van het machtswetmodel is het begrijpen van terugkeer naar het gemiddelde. De prijs van Bitcoin volgt de trendlijn niet perfect; hij oscilleert eromheen, soms dramatisch.</p>
+
+        <div class="dashboard" style="margin: var(--spacing-lg) 0;">
+          <div class="card">
+            <div class="card-label">Historisch Maximum</div>
+            <div class="card-value" style="color: var(--red);">~8&times;</div>
+            <div class="card-sub">Boven trend (juni 2011)</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Historisch Minimum</div>
+            <div class="card-value" style="color: var(--green);">~0,3&times;</div>
+            <div class="card-sub">Onder trend (bearmarkten)</div>
+          </div>
+          <div class="card">
+            <div class="card-label">Typisch Bereik</div>
+            <div class="card-value">0,5&times; - 2&times;</div>
+            <div class="card-sub">&plusmn;1&sigma; van trend</div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <h4>De Elastiek-analogie</h4>
+          <p>Stel je voor dat de prijs met een elastiek aan de trendlijn is bevestigd. Het kan ver in beide richtingen uitrekken tijdens bubbels of crashes, maar hoe verder het uitrekt, hoe sterker de trekkracht terug naar de trend. Dit voorspelt geen kortetermijnbewegingen, maar historisch gezien zijn extreme afwijkingen altijd gecorrigeerd.</p>
+        </div>
+      </section>
+
+      <!-- Methodologie -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Methodologie</h2>
+
+        <h3>Databronnen</h3>
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li><strong>Historische prijzen (2010-2024):</strong> GitHub Bitcoin-prijsdataset</li>
+          <li><strong>Recente prijzen (2024-heden):</strong> Bitstamp wisselkoersdata via CryptoDataDownload</li>
+          <li><strong>Live prijs:</strong> CoinGecko API</li>
+        </ul>
+
+        <h3 style="margin-top: var(--spacing-lg);">Berekening Standaardafwijking</h3>
+        <p>De &sigma; (sigma) banden worden dynamisch berekend op basis van de historische gegevens:</p>
+        <ol style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2;">
+          <li>Bereken voor elk historisch datapunt log<sub>10</sub>(werkelijke_prijs) - log<sub>10</sub>(trendprijs)</li>
+          <li>Deze "log-residuen" tonen hoe ver de prijs afweek van de trend</li>
+          <li>Bereken de standaardafwijking van deze residuen</li>
+          <li>Gebruik deze &sigma; om banden te maken: trend &times; 10<sup>&plusmn;k&sigma;</sup></li>
+        </ol>
+
+        <h3 style="margin-top: var(--spacing-lg);">Genesis Blok</h3>
+        <p>Beide modellen gebruiken 3 januari 2009, 00:00:00 UTC als de genesis-tijdstempel (blok 0).</p>
+      </section>
+
+      <!-- Beperkingen -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Beperkingen & Kanttekeningen</h2>
+
+        <div class="disclaimer">
+          <p><strong>Dit is geen financieel advies.</strong> Het machtswetmodel is een empirische observatie, geen garantie voor toekomstige prestaties.</p>
+        </div>
+
+        <ul style="margin-left: var(--spacing-lg); color: var(--gray); line-height: 2; margin-top: var(--spacing-lg);">
+          <li><strong>Empirisch, niet fundamenteel:</strong> De machtswet is een curve-fit op historische gegevens. Het is niet afgeleid van eerste beginselen.</li>
+          <li><strong>Extrapolatierisico:</strong> Patronen uit het verleden hoeven niet oneindig door te gaan. Het model kan falen.</li>
+          <li><strong>Volatiliteit:</strong> Zelfs als de trend standhoudt, kunnen werkelijke prijzen 50-80% in beide richtingen afwijken.</li>
+          <li><strong>Externe factoren:</strong> Veranderingen in regelgeving, technologische disruptie of macro-economische gebeurtenissen kunnen het traject van Bitcoin veranderen.</li>
+          <li><strong>Overlevingsbias:</strong> We analyseren Bitcoin omdat het heeft overleefd. Mislukte cryptovaluta's verschijnen niet in deze analyse.</li>
+          <li><strong>Modelonzekerheid:</strong> Verschillende parameterkeuzes (beta, genesis-tijd, databronnen) leveren verschillende projecties op.</li>
+        </ul>
+      </section>
+
+      <!-- Verder Lezen -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Verder Lezen</h2>
+
+        <div class="card" style="margin-bottom: var(--spacing-md);">
+          <h4>Giovanni Santostasi's Machtswetonderzoek</h4>
+          <p style="color: var(--gray);">Origineel academisch werk over het machtswetgedrag van Bitcoin</p>
+          <p>Het fundamentele onderzoek dat het wiskundige kader vaststelt voor de machtswetprijsdynamiek van Bitcoin.</p>
+        </div>
+
+        <div class="card" style="margin-bottom: var(--spacing-md);">
+          <h4><a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></h4>
+          <p style="color: var(--gray);">Santostasi's officiele Bitcoin Machtswet-site</p>
+          <p>Interactieve tool met de nieuwste regressieparameters. Deze site gebruikt die parameters (logA=-16,493, beta=5,688).</p>
+        </div>
+
+        <div class="card">
+          <h4>b1m.io</h4>
+          <p style="color: var(--gray);">Bitcoin-statistieken en machtswetvisualisatie</p>
+          <p>Een overzichtelijke, data-gerichte site die veel van de ontwerpbenadering van dit observatorium heeft geinspireerd.</p>
+        </div>
+      </section>
+
+      <!-- Technische Referentie -->
+      <section style="margin-bottom: var(--spacing-xxl);">
+        <h2>Technische Referentie</h2>
+
+        <div class="info-box" style="font-family: monospace; font-size: 0.9rem; overflow-x: auto;">
+          <pre style="margin: 0; white-space: pre-wrap;">
+// Genesis blok
+const GENESIS = new Date('2009-01-03T00:00:00Z');
+
+// Santostasi/Perrenod Model (van bitcoinpower.law)
+const dagenSindsGenesis = (Date.now() - GENESIS.getTime()) / (1000 * 60 * 60 * 24);
+const trendPrijs = Math.pow(10, -16.493) * Math.pow(dagenSindsGenesis, 5.688);
+
+// Sigma-banden (waarbij sigma is berekend uit historische log-residuen)
+const bovenBand = trendPrijs * Math.pow(10, sigma);
+const onderBand = trendPrijs * Math.pow(10, -sigma);
+          </pre>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Databronnen</h4>
+          <p>Live: CoinGecko API<br>Historisch: Bitstamp, CryptoDataDownload, GitHub</p>
+        </div>
+        <div class="footer-section">
+          <h4>Naamsvermelding</h4>
+          <p>Model gebaseerd op werk van Giovanni Santostasi en Harold Christopher Burger (Perrenod)</p>
+        </div>
+        <div class="footer-section">
+          <h4>Open Source</h4>
+          <p>Deze site is uitsluitend bedoeld voor educatieve doeleinden</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Dit is geen financieel advies. Een historische modelfit garandeert geen toekomstige prestaties. Doe altijd je eigen onderzoek.</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

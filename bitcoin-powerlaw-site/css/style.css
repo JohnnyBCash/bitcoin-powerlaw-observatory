@@ -135,6 +135,30 @@ a:hover {
   transition: color 0.2s;
 }
 
+.lang-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: var(--spacing-md);
+}
+
+.lang-link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--gray);
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.lang-link:hover { color: var(--black); }
+
+.lang-link.active {
+  color: var(--black);
+  background: var(--gray-light);
+}
+
 .nav a:hover,
 .nav a.active {
   color: var(--black);

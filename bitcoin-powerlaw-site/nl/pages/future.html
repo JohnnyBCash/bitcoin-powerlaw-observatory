@@ -1,16 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Future Projections - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Power law projections for Bitcoin's future price milestones including $1M and beyond.">
-  <link rel="stylesheet" href="../css/style.css">
+  <title>Toekomstprojecties - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Machtswetprojecties voor Bitcoin's toekomstige prijsmijlpalen, waaronder $1 miljoen en verder.">
+  <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* ── Time Travel section ── */
+    /* ── Time Travel sectie ── */
     .tt-section {
       margin-top: var(--spacing-xxl);
       padding-top: var(--spacing-xl);
@@ -29,7 +29,7 @@
       color: var(--gray);
     }
 
-    /* slider row */
+    /* slider rij */
     .tt-slider-row {
       display: flex;
       align-items: center;
@@ -72,7 +72,7 @@
       text-align: right;
     }
 
-    /* play / reset buttons */
+    /* afspelen / reset knoppen */
     .tt-controls {
       display: flex;
       justify-content: center;
@@ -100,7 +100,7 @@
     }
     .tt-btn.primary:hover { background: #333; border-color: #333; color: var(--white); }
 
-    /* quick-jump age buttons */
+    /* snelkeuze leeftijdknoppen */
     .tt-quick-ages {
       display: flex;
       justify-content: center;
@@ -124,7 +124,7 @@
     .tt-age-btn:hover          { border-color: var(--orange); color: var(--orange); }
     .tt-age-btn.active         { background: var(--orange); color: var(--white); border-color: var(--orange); }
 
-    /* Stats row for time travel */
+    /* Statistiekenrij voor tijdreizen */
     .stats-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -162,21 +162,21 @@
     <div class="container">
       <a href="../index.html" class="logo">
         <span class="logo-icon">&#x20BF;</span>
-        Power Law Observatory
+        Machtswet Observatorium
       </a>
-      <nav class="nav" aria-label="Main navigation">
+      <nav class="nav" aria-label="Hoofdnavigatie">
         <a href="../index.html">Dashboard</a>
-        <a href="history.html">History</a>
-        <a href="price-chart.html">Price Chart</a>
-        <a href="future.html" class="active">Future</a>
-        <a href="retirement.html">Retirement</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="price-chart.html">Prijsgrafiek</a>
+        <a href="future.html" class="active">Toekomst</a>
+        <a href="retirement.html">Pensioen</a>
         <a href="dca.html">DCA</a>
-        <a href="about.html">About</a>
+        <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
-        <a href="future.html" class="lang-link active">EN</a>
+        <a href="../../pages/future.html" class="lang-link">EN</a>
         <span class="lang-sep">|</span>
-        <a href="../nl/pages/future.html" class="lang-link">NL</a>
+        <a href="future.html" class="lang-link active">NL</a>
       </div>
     </div>
   </header>
@@ -184,169 +184,169 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Future Projections</h1>
-        <p>If the power law continues to hold, here's what the models suggest for Bitcoin's long-term trend. Remember: these are trend values, not price predictions.</p>
+        <h1>Toekomstprojecties</h1>
+        <p>Als de machtswet blijft gelden, is dit wat de modellen suggereren voor Bitcoin's langetermijntrend. Onthoud: dit zijn trendwaarden, geen prijsvoorspellingen.</p>
       </section>
 
       <!-- Disclaimer -->
       <div class="disclaimer">
-        <p><strong>Important:</strong> These projections represent the power law trend line only. Actual prices oscillate around the trend, often dramatically. This is not financial advice or a price guarantee. Focus on the long-term adoption math, not short-term speculation.</p>
+        <p><strong>Belangrijk:</strong> Deze projecties vertegenwoordigen uitsluitend de machtswettrendlijn. Werkelijke prijzen schommelen rond de trend, vaak dramatisch. Dit is geen financieel advies of prijsgarantie. Focus op de langetermijn-adoptiemathematiek, niet op kortetermijnspeculatie.</p>
       </div>
 
-      <!-- Interactive Date Slider -->
+      <!-- Interactieve Datumschuifregelaar -->
       <div class="card" style="margin: var(--spacing-xl) 0;">
-        <h3>Explore Future Dates</h3>
+        <h3>Verken Toekomstige Datums</h3>
         <div class="slider-container">
-          <label for="date-slider">Select a future date:</label>
+          <label for="date-slider">Selecteer een toekomstige datum:</label>
           <input type="range" id="date-slider" min="0" max="20" step="0.5" value="5">
           <div style="display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--gray); margin-top: 0.5rem;">
-            <span>Today</span>
-            <span>+10 years</span>
-            <span>+20 years</span>
+            <span>Vandaag</span>
+            <span>+10 jaar</span>
+            <span>+20 jaar</span>
           </div>
         </div>
 
         <div class="dashboard" style="margin-top: var(--spacing-lg);">
           <div class="card" style="background: var(--gray-light); border: none;">
-            <div class="card-label">Selected Date</div>
+            <div class="card-label">Geselecteerde Datum</div>
             <div class="card-value" id="selected-date">--</div>
           </div>
           <div class="card" style="background: var(--gray-light); border: none;">
-            <div class="card-label">Trend Price</div>
+            <div class="card-label">Trendprijs</div>
             <div class="card-value" id="projected-trend" style="color: var(--orange);">--</div>
           </div>
           <div class="card" style="background: var(--gray-light); border: none;">
-            <div class="card-label">-1&sigma; to +1&sigma; Range</div>
+            <div class="card-label">-1&sigma; tot +1&sigma; Bereik</div>
             <div class="card-value" id="projected-range" style="font-size: 1.25rem;">--</div>
           </div>
         </div>
       </div>
 
-      <!-- Milestone Timeline -->
-      <h2 style="margin-top: var(--spacing-xxl);">Key Milestones</h2>
+      <!-- Mijlpalen Tijdlijn -->
+      <h2 style="margin-top: var(--spacing-xxl);">Belangrijke Mijlpalen</h2>
       <div class="timeline" id="milestone-timeline">
-        <!-- Populated by JS -->
+        <!-- Gevuld door JS -->
       </div>
 
-      <!-- Projection Table -->
-      <h2 style="margin-top: var(--spacing-xl);">Trend Projections</h2>
+      <!-- Projectietabel -->
+      <h2 style="margin-top: var(--spacing-xl);">Trendprojecties</h2>
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Date</th>
-              <th>Trend Price</th>
-              <th>Notes</th>
+              <th>Datum</th>
+              <th>Trendprijs</th>
+              <th>Opmerkingen</th>
             </tr>
           </thead>
           <tbody id="projection-table">
-            <!-- Populated by JS -->
+            <!-- Gevuld door JS -->
           </tbody>
         </table>
       </div>
 
-      <!-- Million Dollar Milestones -->
-      <h2 style="margin-top: var(--spacing-xxl);">Path to $1 Million</h2>
+      <!-- Miljoen Dollar Mijlpalen -->
+      <h2 style="margin-top: var(--spacing-xxl);">Pad naar $1 Miljoen</h2>
       <div class="info-box">
-        <p>The $1 million milestone is a focal point for many Bitcoin enthusiasts. Here's when each model suggests the trend line reaches key price levels:</p>
+        <p>De $1 miljoen-mijlpaal is een focuspunt voor veel Bitcoin-enthousiastelingen. Hier is wanneer het model suggereert dat de trendlijn belangrijke prijsniveaus bereikt:</p>
       </div>
 
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>Target Price</th>
-              <th>Estimated Date</th>
+              <th>Doelprijs</th>
+              <th>Geschatte Datum</th>
             </tr>
           </thead>
           <tbody id="milestone-table">
-            <!-- Populated by JS -->
+            <!-- Gevuld door JS -->
           </tbody>
         </table>
       </div>
 
-      <!-- Projection Chart -->
-      <h2 style="margin-top: var(--spacing-xxl);">20-Year Projection</h2>
+      <!-- Projectiegrafiek -->
+      <h2 style="margin-top: var(--spacing-xxl);">20-Jaarsprojectie</h2>
       <div class="chart-container" style="height: 400px;">
-        <canvas id="projection-chart" aria-label="Bitcoin power law projection chart" role="img"></canvas>
+        <canvas id="projection-chart" aria-label="Bitcoin machtswet projectiegrafiek" role="img"></canvas>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
-      <!--                     TIME TRAVEL SECTION                            -->
+      <!--                     TIJDREIZEN SECTIE                              -->
       <!-- ═══════════════════════════════════════════════════════════════════ -->
       <section class="tt-section">
-        <h2>Time Travel</h2>
-        <p>Bitcoin is <strong>17 years old</strong>. What does the power law predict if it ages 50% more? What if the age doubles? Drag the slider — or hit Play — to watch the trend and corridor extend into the future.</p>
+        <h2>Tijdreizen</h2>
+        <p>Bitcoin is <strong>17 jaar oud</strong>. Wat voorspelt de machtswet als het 50% ouder wordt? Wat als de leeftijd verdubbelt? Versleep de schuifregelaar &mdash; of druk op Afspelen &mdash; om te zien hoe de trend en corridor zich uitstrekken naar de toekomst.</p>
 
-        <!-- quick-jump buttons -->
+        <!-- snelkeuze knoppen -->
         <div class="tt-quick-ages">
-          <button class="tt-age-btn active" data-age="1.0">Now (1×)</button>
+          <button class="tt-age-btn active" data-age="1.0">Nu (1&times;)</button>
           <button class="tt-age-btn"        data-age="1.25">+25%</button>
-          <button class="tt-age-btn"        data-age="1.5">1.5×</button>
-          <button class="tt-age-btn"        data-age="1.75">1.75×</button>
-          <button class="tt-age-btn"        data-age="2.0">2×</button>
-          <button class="tt-age-btn"        data-age="2.5">2.5×</button>
-          <button class="tt-age-btn"        data-age="3.0">3×</button>
+          <button class="tt-age-btn"        data-age="1.5">1,5&times;</button>
+          <button class="tt-age-btn"        data-age="1.75">1,75&times;</button>
+          <button class="tt-age-btn"        data-age="2.0">2&times;</button>
+          <button class="tt-age-btn"        data-age="2.5">2,5&times;</button>
+          <button class="tt-age-btn"        data-age="3.0">3&times;</button>
         </div>
 
-        <!-- slider -->
+        <!-- schuifregelaar -->
         <div class="tt-slider-row">
-          <label>1×</label>
+          <label>1&times;</label>
           <input type="range" id="tt-slider" min="1.0" max="3.0" step="0.01" value="1.0">
-          <span id="tt-slider-label">1.00×</span>
+          <span id="tt-slider-label">1,00&times;</span>
         </div>
 
-        <!-- play / reset -->
+        <!-- afspelen / reset -->
         <div class="tt-controls">
-          <button class="tt-btn primary" id="tt-play-btn">Play</button>
+          <button class="tt-btn primary" id="tt-play-btn">Afspelen</button>
           <button class="tt-btn"         id="tt-reset-btn">Reset</button>
         </div>
 
-        <!-- chart -->
+        <!-- grafiek -->
         <div class="chart-container" style="height: 520px;">
-          <canvas id="tt-chart" aria-label="Time travel power law projection chart" role="img"></canvas>
+          <canvas id="tt-chart" aria-label="Tijdreizen machtswet projectiegrafiek" role="img"></canvas>
         </div>
 
-        <!-- stat cards -->
+        <!-- statistiekkaarten -->
         <div class="stats-row" style="margin-top: var(--spacing-md);">
           <div class="stat-item">
-            <div class="stat-label">Age Multiplier</div>
-            <div class="stat-value" id="tt-multiplier" style="color: var(--orange);">1.00×</div>
+            <div class="stat-label">Leeftijdsmultiplicator</div>
+            <div class="stat-value" id="tt-multiplier" style="color: var(--orange);">1,00&times;</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Target Date</div>
+            <div class="stat-label">Doeldatum</div>
             <div class="stat-value" id="tt-date" style="font-size: 0.95rem;">--</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">Trend Price</div>
+            <div class="stat-label">Trendprijs</div>
             <div class="stat-value" id="tt-trend">--</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">±1σ Range</div>
+            <div class="stat-label">&plusmn;1&sigma; Bereik</div>
             <div class="stat-value" id="tt-1sigma" style="font-size: 0.85rem;">--</div>
           </div>
           <div class="stat-item">
-            <div class="stat-label">±2σ Range</div>
+            <div class="stat-label">&plusmn;2&sigma; Bereik</div>
             <div class="stat-value" id="tt-2sigma" style="font-size: 0.85rem;">--</div>
           </div>
         </div>
 
-        <!-- explainer -->
+        <!-- uitleg -->
         <div class="info-box" style="margin-top: var(--spacing-lg);">
-          <h4>Why does this matter?</h4>
-          <p>Power laws have an unusual property: <strong>the older the network, the faster the trend grows in absolute dollars</strong>. Every additional year of age adds more to the trend price than the last. Doubling Bitcoin's age doesn't double the trend — it multiplies it by <strong>2<sup>β</sup></strong> (roughly 52× for the Santostasi model with β=5.688). That's the compounding engine behind Bitcoin's long-term trajectory. The ±σ corridor shows the historically normal range price has oscillated within — it widens in dollar terms over time, but stays statistically tight on a log scale.</p>
+          <h4>Waarom is dit belangrijk?</h4>
+          <p>Machtswetten hebben een ongewone eigenschap: <strong>hoe ouder het netwerk, hoe sneller de trend groeit in absolute dollars</strong>. Elk extra jaar leeftijd voegt meer toe aan de trendprijs dan het vorige. Het verdubbelen van Bitcoin's leeftijd verdubbelt de trend niet &mdash; het vermenigvuldigt deze met <strong>2<sup>&beta;</sup></strong> (ruwweg 52&times; voor het Santostasi-model met &beta;=5,688). Dat is de samengestelde groeikracht achter Bitcoin's langetermijntraject. De &plusmn;&sigma;-corridor toont het historisch normale bereik waarbinnen de prijs heeft geschommeld &mdash; het wordt breder in dollarwaarde over tijd, maar blijft statistisch strak op een logschaal.</p>
         </div>
       </section>
 
-      <!-- Caveats -->
+      <!-- Kanttekeningen -->
       <div class="info-box" style="margin-top: var(--spacing-xl);">
-        <h4>Important Caveats</h4>
+        <h4>Belangrijke Kanttekeningen</h4>
         <ul style="margin-left: var(--spacing-lg); color: var(--gray);">
-          <li style="margin-bottom: 0.5rem;">Power law models are empirical fits to historical data, not fundamental laws</li>
-          <li style="margin-bottom: 0.5rem;">Past performance does not guarantee future results</li>
-          <li style="margin-bottom: 0.5rem;">The model could break down due to regulatory changes, technological disruption, or other unforeseen events</li>
-          <li style="margin-bottom: 0.5rem;">Actual prices will likely oscillate significantly above and below the trend</li>
-          <li>These projections assume continued network adoption following historical patterns</li>
+          <li style="margin-bottom: 0.5rem;">Machtswetmodellen zijn empirische fits op historische data, geen fundamentele wetten</li>
+          <li style="margin-bottom: 0.5rem;">Resultaten uit het verleden bieden geen garantie voor de toekomst</li>
+          <li style="margin-bottom: 0.5rem;">Het model kan falen door regelgevingswijzigingen, technologische disruptie of andere onvoorziene gebeurtenissen</li>
+          <li style="margin-bottom: 0.5rem;">Werkelijke prijzen zullen waarschijnlijk aanzienlijk boven en onder de trend schommelen</li>
+          <li>Deze projecties gaan uit van voortdurende netwerkadoptie volgens historische patronen</li>
         </ul>
       </div>
     </div>
@@ -357,26 +357,26 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4>Model</h4>
-          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+          <p>Santostasi/Perrenod Machtswettheorie<br>Parameters van <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
-          <p>Not financial advice. For educational purposes only.</p>
+          <p>Geen financieel advies. Alleen voor educatieve doeleinden.</p>
         </div>
       </div>
       <div class="footer-bottom">
-        <p>Historical model fit does not guarantee future performance. Always do your own research.</p>
+        <p>Historische modelpassing garandeert geen toekomstige prestaties. Doe altijd uw eigen onderzoek.</p>
       </div>
     </div>
   </footer>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
-  <script src="../js/powerlaw.js"></script>
+  <script src="../../js/powerlaw.js"></script>
   <script src="../js/future.js"></script>
   <script src="../js/time-travel.js"></script>
   <script>
-    // Quick-jump age buttons
+    // Snelkeuze leeftijdknoppen
     document.querySelectorAll('.tt-age-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.tt-age-btn').forEach(b => b.classList.remove('active'));
@@ -386,7 +386,7 @@
         slider.dispatchEvent(new Event('input'));
       });
     });
-    // Keep quick-jump highlights in sync when slider is dragged manually
+    // Houd snelkeuze-highlights synchroon wanneer schuifregelaar handmatig wordt versleept
     document.getElementById('tt-slider').addEventListener('input', function () {
       const val = parseFloat(this.value);
       document.querySelectorAll('.tt-age-btn').forEach(b => {

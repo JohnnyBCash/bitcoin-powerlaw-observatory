@@ -1,0 +1,110 @@
+[
+  {
+    "date": "2011-06-08",
+    "event": "Eerste Grote Bubbelpiek",
+    "close": 31.91,
+    "trend_sp": 2.10,
+    "deviation_sp": 15.19,
+    "reversion_outcome": "Crashte 93% naar $2 tegen nov 2011. Keerde terug naar ~0,3\u00D7 trend.",
+    "notes": "Mt. Gox-hack droeg bij aan de ineenstorting."
+  },
+  {
+    "date": "2011-11-18",
+    "event": "Post-Bubbel Bodem",
+    "close": 2.14,
+    "trend_sp": 5.80,
+    "deviation_sp": 0.37,
+    "reversion_outcome": "Steeg 230\u00D7 naar $1.163 tegen dec 2013.",
+    "notes": "Diepe onderwaardering na eerste bubbel."
+  },
+  {
+    "date": "2013-04-10",
+    "event": "Eerste 2013 Piek",
+    "close": 259.34,
+    "trend_sp": 55.00,
+    "deviation_sp": 4.72,
+    "reversion_outcome": "Daalde 71% naar $75 in 3 dagen, herstelde daarna.",
+    "notes": "Bankencrisis op Cyprus wekte interesse."
+  },
+  {
+    "date": "2013-12-04",
+    "event": "2013 Cycluspiek",
+    "close": 1147.25,
+    "trend_sp": 130.00,
+    "deviation_sp": 8.82,
+    "reversion_outcome": "Crashte 86% naar $164 tegen jan 2015. Terugkeer naar gemiddelde duurde 13 maanden.",
+    "notes": "Chinees verbod + Mt. Gox-ineenstorting."
+  },
+  {
+    "date": "2015-01-14",
+    "event": "2015 Cyclusbodem",
+    "close": 177.28,
+    "trend_sp": 390.00,
+    "deviation_sp": 0.45,
+    "reversion_outcome": "Steeg 113\u00D7 naar $20.089 tegen dec 2017.",
+    "notes": "Diepe onderwaardering; uitstekende accumulatiezone."
+  },
+  {
+    "date": "2017-12-17",
+    "event": "2017 Cycluspiek",
+    "close": 19783.06,
+    "trend_sp": 5200.00,
+    "deviation_sp": 3.80,
+    "reversion_outcome": "Crashte 84% naar $3.191 tegen dec 2018.",
+    "notes": "ICO-manie bereikte hoogtepunt. CME-futures gelanceerd."
+  },
+  {
+    "date": "2018-12-15",
+    "event": "2018 Cyclusbodem",
+    "close": 3236.76,
+    "trend_sp": 7800.00,
+    "deviation_sp": 0.41,
+    "reversion_outcome": "Steeg 21\u00D7 naar $68.789 tegen nov 2021.",
+    "notes": "Capitulatiebodem; sterke terugkeer naar gemiddelde."
+  },
+  {
+    "date": "2020-03-12",
+    "event": "COVID-crash",
+    "close": 4970.79,
+    "trend_sp": 11500.00,
+    "deviation_sp": 0.43,
+    "reversion_outcome": "Steeg 14\u00D7 naar $68.789 in 20 maanden.",
+    "notes": "Zwarte Donderdag-paniek; V-vormig herstel."
+  },
+  {
+    "date": "2021-04-14",
+    "event": "2021 Eerste Piek",
+    "close": 63503.46,
+    "trend_sp": 22000.00,
+    "deviation_sp": 2.89,
+    "reversion_outcome": "Daalde 55% naar $28.805 tegen juni 2021, herstelde daarna.",
+    "notes": "Coinbase-beursgang. Chinees mijnbouwverbod volgde."
+  },
+  {
+    "date": "2021-11-10",
+    "event": "2021 Cycluspiek",
+    "close": 68789.63,
+    "trend_sp": 26000.00,
+    "deviation_sp": 2.65,
+    "reversion_outcome": "Crashte 77% naar $15.476 tegen nov 2022.",
+    "notes": "Recordhoogte. Fed begon verkrapping."
+  },
+  {
+    "date": "2022-11-21",
+    "event": "FTX-crashbodem",
+    "close": 15476.26,
+    "trend_sp": 34000.00,
+    "deviation_sp": 0.46,
+    "reversion_outcome": "Steeg 7\u00D7 naar huidige niveaus tegen 2026.",
+    "notes": "FTX-ineenstorting; extreme onderwaardering."
+  },
+  {
+    "date": "2024-03-14",
+    "event": "2024 Pre-Halving Piek",
+    "close": 73750.07,
+    "trend_sp": 52000.00,
+    "deviation_sp": 1.42,
+    "reversion_outcome": "Consolideerde; 4e halving in april 2024.",
+    "notes": "ETF-goedkeuring dreef rally. Nabij eerlijke waarde."
+  }
+]
