@@ -302,7 +302,7 @@
     if (hint) hint.classList.add('hidden');
   }
 
-  // ── PDF Export (jsPDF direct drawing) ───────────────────────────
+  // ── PDF Export (jsPDF direct drawing — compact single-page) ──────
   function exportPDF() {
     if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined' && typeof window.jspdf === 'undefined') {
       alert('PDF library not loaded. Please check your connection and refresh.');
@@ -317,217 +317,283 @@
     try {
       const JsPDF = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
       const doc = new JsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
-      const W = 210, H = 297, M = 10; // page width, height, margin
+      const W = 210, H = 297, M = 8; // page width, height, margin (tight)
       const pw = W - 2 * M; // printable width
       let y = M; // current y cursor
 
-      // Helper: add new page if needed, returns y
+      // Helper: add new page if needed
       function checkPage(needed) {
         if (y + needed > H - M) { doc.addPage(); y = M; }
         return y;
       }
 
-      // ── Title
+      // ── Title — compact single line
       doc.setFillColor(247, 147, 26);
-      doc.rect(M, y, pw, 0.7, 'F');
+      doc.rect(M, y, pw, 0.5, 'F');
       y += 3;
-      doc.setFontSize(16);
+      doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('\u20BF Bitcoin Retirement Plan', W / 2, y, { align: 'center' });
-      y += 5;
-      doc.setFontSize(8);
+      doc.text('\u20BF Bitcoin Retirement Plan', M, y);
+      doc.setFontSize(6);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120);
-      doc.text('Generated ' + new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) + ' \u2014 Power Law Observatory', W / 2, y, { align: 'center' });
-      y += 5;
+      doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + ' — Power Law Observatory', W - M, y, { align: 'right' });
       doc.setTextColor(0);
+      y += 3;
 
-      // ── Parameters table
+      // ── Parameters — inline compact grid
       const params = getParams();
       const scenarioName = R.scenarioLabel(params.scenarioMode);
-      const modeName = params.useLoans ? 'With Loans' : 'Sell Only';
+      const modeName = params.useLoans ? 'Loans' : 'Sell Only';
       const spendDisplay = fmtCurrency(params.annualSpendUSD);
 
-      doc.setFontSize(7.5);
-      const paramRows = [
-        ['Holdings', params.btcHoldings + ' BTC', 'Spending', spendDisplay + '/yr', 'Start', '' + params.retirementYear],
-        ['Horizon', params.timeHorizonYears + ' years', 'Scenario', scenarioName, 'Strategy', modeName],
-        ['Growth', (params.m2GrowthRate * 100).toFixed(1) + '%/yr', 'Currency', currency, '', '']
+      doc.setFillColor(248, 248, 248);
+      doc.rect(M, y - 1, pw, 7.5, 'F');
+      doc.setFontSize(5.5);
+      // Row 1
+      const paramPairs1 = [
+        ['Holdings:', params.btcHoldings + ' BTC'],
+        ['Spending:', spendDisplay + '/yr'],
+        ['Start:', '' + params.retirementYear],
+        ['Horizon:', params.timeHorizonYears + 'yr'],
+        ['Scenario:', scenarioName],
+        ['Mode:', modeName]
       ];
-      const colW = pw / 6;
-      paramRows.forEach((row, ri) => {
-        if (ri % 2 === 1) {
-          doc.setFillColor(245);
-          doc.rect(M, y - 3, pw, 5, 'F');
-        }
-        for (let c = 0; c < 6; c++) {
-          const x = M + c * colW + 2;
-          if (c % 2 === 0) {
-            doc.setTextColor(120);
-            doc.setFont('helvetica', 'normal');
-          } else {
-            doc.setTextColor(0);
-            doc.setFont('helvetica', 'bold');
-          }
-          doc.text(row[c], x, y);
-        }
-        y += 5;
+      const pairW = pw / paramPairs1.length;
+      paramPairs1.forEach((p, i) => {
+        const x = M + i * pairW + 1;
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(120);
+        doc.text(p[0], x, y + 1.5);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(p[1], x + doc.getTextWidth(p[0]) + 0.8, y + 1.5);
+      });
+      // Row 2
+      const paramPairs2 = [
+        ['Growth:', (params.m2GrowthRate * 100).toFixed(1) + '%/yr'],
+        ['Currency:', currency]
+      ];
+      if (params.useLoans) {
+        paramPairs2.push(['LTV:', (params.loanLTV * 100).toFixed(0) + '%']);
+        paramPairs2.push(['Rate:', (params.loanInterest * 100).toFixed(0) + '%']);
+      }
+      paramPairs2.forEach((p, i) => {
+        const x = M + i * pairW + 1;
+        doc.setFont('helvetica', 'normal'); doc.setTextColor(120);
+        doc.text(p[0], x, y + 5);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+        doc.text(p[1], x + doc.getTextWidth(p[0]) + 0.8, y + 5);
       });
       doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0);
-      y += 2;
+      y += 8.5;
 
-      // ── Status banner
+      // ── Status banner — single line
       const statusHeadline = $('status-headline') ? $('status-headline').textContent : '';
-      const statusDetailEl = $('status-detail');
-      const statusDetailText = statusDetailEl ? statusDetailEl.textContent : '';
       const statusBanner = $('status-banner');
-      let sR = 0, sG = 200, sB = 83; // green
-      if (statusBanner && statusBanner.classList.contains('status-red')) { sR = 255; sG = 23; sB = 68; }
-      else if (statusBanner && statusBanner.classList.contains('status-amber')) { sR = 247; sG = 147; sB = 26; }
+      let sR = 0, sG = 180, sB = 75;
+      if (statusBanner && statusBanner.classList.contains('status-red')) { sR = 220; sG = 30; sB = 60; }
+      else if (statusBanner && statusBanner.classList.contains('status-amber')) { sR = 230; sG = 140; sB = 20; }
 
       doc.setFillColor(sR, sG, sB);
-      doc.rect(M, y, 1.2, 10, 'F');
-      doc.setFillColor(sR, sG, sB, 0.06);
-      doc.setFontSize(10);
+      doc.rect(M, y, 0.8, 4, 'F');
+      doc.setFontSize(7);
       doc.setFont('helvetica', 'bold');
-      doc.text(statusHeadline, M + 4, y + 4);
-      doc.setFontSize(7.5);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(80);
-      const detailLines = doc.splitTextToSize(statusDetailText, pw - 6);
-      doc.text(detailLines.slice(0, 2), M + 4, y + 8);
+      doc.setTextColor(sR, sG, sB);
+      doc.text(statusHeadline, M + 2.5, y + 2.8);
+      // Add detail text on same line if short enough
+      const statusDetailEl = $('status-detail');
+      const statusDetailText = statusDetailEl ? statusDetailEl.textContent : '';
+      if (statusDetailText) {
+        doc.setFontSize(5.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(100);
+        const detailTrunc = statusDetailText.length > 120 ? statusDetailText.substring(0, 117) + '...' : statusDetailText;
+        doc.text(detailTrunc, M + 2.5, y + 5.5);
+        y += 7.5;
+      } else {
+        y += 5.5;
+      }
       doc.setTextColor(0);
-      y += 14;
 
-      // ── Charts
-      function addChart(canvasId, label) {
-        const canvas = $(canvasId);
-        if (!canvas || canvas.closest('section').classList.contains('hidden')) return;
+      // ── Charts — side by side if both visible, reduced height
+      const chartMaxH = 38; // compact chart height
+      const cagrCanvas = $('cagr-chart');
+      const stackCanvas = $('stack-chart');
+      const cagrVisible = cagrCanvas && !cagrCanvas.closest('section').classList.contains('hidden');
+      const stackVisible = stackCanvas && !stackCanvas.closest('section').classList.contains('hidden');
+
+      if (cagrVisible && stackVisible) {
+        // Two charts side by side
+        checkPage(chartMaxH + 5);
+        const halfW = (pw - 2) / 2;
         try {
-          const imgData = canvas.toDataURL('image/png');
-          const ratio = canvas.height / canvas.width;
-          const imgW = pw;
-          const imgH = imgW * ratio;
-          const cappedH = Math.min(imgH, 55); // cap chart height
-
-          checkPage(cappedH + 8);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text(label, M, y + 3);
-          y += 5;
-          doc.addImage(imgData, 'PNG', M, y, imgW, cappedH);
-          y += cappedH + 4;
-          doc.setFont('helvetica', 'normal');
-        } catch (e) {
-          console.warn('Chart export failed:', e);
+          const cagrImg = cagrCanvas.toDataURL('image/png');
+          const cagrRatio = cagrCanvas.height / cagrCanvas.width;
+          const cagrH = Math.min(halfW * cagrRatio, chartMaxH);
+          doc.setFontSize(6); doc.setFont('helvetica', 'bold');
+          doc.text('Expected Return Decay', M, y + 2);
+          doc.addImage(cagrImg, 'PNG', M, y + 3, halfW, cagrH);
+        } catch (e) {}
+        try {
+          const stackImg = stackCanvas.toDataURL('image/png');
+          const stackRatio = stackCanvas.height / stackCanvas.width;
+          const stackH = Math.min(halfW * stackRatio, chartMaxH);
+          doc.setFontSize(6); doc.setFont('helvetica', 'bold');
+          doc.text('Stack & Spending Over Time', M + halfW + 2, y + 2);
+          doc.addImage(stackImg, 'PNG', M + halfW + 2, y + 3, halfW, stackH);
+        } catch (e) {}
+        y += chartMaxH + 5;
+      } else {
+        // Single chart full width but short
+        function addChart(canvasId, label) {
+          const canvas = $(canvasId);
+          if (!canvas || canvas.closest('section').classList.contains('hidden')) return;
+          try {
+            const imgData = canvas.toDataURL('image/png');
+            const ratio = canvas.height / canvas.width;
+            const imgH = Math.min(pw * ratio, chartMaxH);
+            checkPage(imgH + 5);
+            doc.setFontSize(6); doc.setFont('helvetica', 'bold');
+            doc.text(label, M, y + 2);
+            doc.addImage(imgData, 'PNG', M, y + 3, pw, imgH);
+            y += imgH + 4;
+            doc.setFont('helvetica', 'normal');
+          } catch (e) {}
         }
+        addChart('cagr-chart', 'Expected Return Decay');
+        addChart('stack-chart', 'Stack & Spending Over Time');
       }
 
-      addChart('cagr-chart', 'Expected Return Decay');
-      addChart('stack-chart', 'Stack & Spending Over Time');
+      // ── Summary cards — compact row
+      const summaryCards = document.querySelectorAll('#results-section .summary-card');
+      if (summaryCards.length > 0) {
+        checkPage(8);
+        doc.setFontSize(5);
+        const cardW = pw / Math.min(summaryCards.length, 6);
+        summaryCards.forEach((card, i) => {
+          if (i >= 6) return;
+          const x = M + i * cardW;
+          const label = card.querySelector('.card-label');
+          const value = card.querySelector('.card-value');
+          if (label && value) {
+            doc.setFont('helvetica', 'normal'); doc.setTextColor(120);
+            doc.text(label.textContent.trim(), x + 1, y + 2);
+            doc.setFont('helvetica', 'bold'); doc.setTextColor(0);
+            doc.text(value.textContent.trim().substring(0, 14), x + 1, y + 5);
+          }
+        });
+        y += 7;
+      }
 
-      // ── Yearly table
+      // ── Yearly table — very compact
       const tableBody = $('yearly-table-body');
       const tableSection = tableBody ? tableBody.closest('section') : null;
       if (tableBody && tableSection && !tableSection.classList.contains('hidden')) {
         const rows = tableBody.querySelectorAll('tr');
         if (rows.length > 0) {
-          checkPage(20);
-          doc.setFontSize(9);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Year-by-Year Breakdown', M, y + 3);
-          y += 6;
-
-          // Table header
-          const cols = ['Year', 'Price', 'Trend', 'Mult.', 'Spend', 'Sold', 'Loan', 'Stack', 'Value', 'SWR', 'Status'];
-          const cw = pw / cols.length;
+          checkPage(12);
           doc.setFontSize(6);
-          doc.setFillColor(240);
-          doc.rect(M, y - 2.5, pw, 4, 'F');
           doc.setFont('helvetica', 'bold');
-          cols.forEach((c, i) => doc.text(c, M + i * cw + 0.5, y));
-          y += 4;
-          doc.setFont('helvetica', 'normal');
+          doc.text('Year-by-Year Breakdown', M, y + 2);
+          y += 3.5;
 
-          // Decide which rows to show
+          // Determine columns based on what's visible
+          const headerCells = tableSection.querySelectorAll('thead th');
+          const cols = [];
+          headerCells.forEach(th => cols.push(th.textContent.trim()));
+          const numCols = cols.length || 11;
+          const cw = pw / numCols;
+
+          // Header row
+          doc.setFontSize(4.5);
+          doc.setFillColor(235, 235, 235);
+          doc.rect(M, y - 1.5, pw, 3, 'F');
+          doc.setFont('helvetica', 'bold');
+          cols.forEach((c, i) => doc.text(c.substring(0, 8), M + i * cw + 0.3, y));
+          y += 2.5;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(4.5);
+
+          // Show first 5 + last 3 for long tables, all for short
           const total = rows.length;
           let indices = [];
-          if (total <= 20) {
+          if (total <= 12) {
             for (let i = 0; i < total; i++) indices.push(i);
           } else {
-            for (let i = 0; i < 8; i++) indices.push(i);
-            indices.push(-1); // separator
-            for (let i = total - 5; i < total; i++) indices.push(i);
+            for (let i = 0; i < 5; i++) indices.push(i);
+            indices.push(-1);
+            for (let i = total - 3; i < total; i++) indices.push(i);
           }
 
+          const rh = 2.5; // row height mm
           indices.forEach(idx => {
-            checkPage(4);
+            checkPage(rh + 1);
             if (idx === -1) {
-              doc.setTextColor(120);
-              doc.text('... ' + (total - 13) + ' years omitted ...', M + pw / 2, y, { align: 'center' });
+              doc.setTextColor(140);
+              doc.setFontSize(4);
+              doc.text('\u2026 ' + (total - 8) + ' rows omitted \u2026', M + pw / 2, y, { align: 'center' });
               doc.setTextColor(0);
-              y += 3.5;
+              doc.setFontSize(4.5);
+              y += rh;
               return;
             }
-            const cells = rows[idx].querySelectorAll('td');
-            if (idx % 2 === 1) {
-              doc.setFillColor(250);
-              doc.rect(M, y - 2.5, pw, 3.5, 'F');
+            if (idx % 2 === 0) {
+              doc.setFillColor(250, 250, 250);
+              doc.rect(M, y - 1.5, pw, rh, 'F');
             }
+            const cells = rows[idx].querySelectorAll('td');
             cells.forEach((td, ci) => {
-              if (ci < cols.length) {
-                const txt = td.textContent.trim().substring(0, 12);
-                doc.text(txt, M + ci * cw + 0.5, y);
+              if (ci < numCols) {
+                const txt = td.textContent.trim().substring(0, 10);
+                doc.text(txt, M + ci * cw + 0.3, y);
               }
             });
-            y += 3.5;
+            y += rh;
           });
-          y += 3;
+          y += 2;
         }
       }
 
-      // ── Comparison table
+      // ── Comparison table — compact
       const compSection = $('comparison-section');
       if (compSection && !compSection.classList.contains('hidden')) {
         const compRows = compSection.querySelectorAll('tbody tr');
         if (compRows.length > 0) {
-          checkPage(25);
-          doc.setFontSize(9);
+          checkPage(15);
+          doc.setFontSize(6);
           doc.setFont('helvetica', 'bold');
-          doc.text('Loans vs Sell-Only: Required Stack', M, y + 3);
-          y += 6;
+          doc.text('Loans vs Sell-Only: Required Stack', M, y + 2);
+          y += 3.5;
 
           const compCols = ['Scenario', 'Sell Only', 'With Loans', 'BTC Saved', 'Savings %', 'Interest'];
           const ccw = pw / compCols.length;
-          doc.setFontSize(6.5);
-          doc.setFillColor(240);
-          doc.rect(M, y - 2.5, pw, 4, 'F');
+          doc.setFontSize(4.5);
+          doc.setFillColor(235, 235, 235);
+          doc.rect(M, y - 1.5, pw, 3, 'F');
           doc.setFont('helvetica', 'bold');
-          compCols.forEach((c, i) => doc.text(c, M + i * ccw + 0.5, y));
-          y += 4;
+          compCols.forEach((c, i) => doc.text(c, M + i * ccw + 0.3, y));
+          y += 2.5;
           doc.setFont('helvetica', 'normal');
 
           compRows.forEach((row, ri) => {
-            checkPage(4);
-            if (ri % 2 === 1) { doc.setFillColor(250); doc.rect(M, y - 2.5, pw, 3.5, 'F'); }
+            checkPage(3);
+            if (ri % 2 === 0) { doc.setFillColor(250, 250, 250); doc.rect(M, y - 1.5, pw, 2.5, 'F'); }
             const cells = row.querySelectorAll('td');
             cells.forEach((td, ci) => {
-              if (ci < compCols.length) doc.text(td.textContent.trim().substring(0, 18), M + ci * ccw + 0.5, y);
+              if (ci < compCols.length) doc.text(td.textContent.trim().substring(0, 16), M + ci * ccw + 0.3, y);
             });
-            y += 3.5;
+            y += 2.5;
           });
-          y += 3;
+          y += 2;
         }
       }
 
       // ── Footer
-      checkPage(8);
-      doc.setDrawColor(200);
+      checkPage(5);
+      doc.setDrawColor(210);
       doc.line(M, y, W - M, y);
-      y += 3;
-      doc.setFontSize(6.5);
-      doc.setTextColor(150);
+      y += 2;
+      doc.setFontSize(5);
+      doc.setTextColor(160);
       doc.text('Not financial advice. Power law models are educational projections, not guarantees.', W / 2, y, { align: 'center' });
 
       // ── Save
