@@ -11,6 +11,44 @@
   let historicalData = [];
   let calculatedSigma = 0.3;
 
+  // ── Currency Support ──────────────────────────────────────────
+  let currency = 'USD';        // 'USD' or 'EUR'
+  let eurRate = null;          // EUR per 1 USD (e.g. 0.92)
+
+  function getCurrencySymbol() { return currency === 'EUR' ? '€' : '$'; }
+  function getRate() { return currency === 'EUR' && eurRate ? eurRate : 1; }
+
+  // Convert USD → display currency
+  function toDisplay(usd) { return usd * getRate(); }
+
+  // Convert display currency → USD (for user input)
+  function toUSD(displayAmount) { return displayAmount / getRate(); }
+
+  // Format amount in selected currency
+  function fmtCurrency(usd) {
+    const val = toDisplay(usd);
+    const sym = getCurrencySymbol();
+    if (val >= 1e9) return sym + (val / 1e9).toFixed(2) + 'B';
+    if (val >= 1e6) return sym + (val / 1e6).toFixed(2) + 'M';
+    if (val >= 1e3) return sym + Math.round(val).toLocaleString('en-US');
+    if (val >= 1) return sym + val.toFixed(2);
+    return sym + val.toFixed(4);
+  }
+
+  async function fetchEURRate() {
+    try {
+      const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,eur');
+      const data = await res.json();
+      // Derive EUR/USD rate from BTC prices in both currencies
+      if (data.bitcoin && data.bitcoin.usd && data.bitcoin.eur) {
+        eurRate = data.bitcoin.eur / data.bitcoin.usd;
+      }
+    } catch (e) {
+      console.warn('EUR rate fetch failed, using fallback', e);
+      eurRate = 0.92; // reasonable fallback
+    }
+  }
+
   // ── DOM Helpers ─────────────────────────────────────────────
   const $ = id => document.getElementById(id);
   const show = id => { const el = $(id); if (el) el.classList.remove('hidden'); };
@@ -19,9 +57,10 @@
   // ── Gather User Inputs ───────────────────────────────────────
   function getParams() {
     const useLoans = $('use-loans').checked;
+    const spendInput = parseFloat($('annual-spend').value) || 50000;
     return {
       btcHoldings: parseFloat($('btc-holdings').value) || 1.0,
-      annualSpendUSD: parseFloat($('annual-spend').value) || 50000,
+      annualSpendUSD: toUSD(spendInput),  // convert from display currency to USD
       retirementYear: parseInt($('retirement-year').value) || 2030,
       timeHorizonYears: parseInt($('time-horizon').value) || 30,
       m2GrowthRate: parseFloat($('m2-growth').value) / 100,
@@ -38,8 +77,10 @@
   // ── Initialize ───────────────────────────────────────────────
   async function init() {
     await loadHistoricalData();
+    fetchEURRate(); // non-blocking, we don't await
     setupSliders();
     setupLoanToggle();
+    setupCurrencyToggle();
     setupButtons();
   }
 
@@ -101,6 +142,16 @@
     });
   }
 
+  function setupCurrencyToggle() {
+    const sel = $('currency');
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      currency = sel.value;
+      const label = $('currency-label');
+      if (label) label.textContent = currency;
+    });
+  }
+
   function setupButtons() {
     $('calculate-btn').addEventListener('click', runCalculation);
     $('compare-btn').addEventListener('click', runComparison);
@@ -153,7 +204,7 @@
         <td>${row.withLoans.minStack === Infinity ? '∞ (impossible)' : row.withLoans.minStack.toFixed(3) + ' BTC'}</td>
         <td>${row.btcSaved === Infinity ? '—' : row.btcSaved.toFixed(3) + ' BTC'}</td>
         <td>${row.savingsPct === Infinity || isNaN(row.savingsPct) ? '—' : row.savingsPct.toFixed(1) + '%'}</td>
-        <td>${row.withLoans.totalInterest > 0 ? '$' + Math.round(row.withLoans.totalInterest).toLocaleString() : '—'}</td>
+        <td>${row.withLoans.totalInterest > 0 ? fmtCurrency(row.withLoans.totalInterest) : '—'}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -226,10 +277,12 @@
     if (stackChart) stackChart.destroy();
 
     const years = result.results.map(r => r.year);
+    const sym = getCurrencySymbol();
+    const r8 = getRate();
     const stackData = result.results.map(r => r.stackAfter);
-    const portfolioData = result.results.map(r => r.portfolioValueUSD);
-    const spendData = result.results.map(r => r.annualSpend);
-    const loanData = result.results.map(r => r.loanBalance || 0);
+    const portfolioData = result.results.map(r => r.portfolioValueUSD * r8);
+    const spendData = result.results.map(r => r.annualSpend * r8);
+    const loanData = result.results.map(r => (r.loanBalance || 0) * r8);
 
     const datasets = [
       {
@@ -244,37 +297,37 @@
         yAxisID: 'yBTC'
       },
       {
-        label: 'Annual Spending (USD)',
+        label: 'Annual Spending (' + currency + ')',
         data: spendData,
         borderColor: '#FF1744',
         borderWidth: 2,
         borderDash: [5, 5],
         pointRadius: 0,
         tension: 0.2,
-        yAxisID: 'yUSD'
+        yAxisID: 'yVal'
       },
       {
-        label: 'Portfolio Value (USD)',
+        label: 'Portfolio Value (' + currency + ')',
         data: portfolioData,
         borderColor: '#00C853',
         borderWidth: 2,
         pointRadius: 0,
         tension: 0.2,
-        yAxisID: 'yUSD'
+        yAxisID: 'yVal'
       }
     ];
 
     // Add loan balance line if loans are active
     if (params.useLoans && loanData.some(v => v > 0)) {
       datasets.push({
-        label: 'Loan Balance (USD)',
+        label: 'Loan Balance (' + currency + ')',
         data: loanData,
         borderColor: '#9C27B0',
         borderWidth: 2,
         borderDash: [3, 3],
         pointRadius: 0,
         tension: 0.2,
-        yAxisID: 'yUSD'
+        yAxisID: 'yVal'
       });
     }
 
@@ -297,7 +350,7 @@
                 if (ctx.dataset.yAxisID === 'yBTC') {
                   return ctx.dataset.label + ': ' + val.toFixed(4) + ' BTC';
                 }
-                return ctx.dataset.label + ': $' + Math.round(val).toLocaleString();
+                return ctx.dataset.label + ': ' + sym + Math.round(val).toLocaleString();
               }
             }
           }
@@ -315,17 +368,17 @@
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: { callback: v => v.toFixed(2) }
           },
-          yUSD: {
+          yVal: {
             type: 'logarithmic',
             position: 'right',
-            title: { display: true, text: 'USD Value' },
+            title: { display: true, text: currency + ' Value' },
             grid: { display: false },
             ticks: {
               callback: v => {
-                if (v >= 1e9) return '$' + (v / 1e9).toFixed(0) + 'B';
-                if (v >= 1e6) return '$' + (v / 1e6).toFixed(0) + 'M';
-                if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
-                return '$' + v;
+                if (v >= 1e9) return sym + (v / 1e9).toFixed(0) + 'B';
+                if (v >= 1e6) return sym + (v / 1e6).toFixed(0) + 'M';
+                if (v >= 1e3) return sym + (v / 1e3).toFixed(0) + 'K';
+                return sym + v;
               }
             }
           }
@@ -367,7 +420,7 @@
       <div class="card">
         <div class="card-label">Final Stack</div>
         <div class="card-value">${summary.finalStack.toFixed(4)} BTC</div>
-        <div class="card-sub">$${Math.round(summary.finalValue).toLocaleString()} portfolio value</div>
+        <div class="card-sub">${fmtCurrency(summary.finalValue)} portfolio value</div>
       </div>
       <div class="card">
         <div class="card-label">Total BTC Sold</div>
@@ -377,11 +430,11 @@
       <div class="card">
         <div class="card-label">Average SWR</div>
         <div class="card-value">${summary.avgSWR.toFixed(2)}%</div>
-        <div class="card-sub">Dynamic: fixed $ amount, shrinking %</div>
+        <div class="card-sub">Dynamic: fixed ${getCurrencySymbol()} amount, shrinking %</div>
       </div>
       <div class="card">
         <div class="card-label">Total Spent</div>
-        <div class="card-value">$${Math.round(summary.totalSpent).toLocaleString()}</div>
+        <div class="card-value">${fmtCurrency(summary.totalSpent)}</div>
         <div class="card-sub">At ${(params.m2GrowthRate * 100).toFixed(1)}% annual spending growth</div>
       </div>
       ${params.useLoans ? `
@@ -392,7 +445,7 @@
       </div>
       <div class="card">
         <div class="card-label">Total Interest Paid</div>
-        <div class="card-value">$${Math.round(summary.totalInterestPaid).toLocaleString()}</div>
+        <div class="card-value">${fmtCurrency(summary.totalInterestPaid)}</div>
         <div class="card-sub">At ${(params.loanInterestRate * 100).toFixed(1)}% annual rate</div>
       </div>
       ` : ''}
@@ -431,16 +484,16 @@
 
       tr.innerHTML = `
         <td><strong>${row.year}</strong></td>
-        <td>${row.price > 0 ? PL.formatPrice(row.price) : '—'}</td>
-        <td>${row.trend > 0 ? PL.formatPrice(row.trend) : '—'}</td>
+        <td>${row.price > 0 ? fmtCurrency(row.price) : '—'}</td>
+        <td>${row.trend > 0 ? fmtCurrency(row.trend) : '—'}</td>
         <td class="multiple-cell ${row.multiple < 1 ? 'under' : row.multiple > 1.5 ? 'over' : 'fair'}">
           ${row.multiple > 0 ? row.multiple.toFixed(2) + '×' : '—'}
         </td>
-        <td>$${Math.round(row.annualSpend).toLocaleString()}</td>
+        <td>${fmtCurrency(row.annualSpend)}</td>
         <td>${row.btcSold > 0 ? row.btcSold.toFixed(4) : '—'}</td>
-        <td>${(row.loanBalance || 0) > 0 ? '$' + Math.round(row.loanBalance).toLocaleString() : '—'}</td>
+        <td>${(row.loanBalance || 0) > 0 ? fmtCurrency(row.loanBalance) : '—'}</td>
         <td>${row.stackAfter > 0 ? row.stackAfter.toFixed(4) : '0'}</td>
-        <td>${row.portfolioValueUSD > 0 ? '$' + Math.round(row.portfolioValueUSD).toLocaleString() : '—'}</td>
+        <td>${row.portfolioValueUSD > 0 ? fmtCurrency(row.portfolioValueUSD) : '—'}</td>
         <td>${row.swrPct > 0 ? row.swrPct.toFixed(2) + '%' : '—'}</td>
         <td class="${statusClass}">${statusText}</td>
       `;
@@ -464,7 +517,7 @@
     if (!el) return;
 
     if (!summary) {
-      el.innerHTML = `With <strong>${params.btcHoldings} BTC</strong> and <strong>$${params.annualSpendUSD.toLocaleString()}/year</strong> spending, your stack would be depleted by <strong>${result.ruinYear}</strong> under the ${R.scenarioLabel(params.scenarioMode)} scenario. Consider reducing spending, increasing holdings, or delaying retirement.`;
+      el.innerHTML = `With <strong>${params.btcHoldings} BTC</strong> and <strong>${fmtCurrency(params.annualSpendUSD)}/year</strong> spending, your stack would be depleted by <strong>${result.ruinYear}</strong> under the ${R.scenarioLabel(params.scenarioMode)} scenario. Consider reducing spending, increasing holdings, or delaying retirement.`;
       return;
     }
 
@@ -475,17 +528,17 @@
 
     let text = `On the power law model, expected annual returns decline from <strong>${(startCAGR * 100).toFixed(1)}%</strong> in ${params.retirementYear} to <strong>${(endCAGR * 100).toFixed(1)}%</strong> by ${params.retirementYear + params.timeHorizonYears}. `;
     text += `This is fundamentally different from stock-based retirement planning where CAGR is assumed constant. `;
-    text += `Your spending rises from <strong>$${spendStart.toLocaleString()}</strong> to <strong>$${Math.round(spendEnd).toLocaleString()}</strong> over ${params.timeHorizonYears} years at ${(params.m2GrowthRate * 100).toFixed(1)}% annual spending growth. `;
+    text += `Your spending rises from <strong>${fmtCurrency(spendStart)}</strong> to <strong>${fmtCurrency(spendEnd)}</strong> over ${params.timeHorizonYears} years at ${(params.m2GrowthRate * 100).toFixed(1)}% annual spending growth. `;
 
     if (summary.yearsBeforeRuin >= params.timeHorizonYears) {
-      text += `Your stack of <strong>${params.btcHoldings} BTC</strong> survives the full ${params.timeHorizonYears}-year horizon, ending with <strong>${summary.finalStack.toFixed(4)} BTC</strong> worth <strong>$${Math.round(summary.finalValue).toLocaleString()}</strong>. `;
+      text += `Your stack of <strong>${params.btcHoldings} BTC</strong> survives the full ${params.timeHorizonYears}-year horizon, ending with <strong>${summary.finalStack.toFixed(4)} BTC</strong> worth <strong>${fmtCurrency(summary.finalValue)}</strong>. `;
     }
 
     if (params.useLoans && summary.borrowYears > 0) {
-      text += `The loan strategy preserves bitcoin during ${summary.borrowYears} below-trend years, costing <strong>$${Math.round(summary.totalInterestPaid).toLocaleString()}</strong> in interest. `;
+      text += `The loan strategy preserves bitcoin during ${summary.borrowYears} below-trend years, costing <strong>${fmtCurrency(summary.totalInterestPaid)}</strong> in interest. `;
     }
 
-    text += `Your average withdrawal rate is <strong>${summary.avgSWR.toFixed(2)}%</strong> — a "dynamic SWR" where the dollar amount stays constant (adjusted for M2 inflation) but the percentage of your stack decreases as bitcoin appreciates.`;
+    text += `Your average withdrawal rate is <strong>${summary.avgSWR.toFixed(2)}%</strong> — a "dynamic SWR" where the ${currency} amount stays constant (adjusted for spending growth) but the percentage of your stack decreases as bitcoin appreciates.`;
 
     el.innerHTML = text;
   }
@@ -552,7 +605,7 @@
     }
 
     if (spendReduction > 0 && maxSafeSpend >= 1000) {
-      html += `, or reduce spending by <strong>$${Math.round(spendReduction).toLocaleString()}/year</strong> to <strong>$${Math.round(maxSafeSpend).toLocaleString()}/year</strong>`;
+      html += `, or reduce spending by <strong>${fmtCurrency(spendReduction)}/year</strong> to <strong>${fmtCurrency(maxSafeSpend)}/year</strong>`;
     }
 
     html += '.';
@@ -574,8 +627,7 @@
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
       headline.textContent = `You survive all ${params.timeHorizonYears} years`;
-      const fv = PL.formatPrice(classification.finalValue);
-      detail.innerHTML = `Ending with <strong>${classification.finalStack.toFixed(4)} BTC</strong> (${fv} portfolio value)`;
+      detail.innerHTML = `Ending with <strong>${classification.finalStack.toFixed(4)} BTC</strong> (${fmtCurrency(classification.finalValue)} portfolio value)`;
 
     } else if (classification.status === 'amber') {
       banner.classList.add('status-amber');
