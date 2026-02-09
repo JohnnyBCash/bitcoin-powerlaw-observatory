@@ -8,6 +8,7 @@ let bellCurveChart = null;
 let bellCurveTodayResidual = 0;
 let bellCurveTodayMultiplier = 1;
 let bellCurveLnSigma = 0.7;
+let livePrice = null;
 
 // Initialize
 async function init() {
@@ -18,6 +19,7 @@ async function init() {
   setupControls();
   updateStatistics();
   setupRubberBandDemo();
+  fetchLivePrice();
 }
 
 // Load historical data
@@ -28,6 +30,51 @@ async function loadHistoricalData() {
   } catch (error) {
     console.error('Failed to load historical data:', error);
   }
+}
+
+// Fetch live price from CoinGecko and update today's position
+async function fetchLivePrice() {
+  try {
+    const response = await fetch(
+      'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd'
+    );
+    const data = await response.json();
+    livePrice = data.bitcoin.usd;
+    updateTodayPosition();
+  } catch (error) {
+    console.error('Failed to fetch live price:', error);
+  }
+}
+
+// Update TODAY marker and stat cards with current price
+function updateTodayPosition() {
+  const price = livePrice || historicalData[historicalData.length - 1].price;
+  const todayTrend = PowerLaw.trendPrice(currentModel, new Date());
+  bellCurveTodayMultiplier = price / todayTrend;
+  bellCurveTodayResidual = Math.log(bellCurveTodayMultiplier);
+
+  // Recompute percentile against historical residuals
+  const residuals = computeLogResiduals(currentModel);
+  const sortedResiduals = [...residuals].sort((a, b) => a - b);
+  const percentile = calculatePercentile(bellCurveTodayResidual, sortedResiduals);
+
+  // Update stat cards
+  const todayMultEl = document.getElementById('today-pct-from-trend');
+  todayMultEl.textContent = PowerLaw.formatMultiplier(bellCurveTodayMultiplier);
+
+  const valuation = PowerLaw.valuationLabel(bellCurveTodayMultiplier);
+  todayMultEl.style.color = valuation.color;
+  document.getElementById('today-valuation-label').textContent = valuation.label;
+
+  const pctile = Math.round(percentile);
+  const suffix = pctile % 10 === 1 && pctile !== 11 ? 'st' :
+                 pctile % 10 === 2 && pctile !== 12 ? 'nd' :
+                 pctile % 10 === 3 && pctile !== 13 ? 'rd' : 'th';
+  document.getElementById('today-percentile-value').textContent = pctile + suffix;
+  document.getElementById('pct-cheaper').textContent = (100 - pctile);
+
+  // Redraw chart to update TODAY marker
+  if (bellCurveChart) bellCurveChart.update();
 }
 
 // Calculate sigma for the model
