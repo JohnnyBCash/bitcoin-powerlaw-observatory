@@ -82,10 +82,22 @@
       T_growth = 0.3,   // each cycle grows by this many years
       damping = 0.02,   // amplitude decay rate per year
       bearBias = 0,      // shift wave down (0.309 → 60% below trend)
-      amplitude = 1.0
+      amplitude = 1.0,
+      initialK = null    // initial sigmaK at t=0 (null → use default -amplitude)
     } = options;
 
-    if (yearsFromStart <= 0) return -amplitude; // start at bottom
+    // Compute phase offset so the cycle starts at the given sigmaK
+    let phaseOffset = -Math.PI / 2; // default: start at -1 (trough)
+    if (initialK !== null) {
+      // Clamp initialK to [-1, 1] then solve: sin(phaseOffset) = initialK / amplitude
+      const clamped = Math.max(-1, Math.min(1, initialK / amplitude));
+      phaseOffset = Math.asin(clamped);
+    }
+
+    if (yearsFromStart <= 0) {
+      const val = Math.sin(phaseOffset);
+      return Math.max(-1, Math.min(1, amplitude * val - bearBias));
+    }
 
     // Walk through cycles via phase accumulation
     let elapsed = 0;
@@ -96,10 +108,9 @@
       if (elapsed + period > yearsFromStart) {
         // We're inside this cycle
         const positionInCycle = (yearsFromStart - elapsed) / period; // 0..1
-        const phase = positionInCycle * 2 * Math.PI;
+        const phase = positionInCycle * 2 * Math.PI + phaseOffset;
 
-        // Sine starting at -1 (trough), peaking at mid-cycle
-        let sineVal = Math.sin(phase - Math.PI / 2);
+        let sineVal = Math.sin(phase);
 
         // Apply bear bias (shifts wave downward)
         sineVal -= bearBias;
@@ -118,15 +129,16 @@
   }
 
   // Resolve the effective sigmaK for a given year based on scenario mode
-  function resolveScenarioK(scenarioMode, yearIndex) {
+  // initialK: optional starting sigmaK derived from current market price
+  function resolveScenarioK(scenarioMode, yearIndex, initialK) {
     switch (scenarioMode) {
       case 'smooth_trend':      return 0;
       case 'smooth_bear':       return -1;
       case 'smooth_deep_bear':  return -2;
       case 'cyclical':
-        return cyclicalSigmaK(yearIndex, { bearBias: 0 });
+        return cyclicalSigmaK(yearIndex, { bearBias: 0, initialK: initialK != null ? initialK : null });
       case 'cyclical_bear':
-        return cyclicalSigmaK(yearIndex, { bearBias: 0.309 });
+        return cyclicalSigmaK(yearIndex, { bearBias: 0.309, initialK: initialK != null ? initialK : null });
       default:
         return 0;
     }
@@ -148,7 +160,8 @@
   function simulateSellOnly(params) {
     const {
       btcHoldings, annualSpendUSD, retirementYear,
-      timeHorizonYears, m2GrowthRate, model, sigma, scenarioMode
+      timeHorizonYears, m2GrowthRate, model, sigma, scenarioMode,
+      initialK
     } = params;
 
     let stack = btcHoldings;
@@ -159,7 +172,7 @@
     for (let i = 0; i < timeHorizonYears; i++) {
       const year = retirementYear + i;
       const date = new Date(year, 6, 1); // mid-year
-      const effectiveK = resolveScenarioK(scenarioMode, i);
+      const effectiveK = resolveScenarioK(scenarioMode, i, initialK);
       const price = scenarioPrice(model, date, sigma, effectiveK);
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
@@ -221,7 +234,8 @@
     const {
       btcHoldings, annualSpendUSD, retirementYear,
       timeHorizonYears, m2GrowthRate, model, sigma, scenarioMode,
-      loanLTV, loanInterestRate, loanThreshold
+      loanLTV, loanInterestRate, loanThreshold,
+      initialK
     } = params;
 
     let stack = btcHoldings;
@@ -234,7 +248,7 @@
     for (let i = 0; i < timeHorizonYears; i++) {
       const year = retirementYear + i;
       const date = new Date(year, 6, 1);
-      const effectiveK = resolveScenarioK(scenarioMode, i);
+      const effectiveK = resolveScenarioK(scenarioMode, i, initialK);
       const price = scenarioPrice(model, date, sigma, effectiveK);
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
@@ -459,6 +473,15 @@
   }
 
 
+  // ── Current Market Position ───────────────────────────────────
+  // Compute sigmaK from a live BTC price: how many σ above/below trend
+  function currentSigmaK(model, sigma, livePrice) {
+    const trend = PL.trendPrice(model, new Date());
+    if (!trend || trend <= 0 || !livePrice || livePrice <= 0) return 0;
+    const logResidual = Math.log10(livePrice) - Math.log10(trend);
+    return logResidual / sigma;  // e.g. +0.5 means half a σ above trend
+  }
+
   // ── Export ───────────────────────────────────────────────────
   window.Retirement = {
     DEFAULTS,
@@ -469,6 +492,7 @@
     cyclicalSigmaK,
     resolveScenarioK,
     scenarioLabel,
+    currentSigmaK,
     simulateSellOnly,
     simulateWithLoans,
     findMinimumStack,

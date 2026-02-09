@@ -10,6 +10,7 @@
   let stackChart = null;
   let historicalData = [];
   let calculatedSigma = 0.3;
+  let livePrice = null;       // live BTC price in USD
 
   // ── Currency Support ──────────────────────────────────────────
   let currency = 'USD';        // 'USD' or 'EUR'
@@ -35,17 +36,21 @@
     return sym + val.toFixed(4);
   }
 
-  async function fetchEURRate() {
+  async function fetchLiveData() {
     try {
       const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd,eur');
       const data = await res.json();
-      // Derive EUR/USD rate from BTC prices in both currencies
-      if (data.bitcoin && data.bitcoin.usd && data.bitcoin.eur) {
-        eurRate = data.bitcoin.eur / data.bitcoin.usd;
+      if (data.bitcoin) {
+        // Live BTC price
+        if (data.bitcoin.usd) livePrice = data.bitcoin.usd;
+        // Derive EUR/USD rate from BTC prices in both currencies
+        if (data.bitcoin.usd && data.bitcoin.eur) {
+          eurRate = data.bitcoin.eur / data.bitcoin.usd;
+        }
       }
     } catch (e) {
-      console.warn('EUR rate fetch failed, using fallback', e);
-      eurRate = 0.92; // reasonable fallback
+      console.warn('Live data fetch failed, using fallbacks', e);
+      eurRate = 0.92;
     }
   }
 
@@ -58,15 +63,26 @@
   function getParams() {
     const useLoans = $('use-loans').checked;
     const spendInput = parseFloat($('annual-spend').value) || 50000;
+    const retYear = parseInt($('retirement-year').value) || 2030;
+    const scenarioMode = $('price-scenario').value;
+
+    // Compute initialK from live price so cyclical scenarios start at today's real position
+    let initialK = null;
+    if (livePrice && retYear <= new Date().getFullYear() + 1 &&
+        (scenarioMode === 'cyclical' || scenarioMode === 'cyclical_bear')) {
+      initialK = R.currentSigmaK(currentModel, calculatedSigma, livePrice);
+    }
+
     return {
       btcHoldings: parseFloat($('btc-holdings').value) || 1.0,
       annualSpendUSD: toUSD(spendInput),  // convert from display currency to USD
-      retirementYear: parseInt($('retirement-year').value) || 2030,
+      retirementYear: retYear,
       timeHorizonYears: parseInt($('time-horizon').value) || 30,
       m2GrowthRate: parseFloat($('m2-growth').value) / 100,
       model: currentModel,
       sigma: calculatedSigma,
-      scenarioMode: $('price-scenario').value,
+      scenarioMode,
+      initialK,
       useLoans,
       loanLTV: parseFloat($('loan-ltv').value) / 100,
       loanInterestRate: parseFloat($('loan-interest').value) / 100,
@@ -77,10 +93,11 @@
   // ── Initialize ───────────────────────────────────────────────
   async function init() {
     await loadHistoricalData();
-    fetchEURRate(); // non-blocking, we don't await
+    fetchLiveData(); // non-blocking, we don't await
     setupSliders();
     setupLoanToggle();
     setupCurrencyToggle();
+    setupStartNow();
     setupButtons();
   }
 
@@ -149,6 +166,15 @@
       currency = sel.value;
       const label = $('currency-label');
       if (label) label.textContent = currency;
+    });
+  }
+
+  function setupStartNow() {
+    const btn = $('start-now-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+      const yearInput = $('retirement-year');
+      if (yearInput) yearInput.value = new Date().getFullYear();
     });
   }
 

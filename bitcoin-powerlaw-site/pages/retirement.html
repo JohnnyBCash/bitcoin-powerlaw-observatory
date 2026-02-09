@@ -64,7 +64,10 @@
 
           <div class="input-group">
             <label for="retirement-year">Retirement Start Year</label>
-            <input type="number" id="retirement-year" value="2030" min="2025" max="2060" step="1">
+            <div class="year-input-row">
+              <input type="number" id="retirement-year" value="2030" min="2024" max="2060" step="1">
+              <button type="button" class="now-btn" id="start-now-btn" title="Start retirement this year">Now</button>
+            </div>
           </div>
 
           <div class="input-group">
@@ -480,6 +483,36 @@
       color: var(--orange);
       margin-top: 2px;
       line-height: 1.4;
+    }
+
+    .year-input-row {
+      display: flex;
+      gap: var(--spacing-xs);
+      align-items: stretch;
+    }
+
+    .year-input-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .now-btn {
+      padding: 0 var(--spacing-sm);
+      border: 1px solid var(--orange);
+      border-radius: var(--border-radius);
+      background: rgba(247, 147, 26, 0.08);
+      color: var(--orange);
+      font-family: var(--font-family);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .now-btn:hover {
+      background: var(--orange);
+      color: var(--white);
     }
   </style>
 
