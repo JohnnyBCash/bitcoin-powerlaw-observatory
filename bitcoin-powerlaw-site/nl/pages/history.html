@@ -104,23 +104,17 @@
         </div>
       </div>
 
-      <!-- Bediening -->
-      <div class="dashboard" style="margin-top: var(--spacing-lg);">
-        <div class="card">
-          <div class="card-label">Datumbereik</div>
-          <select id="date-range" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid var(--gray-border); border-radius: var(--border-radius);">
-            <option value="all">Alle Tijden (2010-heden)</option>
-            <option value="10y">Laatste 10 Jaar</option>
-            <option value="5y">Laatste 5 Jaar</option>
-            <option value="3y">Laatste 3 Jaar</option>
-            <option value="1y">Afgelopen Jaar</option>
-          </select>
+      <!-- Zoom bediening + Export -->
+      <div class="chart-controls">
+        <div class="zoom-group" role="group" aria-label="Grafiek tijdsbereik">
+          <button class="zoom-btn" data-range="1w">1W</button>
+          <button class="zoom-btn" data-range="1m">1M</button>
+          <button class="zoom-btn" data-range="6m">6M</button>
+          <button class="zoom-btn" data-range="1y">1J</button>
+          <button class="zoom-btn" data-range="5y">5J</button>
+          <button class="zoom-btn active" data-range="all">Alles</button>
         </div>
-
-        <div class="card">
-          <div class="card-label">Data Exporteren</div>
-          <button id="export-csv" class="toggle-btn" style="margin-top: 0.5rem;">Download CSV</button>
-        </div>
+        <button id="export-csv" class="toggle-btn" style="font-size: 0.8rem; padding: 0.4rem 1rem;">CSV ↓</button>
       </div>
 
       <!-- Grafiek uitleg -->

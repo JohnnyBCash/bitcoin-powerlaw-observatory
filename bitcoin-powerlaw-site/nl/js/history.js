@@ -43,12 +43,14 @@ let yScale = 'logarithmic';
 // Initialisatie
 async function init() {
   await loadHistoricalData();
+  await fillRecentPriceGap();
   calculateSigmas();
   computeStats();
   initHistoryChart();
   initBellCurve();
   setupControls();
   setupScaleToggles();
+  setupZoomButtons();
   updateStatistics();
   setupRubberBandDemo();
   fetchLivePrice();
@@ -61,6 +63,50 @@ async function loadHistoricalData() {
     historicalData = await response.json();
   } catch (error) {
     console.error('Historische data laden mislukt:', error);
+  }
+}
+
+// Recente dagprijzen ophalen van CoinGecko om het gat te vullen
+// tussen de statische btc_historical.json en vandaag
+async function fillRecentPriceGap() {
+  if (historicalData.length === 0) return;
+
+  const lastDate = new Date(historicalData[historicalData.length - 1].date);
+  const now = new Date();
+  const gapDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+
+  if (gapDays <= 1) return; // geen gat om te vullen
+
+  try {
+    const fetchDays = Math.min(gapDays + 2, 90);
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${fetchDays}&interval=daily`
+    );
+    const data = await response.json();
+
+    if (!data.prices || data.prices.length === 0) return;
+
+    const lastTimestamp = lastDate.getTime();
+    let added = 0;
+
+    for (const [timestamp, price] of data.prices) {
+      if (timestamp > lastTimestamp + 12 * 60 * 60 * 1000) {
+        const date = new Date(timestamp);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const alreadyExists = historicalData.some(d => d.date === dateStr);
+        if (!alreadyExists) {
+          historicalData.push({ date: dateStr, price: price });
+          added++;
+        }
+      }
+    }
+
+    if (added > 0) {
+      console.log(`${added} dagen prijsdata aangevuld via CoinGecko`);
+    }
+  } catch (error) {
+    console.warn('Kon prijsgat niet aanvullen via CoinGecko:', error);
   }
 }
 
@@ -266,15 +312,13 @@ function initHistoryChart() {
 
 // Datapunt ophalen op index (rekening houdend met gefilterde data)
 function getDataPoint(index) {
-  const range = document.getElementById('date-range').value;
-  const filteredData = filterDataByRange(historicalData, range);
+  const filteredData = filterDataByRange(historicalData, currentRange);
   return filteredData[index];
 }
 
 // Grafiekdata voorbereiden
 function prepareChartData(data, model, sigma) {
-  const range = document.getElementById('date-range')?.value || 'all';
-  const filteredData = filterDataByRange(data, range);
+  const filteredData = filterDataByRange(data, currentRange);
 
   const showTrend  = document.getElementById('show-trend')?.checked ?? true;
   const show1Sigma = document.getElementById('show-1sigma')?.checked ?? true;
@@ -373,6 +417,9 @@ function prepareChartData(data, model, sigma) {
   return { datasets };
 }
 
+// Huidig zoombereik (standaard: alles)
+let currentRange = 'all';
+
 // Data filteren op datumbereik
 function filterDataByRange(data, range) {
   if (range === 'all') return data;
@@ -381,17 +428,20 @@ function filterDataByRange(data, range) {
   let cutoff;
 
   switch (range) {
-    case '10y':
-      cutoff = new Date(now.getFullYear() - 10, now.getMonth(), now.getDate());
+    case '1w':
+      cutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       break;
-    case '5y':
-      cutoff = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
+    case '1m':
+      cutoff = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
       break;
-    case '3y':
-      cutoff = new Date(now.getFullYear() - 3, now.getMonth(), now.getDate());
+    case '6m':
+      cutoff = new Date(now.getFullYear(), now.getMonth() - 6, now.getDate());
       break;
     case '1y':
       cutoff = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+      break;
+    case '5y':
+      cutoff = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
       break;
     default:
       return data;
@@ -402,9 +452,6 @@ function filterDataByRange(data, range) {
 
 // Bediening instellen
 function setupControls() {
-  // Datumbereik
-  document.getElementById('date-range').addEventListener('change', updateChart);
-
   // Band / trend schakelaars
   ['show-trend', 'show-1sigma', 'show-2sigma'].forEach(id => {
     const el = document.getElementById(id);
@@ -413,6 +460,18 @@ function setupControls() {
 
   // CSV exporteren
   document.getElementById('export-csv').addEventListener('click', exportCSV);
+}
+
+// Zoomknoppen instellen
+function setupZoomButtons() {
+  document.querySelectorAll('.zoom-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.zoom-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentRange = btn.dataset.range;
+      updateChart();
+    });
+  });
 }
 
 // Schaalknoppen instellen

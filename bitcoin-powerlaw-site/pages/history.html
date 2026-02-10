@@ -104,23 +104,17 @@
         </div>
       </div>
 
-      <!-- Controls -->
-      <div class="dashboard" style="margin-top: var(--spacing-lg);">
-        <div class="card">
-          <div class="card-label">Date Range</div>
-          <select id="date-range" style="width: 100%; padding: 0.5rem; font-size: 1rem; border: 1px solid var(--gray-border); border-radius: var(--border-radius);">
-            <option value="all">All Time (2010-present)</option>
-            <option value="10y">Last 10 Years</option>
-            <option value="5y">Last 5 Years</option>
-            <option value="3y">Last 3 Years</option>
-            <option value="1y">Last Year</option>
-          </select>
+      <!-- Zoom controls + Export -->
+      <div class="chart-controls">
+        <div class="zoom-group" role="group" aria-label="Chart time range">
+          <button class="zoom-btn" data-range="1w">1W</button>
+          <button class="zoom-btn" data-range="1m">1M</button>
+          <button class="zoom-btn" data-range="6m">6M</button>
+          <button class="zoom-btn" data-range="1y">1Y</button>
+          <button class="zoom-btn" data-range="5y">5Y</button>
+          <button class="zoom-btn active" data-range="all">All</button>
         </div>
-
-        <div class="card">
-          <div class="card-label">Export Data</div>
-          <button id="export-csv" class="toggle-btn" style="margin-top: 0.5rem;">Download CSV</button>
-        </div>
+        <button id="export-csv" class="toggle-btn" style="font-size: 0.8rem; padding: 0.4rem 1rem;">CSV ↓</button>
       </div>
 
       <!-- How to read the chart -->

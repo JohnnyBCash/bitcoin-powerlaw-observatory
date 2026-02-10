@@ -907,6 +907,50 @@ input[type="range"]::-webkit-slider-thumb {
 .stat-item .stat-value.green { color: var(--green); }
 .stat-item .stat-value.red   { color: var(--red); }
 
+/* Chart controls row (zoom + export) */
+.chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--spacing-md);
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.zoom-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--gray-border);
+  border-radius: var(--border-radius);
+  overflow: hidden;
+}
+
+.zoom-btn {
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  background: var(--white);
+  color: var(--gray);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-right: 1px solid var(--gray-border);
+}
+
+.zoom-btn:last-child {
+  border-right: none;
+}
+
+.zoom-btn:hover {
+  background: var(--gray-light);
+  color: var(--black);
+}
+
+.zoom-btn.active {
+  background: var(--black);
+  color: var(--white);
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .weekly-table-wrapper {
