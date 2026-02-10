@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overwaarde Rekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Verken de mogelijkheid om met een overwaardekrediet Bitcoin te kopen. Bekijk verwachte rendementen onder verschillende machtswetscenario's.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Machtswet Observatorium
+      </a>
+      <nav class="nav" aria-label="Hoofdnavigatie">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="future.html">Toekomst</a>
+        <a href="dca.html">DCA</a>
+        <a href="equity.html" class="active">Overwaarde</a>
+        <a href="retirement.html">Pensioen</a>
+        <a href="about.html">Over</a>
+      </nav>
+      <div class="lang-toggle">
+        <a href="../../pages/equity.html" class="lang-link">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="equity.html" class="lang-link active">NL</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Overwaarde Bitcoin Rekentool</h1>
+        <p>Wat als je een overwaardekrediet gebruikt om Bitcoin te kopen? Verken de verwachte uitkomst onder verschillende machtswetscenario's. Zie wanneer je Bitcoin de leenkosten kan overtreffen.</p>
+      </section>
+
+      <div class="disclaimer">
+        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetmodellen, geen financieel advies. Het gebruik van overwaarde om Bitcoin te kopen brengt aanzienlijke risico's met zich mee. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten kunnen afwijken. Doe altijd je eigen onderzoek en raadpleeg een financieel adviseur.</p>
+      </div>
+
+      <!-- ── Invoersectie ──────────────────────────────────── -->
+      <div class="card" id="eq-input-section">
+
+        <!-- Leningparameters -->
+        <h3>Leningparameters</h3>
+        <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+          <div class="input-group">
+            <label for="eq-loan-amount">Leenbedrag (<span id="eq-currency-label">$</span>)</label>
+            <input type="number" id="eq-loan-amount" value="50000" min="1000" step="1000">
+          </div>
+          <div class="input-group">
+            <label for="eq-currency">Valuta</label>
+            <select id="eq-currency">
+              <option value="USD">USD ($)</option>
+              <option value="EUR" selected>EUR (&euro;)</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="eq-duration">Looptijd (jaren)</label>
+            <input type="number" id="eq-duration" value="10" min="1" max="30">
+          </div>
+          <div class="input-group">
+            <label for="eq-interest-rate">Rente: <strong><span id="eq-interest-value">4.5</span>%</strong></label>
+            <input type="range" id="eq-interest-rate" min="3" max="6" step="0.1" value="4.5">
+          </div>
+          <div class="input-group" style="display: flex; align-items: center; gap: 0.5rem; padding-top: 1.6rem;">
+            <input type="checkbox" id="eq-interest-only">
+            <label for="eq-interest-only" id="eq-interest-only-label" style="cursor: pointer;">Aflossingsvrij</label>
+          </div>
+        </div>
+
+        <!-- Woning & Hypotheek -->
+        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+          <h3>Woning &amp; Hypotheek</h3>
+          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+            <div class="input-group">
+              <label for="eq-home-value">Woningwaarde (<span id="eq-currency-label2">$</span>)</label>
+              <input type="number" id="eq-home-value" value="500000" min="0" step="10000">
+            </div>
+            <div class="input-group">
+              <label for="eq-mortgage-balance">Huidig hypotheeksaldo (<span id="eq-currency-label3">$</span>)</label>
+              <input type="number" id="eq-mortgage-balance" value="300000" min="0" step="10000">
+            </div>
+            <div class="input-group">
+              <label for="eq-mortgage-rate">Hypotheekrente: <strong><span id="eq-mortgage-rate-value">3.5</span>%</strong></label>
+              <input type="range" id="eq-mortgage-rate" min="1" max="6" step="0.1" value="3.5">
+            </div>
+          </div>
+
+          <!-- Auto-berekende overwaarde -->
+          <div style="display: flex; gap: var(--spacing-xl); flex-wrap: wrap; margin: var(--spacing-md) 0; padding: var(--spacing-md); background: var(--gray-light); border-radius: var(--border-radius);">
+            <div>
+              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Overwaarde</div>
+              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-home-equity">--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Bestaand LTV</div>
+              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-existing-ltv">--</div>
+            </div>
+            <div>
+              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Totaal LTV (met nieuwe lening)</div>
+              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-total-ltv">--</div>
+            </div>
+          </div>
+          <div id="eq-ltv-warning" class="hidden" style="color: var(--red); font-size: 0.875rem; font-weight: 500; margin-bottom: var(--spacing-sm);">
+            &#9888; Totaal LTV overschrijdt 80%. Geldverstrekkers vereisen doorgaans een hypotheekverzekering of kunnen de lening afwijzen.
+          </div>
+        </div>
+
+        <!-- Bitcoin Aankoop -->
+        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+          <h3>Bitcoin Aankoop</h3>
+          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+            <div class="input-group">
+              <label for="eq-buy-timing">Wanneer kopen</label>
+              <select id="eq-buy-timing">
+                <option value="now" selected>Nu kopen tegen huidige prijs</option>
+                <option value="future">Toekomstige aankoop (schatting)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Huidige BTC-prijs</label>
+              <div id="eq-live-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;">Laden...</div>
+            </div>
+          </div>
+
+          <!-- Toekomstige datumkiezer (standaard verborgen) -->
+          <div id="eq-future-date-section" class="hidden" style="margin-top: var(--spacing-md);">
+            <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+              <div class="input-group">
+                <label for="eq-future-year">Aankoopjaar</label>
+                <input type="number" id="eq-future-year" value="2026" min="2025" max="2040">
+              </div>
+              <div class="input-group">
+                <label for="eq-future-month">Aankoopmaand</label>
+                <select id="eq-future-month">
+                  <option value="1">Januari</option>
+                  <option value="2">Februari</option>
+                  <option value="3">Maart</option>
+                  <option value="4">April</option>
+                  <option value="5">Mei</option>
+                  <option value="6" selected>Juni</option>
+                  <option value="7">Juli</option>
+                  <option value="8">Augustus</option>
+                  <option value="9">September</option>
+                  <option value="10">Oktober</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label>Verwachte BTC-prijs</label>
+                <div id="eq-future-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;">--</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Scenario -->
+        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+          <h3>Prijsscenario</h3>
+          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md);">
+            <div class="input-group">
+              <label for="eq-scenario">Scenario</label>
+              <select id="eq-scenario">
+                <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde periodes)</option>
+                <option value="cyclical_bear">Bear Bias Cycli (60% onder trend)</option>
+                <option value="smooth_trend">Vloeiende Trend (blijft op trend)</option>
+                <option value="smooth_bear">Bear (vlak &minus;1&sigma; onder trend)</option>
+                <option value="smooth_deep_bear">Diepe Bear (vlak &minus;2&sigma; onder trend)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Knoppen -->
+        <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+          <button class="calculate-btn" id="eq-calculate-btn">Berekenen</button>
+          <button class="calculate-btn secondary" id="eq-compare-btn">Vergelijk Alle Scenario's</button>
+        </div>
+
+        <div class="hidden" id="eq-action-buttons" style="margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+          <button class="calculate-btn secondary" id="eq-export-pdf-btn">&#128196; Opslaan als PDF</button>
+          <button class="calculate-btn secondary" id="eq-reset-btn">&#8634; Standaardwaarden</button>
+        </div>
+
+        <!-- Statusbanner -->
+        <div id="eq-status-banner" class="status-banner hidden" style="margin-top: var(--spacing-lg);">
+          <div id="eq-status-icon" style="font-size: 1.5rem;"></div>
+          <div>
+            <div id="eq-status-headline" style="font-weight: 700;"></div>
+            <div id="eq-status-detail" style="font-size: 0.875rem; color: var(--gray);"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Samenvattingskaarten ──────────────────────────────── -->
+      <section id="eq-results-section" class="hidden">
+        <h2>Samenvatting Overwaardekrediet</h2>
+        <div class="dashboard" id="eq-summary-cards"></div>
+      </section>
+
+      <!-- ── Waardegrafiek ────────────────────────────────── -->
+      <section id="eq-chart-section" class="hidden">
+        <h2>Bitcoin Waarde vs Leenkosten</h2>
+        <p style="color: var(--gray); margin-bottom: var(--spacing-md);">De groene lijn is de verwachte waarde van je Bitcoin. De oranje lijn zijn de cumulatieve leenkosten. Waar groen boven oranje uitstijgt is je break-evenpunt.</p>
+        <div class="chart-container" style="position: relative; height: 420px;">
+          <canvas id="eq-value-chart" aria-label="Bitcoin waarde versus leenkosten over tijd" role="img"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Jaarlijks overzicht ─────────────────────────── -->
+      <section id="eq-table-section" class="hidden">
+        <h2>Jaarlijks Overzicht</h2>
+        <div class="table-container">
+          <div style="max-height: 500px; overflow-y: auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Jaar</th>
+                  <th>BTC-prijs</th>
+                  <th>BTC-waarde</th>
+                  <th>Jaarkosten</th>
+                  <th>Cumulatieve Kosten</th>
+                  <th>Leningsaldo</th>
+                  <th>Nettopositie</th>
+                  <th>LTV</th>
+                  <th>ROI</th>
+                </tr>
+              </thead>
+              <tbody id="eq-yearly-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Scenariovergelijking ────────────────────────── -->
+      <section id="eq-comparison-section" class="hidden">
+        <h2>Scenariovergelijking</h2>
+        <p style="color: var(--gray); margin-bottom: var(--spacing-md);">Hoe het overwaardekrediet presteert onder elk prijsscenario.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Eindwaarde BTC</th>
+                <th>Totale Kosten</th>
+                <th>Netto Winst/Verlies</th>
+                <th>ROI</th>
+                <th>Break-even</th>
+              </tr>
+            </thead>
+            <tbody id="eq-comparison-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Inzicht ────────────────────────────────────── -->
+      <section id="eq-insight-section" class="hidden">
+        <div class="info-box">
+          <h4>Belangrijk Inzicht</h4>
+          <p id="eq-insight-text"></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Databronnen</h4>
+          <p>Historisch: Bitstamp, CryptoDataDownload<br>Live: CoinGecko API</p>
+        </div>
+        <div class="footer-section">
+          <h4>Model</h4>
+          <p>Santostasi/Perrenod Machtswet Theorie<br>Parameters van <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Dit is geen financieel advies. Het gebruik van overwaarde om in Bitcoin te investeren brengt aanzienlijke risico's met zich mee. Historische modelfit garandeert geen toekomstige prestaties.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="../../js/powerlaw.js"></script>
+  <script src="../../js/retirement.js"></script>
+  <script src="../../js/equity.js"></script>
+  <script src="../js/equity-ui.js"></script>
+</body>
+</html>
