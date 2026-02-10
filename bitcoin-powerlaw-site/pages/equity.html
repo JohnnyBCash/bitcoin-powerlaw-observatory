@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Home Equity Calculator - Bitcoin Power Law Observatory</title>
+  <title>Mortgage Calculator - Bitcoin Power Law Observatory</title>
   <meta name="description" content="Explore using a home equity loan to buy Bitcoin. See projected returns under power law price scenarios.">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -22,7 +22,7 @@
         <a href="history.html">History</a>
         <a href="future.html">Future</a>
         <a href="dca.html">DCA</a>
-        <a href="equity.html" class="active">Equity</a>
+        <a href="equity.html" class="active">Mortgage</a>
         <a href="retirement.html">Retirement</a>
         <a href="about.html">About</a>
       </nav>
@@ -37,7 +37,7 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Home Equity Bitcoin Calculator</h1>
+        <h1>Mortgage Bitcoin Calculator</h1>
         <p>What if you used a home equity loan to buy Bitcoin? Explore the projected outcome under different power law scenarios. See when your Bitcoin could break even against the loan cost.</p>
       </section>
 
@@ -50,7 +50,7 @@
 
         <!-- Loan Parameters -->
         <h3>Loan Parameters</h3>
-        <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+        <div class="input-grid">
           <div class="input-group">
             <label for="eq-loan-amount">Loan Amount (<span id="eq-currency-label">$</span>)</label>
             <input type="number" id="eq-loan-amount" value="50000" min="1000" step="1000">
@@ -58,8 +58,8 @@
           <div class="input-group">
             <label for="eq-currency">Currency</label>
             <select id="eq-currency">
-              <option value="USD" selected>USD ($)</option>
-              <option value="EUR">EUR (&euro;)</option>
+              <option value="USD" selected>$ USD</option>
+              <option value="EUR">&euro; EUR</option>
             </select>
           </div>
           <div class="input-group">
@@ -67,19 +67,25 @@
             <input type="number" id="eq-duration" value="10" min="1" max="30">
           </div>
           <div class="input-group">
-            <label for="eq-interest-rate">Interest Rate: <strong><span id="eq-interest-value">4.5</span>%</strong></label>
+            <label for="eq-interest-rate">Interest Rate</label>
             <input type="range" id="eq-interest-rate" min="3" max="6" step="0.1" value="4.5">
-          </div>
-          <div class="input-group" style="display: flex; align-items: center; gap: 0.5rem; padding-top: 1.6rem;">
-            <input type="checkbox" id="eq-interest-only">
-            <label for="eq-interest-only" id="eq-interest-only-label" style="cursor: pointer;">Interest-only (aflossingsvrij)</label>
+            <div class="slider-value"><span id="eq-interest-value">4.5</span>%</div>
           </div>
         </div>
 
-        <!-- Home Equity Context -->
-        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+        <!-- Interest-only toggle -->
+        <div class="toggle-switch-row" style="margin-top: var(--spacing-sm);">
+          <label class="toggle-switch">
+            <input type="checkbox" id="eq-interest-only">
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="toggle-label" id="eq-interest-only-label">Interest-only (aflossingsvrij): OFF</span>
+        </div>
+
+        <!-- Home & Mortgage -->
+        <div class="loans-toggle-section">
           <h3>Home &amp; Mortgage</h3>
-          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+          <div class="input-grid">
             <div class="input-group">
               <label for="eq-home-value">Home Value (<span id="eq-currency-label2">$</span>)</label>
               <input type="number" id="eq-home-value" value="500000" min="0" step="10000">
@@ -89,35 +95,36 @@
               <input type="number" id="eq-mortgage-balance" value="300000" min="0" step="10000">
             </div>
             <div class="input-group">
-              <label for="eq-mortgage-rate">Mortgage Rate: <strong><span id="eq-mortgage-rate-value">3.5</span>%</strong></label>
+              <label for="eq-mortgage-rate">Mortgage Rate</label>
               <input type="range" id="eq-mortgage-rate" min="1" max="6" step="0.1" value="3.5">
+              <div class="slider-value"><span id="eq-mortgage-rate-value">3.5</span>%</div>
             </div>
           </div>
 
           <!-- Auto-calculated equity display -->
-          <div style="display: flex; gap: var(--spacing-xl); flex-wrap: wrap; margin: var(--spacing-md) 0; padding: var(--spacing-md); background: var(--gray-light); border-radius: var(--border-radius);">
+          <div class="loan-params" style="margin-top: var(--spacing-md); display: flex; gap: var(--spacing-xl); flex-wrap: wrap;">
             <div>
-              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Home Equity</div>
-              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-home-equity">--</div>
+              <div class="equity-label">Home Equity</div>
+              <div class="equity-value" id="eq-home-equity">--</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Existing LTV</div>
-              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-existing-ltv">--</div>
+              <div class="equity-label">Existing LTV</div>
+              <div class="equity-value" id="eq-existing-ltv">--</div>
             </div>
             <div>
-              <div style="font-size: 0.75rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.04em;">Total LTV (with new loan)</div>
-              <div style="font-size: 1.25rem; font-weight: 600;" id="eq-total-ltv">--</div>
+              <div class="equity-label">Total LTV (with new loan)</div>
+              <div class="equity-value" id="eq-total-ltv">--</div>
             </div>
           </div>
-          <div id="eq-ltv-warning" class="hidden" style="color: var(--red); font-size: 0.875rem; font-weight: 500; margin-bottom: var(--spacing-sm);">
+          <div id="eq-ltv-warning" class="hidden" style="color: var(--red); font-size: 0.875rem; font-weight: 500; margin-top: var(--spacing-xs);">
             &#9888; Total LTV exceeds 80%. Lenders typically require mortgage insurance or may decline the loan.
           </div>
         </div>
 
         <!-- Bitcoin Purchase Timing -->
-        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+        <div class="loans-toggle-section">
           <h3>Bitcoin Purchase</h3>
-          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+          <div class="input-grid">
             <div class="input-group">
               <label for="eq-buy-timing">When to Buy</label>
               <select id="eq-buy-timing">
@@ -133,7 +140,7 @@
 
           <!-- Future date picker (hidden by default) -->
           <div id="eq-future-date-section" class="hidden" style="margin-top: var(--spacing-md);">
-            <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--spacing-md);">
+            <div class="input-grid">
               <div class="input-group">
                 <label for="eq-future-year">Purchase Year</label>
                 <input type="number" id="eq-future-year" value="2026" min="2025" max="2040">
@@ -164,9 +171,9 @@
         </div>
 
         <!-- Scenario -->
-        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--gray-border);">
+        <div class="loans-toggle-section">
           <h3>Price Scenario</h3>
-          <div class="input-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-md);">
+          <div class="input-grid">
             <div class="input-group">
               <label for="eq-scenario">Scenario</label>
               <select id="eq-scenario">
@@ -180,39 +187,39 @@
           </div>
         </div>
 
-        <!-- Buttons -->
-        <div style="margin-top: var(--spacing-xl); display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
-          <button class="calculate-btn" id="eq-calculate-btn">Calculate</button>
-          <button class="calculate-btn secondary" id="eq-compare-btn">Compare All Scenarios</button>
-        </div>
+        <button class="calculate-btn" id="eq-calculate-btn">Calculate Mortgage Plan</button>
+        <button class="calculate-btn secondary" id="eq-compare-btn">Compare All Scenarios</button>
 
-        <div class="hidden" id="eq-action-buttons" style="margin-top: var(--spacing-sm); display: flex; gap: var(--spacing-sm); flex-wrap: wrap;">
+        <!-- Action buttons — shown after first calculation -->
+        <div class="action-buttons hidden" id="eq-action-buttons">
           <button class="calculate-btn secondary" id="eq-export-pdf-btn">&#128196; Save as PDF</button>
           <button class="calculate-btn secondary" id="eq-reset-btn">&#8634; Reset Defaults</button>
         </div>
 
         <!-- Status Banner -->
-        <div id="eq-status-banner" class="status-banner hidden" style="margin-top: var(--spacing-lg);">
-          <div id="eq-status-icon" style="font-size: 1.5rem;"></div>
-          <div>
-            <div id="eq-status-headline" style="font-weight: 700;"></div>
-            <div id="eq-status-detail" style="font-size: 0.875rem; color: var(--gray);"></div>
+        <div id="eq-status-banner" class="status-banner hidden">
+          <div class="status-icon" id="eq-status-icon"></div>
+          <div class="status-content">
+            <div class="status-headline" id="eq-status-headline"></div>
+            <div class="status-detail" id="eq-status-detail"></div>
           </div>
         </div>
       </div>
 
       <!-- ── Summary Cards ──────────────────────────────── -->
       <section id="eq-results-section" class="hidden">
-        <h2>Equity Loan Summary</h2>
-        <div class="dashboard" id="eq-summary-cards"></div>
+        <h2>Mortgage Loan Summary</h2>
+        <div class="dashboard" id="eq-summary-cards">
+          <!-- Populated by JS -->
+        </div>
       </section>
 
       <!-- ── Value Chart ────────────────────────────────── -->
       <section id="eq-chart-section" class="hidden">
         <h2>Bitcoin Value vs Loan Cost</h2>
-        <p style="color: var(--gray); margin-bottom: var(--spacing-md);">The green line is your Bitcoin's projected value. The orange line is your cumulative loan cost. Where green crosses above orange is your break-even point.</p>
+        <p>The green line is your Bitcoin's projected value. The orange line is your cumulative loan cost. Where green crosses above orange is your break-even point.</p>
         <div class="chart-container" style="position: relative; height: 420px;">
-          <canvas id="eq-value-chart" aria-label="Bitcoin value versus loan cost over time" role="img"></canvas>
+          <canvas id="eq-value-chart" aria-label="Bitcoin value versus loan cost over time"></canvas>
         </div>
       </section>
 
@@ -220,7 +227,7 @@
       <section id="eq-table-section" class="hidden">
         <h2>Year-by-Year Breakdown</h2>
         <div class="table-container">
-          <div style="max-height: 500px; overflow-y: auto;">
+          <div class="weekly-table-wrapper" style="max-height: 500px;">
             <table>
               <thead>
                 <tr>
@@ -244,7 +251,7 @@
       <!-- ── Scenario Comparison ────────────────────────── -->
       <section id="eq-comparison-section" class="hidden">
         <h2>Scenario Comparison</h2>
-        <p style="color: var(--gray); margin-bottom: var(--spacing-md);">How the equity loan performs under each price scenario.</p>
+        <p>How the equity loan performs under each price scenario.</p>
         <div class="table-container">
           <table>
             <thead>
@@ -262,7 +269,7 @@
         </div>
       </section>
 
-      <!-- ── Insight ────────────────────────────────────── -->
+      <!-- ── Key Insight ────────────────────────────────── -->
       <section id="eq-insight-section" class="hidden">
         <div class="info-box">
           <h4>Key Insight</h4>
@@ -277,12 +284,12 @@
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
-          <h4>Data Sources</h4>
-          <p>Historical: Bitstamp, CryptoDataDownload<br>Live: CoinGecko API</p>
+          <h4>Methodology</h4>
+          <p>Power law trend: expected growth path. Scenario engine models cyclical deviation around trend. Loan amortisation follows standard annuity or interest-only schedules.</p>
         </div>
         <div class="footer-section">
-          <h4>Model</h4>
-          <p>Santostasi/Perrenod Power Law Theory<br>Parameters from <a href="https://bitcoinpower.law" style="color: var(--orange);">bitcoinpower.law</a></p>
+          <h4>Disclaimer</h4>
+          <p>Not financial advice. For educational purposes only.</p>
         </div>
       </div>
       <div class="footer-bottom">
@@ -290,6 +297,259 @@
       </div>
     </div>
   </footer>
+
+  <!-- Page-specific styles -->
+  <style>
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .input-group label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    .input-group input[type="number"],
+    .input-group select {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      background: var(--white);
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .slider-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--orange);
+      text-align: center;
+    }
+
+    .loans-toggle-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .toggle-switch-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin: var(--spacing-md) 0;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+
+    .toggle-switch input { display: none; }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--gray-border);
+      border-radius: 28px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .toggle-slider::before {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      left: 3px;
+      top: 3px;
+      background: var(--white);
+      border-radius: 50%;
+      transition: transform 0.3s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: var(--orange);
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(24px);
+    }
+
+    .toggle-label {
+      font-weight: 500;
+      font-size: 0.9375rem;
+    }
+
+    .loan-params {
+      padding: var(--spacing-md);
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+    }
+
+    .equity-label {
+      font-size: 0.75rem;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .equity-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .hidden { display: none; }
+
+    .calculate-btn {
+      display: inline-block;
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: var(--spacing-md);
+      margin-right: var(--spacing-sm);
+    }
+
+    .calculate-btn:not(.secondary) {
+      background: var(--orange);
+      color: var(--white);
+    }
+
+    .calculate-btn:not(.secondary):hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .calculate-btn.secondary {
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--gray-border);
+    }
+
+    .calculate-btn.secondary:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius);
+      margin-top: var(--spacing-lg);
+      border-left: 4px solid;
+      animation: statusFadeIn 0.3s ease-out;
+    }
+
+    @keyframes statusFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-banner.status-green {
+      background: rgba(0, 200, 83, 0.08);
+      border-left-color: var(--green);
+    }
+
+    .status-banner.status-amber {
+      background: rgba(247, 147, 26, 0.08);
+      border-left-color: var(--orange);
+    }
+
+    .status-banner.status-red {
+      background: rgba(255, 23, 68, 0.08);
+      border-left-color: var(--red);
+    }
+
+    .status-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .status-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-headline {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .status-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .status-detail strong {
+      color: var(--black);
+    }
+
+    .roi-positive { color: var(--green); font-weight: 600; }
+    .roi-negative { color: var(--red); font-weight: 600; }
+
+    .comparison-winner {
+      background: rgba(0, 200, 83, 0.08);
+      font-weight: 600;
+    }
+
+    @media print {
+      .header, .footer, .nav, .hero, .disclaimer,
+      .calculate-btn, .action-buttons,
+      #eq-input-section { display: none !important; }
+      .hidden { display: block !important; }
+      body { background: white; }
+      .container { max-width: 100%; padding: 0; }
+      section { page-break-inside: avoid; margin-bottom: 1rem; }
+      .chart-container { height: 300px !important; }
+    }
+  </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
