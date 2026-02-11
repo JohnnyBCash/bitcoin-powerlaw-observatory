@@ -4,6 +4,9 @@ let historicalData = [];
 let sigmaCache = {};
 let currentModel = 'santostasi';
 let projectionChart = null;
+let projectionYears = 20;
+let showCycleOverlay = false;
+let livePrice = null;
 
 // Key dates and milestones
 const PROJECTION_DATES = [
@@ -29,6 +32,7 @@ const MILESTONE_PRICES = [
 // Initialize
 async function init() {
   await loadHistoricalData();
+  fetchLivePrice();
   calculateSigmas();
   populateTimeline();
   populateProjectionTable();
@@ -44,6 +48,19 @@ async function loadHistoricalData() {
     historicalData = await response.json();
   } catch (error) {
     console.error('Failed to load historical data:', error);
+  }
+}
+
+// Fetch live BTC price for initialK calculation
+async function fetchLivePrice() {
+  try {
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const data = await res.json();
+    if (data.bitcoin && data.bitcoin.usd) {
+      livePrice = data.bitcoin.usd;
+    }
+  } catch (e) {
+    console.warn('Live price fetch failed:', e);
   }
 }
 
@@ -141,8 +158,7 @@ function initProjectionChart() {
   const ctx = document.getElementById('projection-chart').getContext('2d');
   const sigma = sigmaCache[currentModel].sigma;
 
-  // Generate future projection data (20 years)
-  const chartData = prepareProjectionData(currentModel, sigma, 20);
+  const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
 
   projectionChart = new Chart(ctx, {
     type: 'line',
@@ -150,6 +166,7 @@ function initProjectionChart() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: { duration: 400 },
       interaction: {
         intersect: false,
         mode: 'index'
@@ -192,7 +209,18 @@ function initProjectionChart() {
       plugins: {
         legend: {
           display: true,
-          position: 'top'
+          position: 'top',
+          labels: {
+            usePointStyle: true,
+            padding: 16,
+            filter: function(item) {
+              // Hide cycle datasets from legend when overlay is off
+              if (!showCycleOverlay && (item.text === 'Cyclical Price Path' || item.text === 'Cyclical Upper (1σ)' || item.text === 'Cyclical Lower (1σ)')) {
+                return false;
+              }
+              return true;
+            }
+          }
         },
         tooltip: {
           callbacks: {
@@ -200,6 +228,7 @@ function initProjectionChart() {
               return PowerLaw.formatDate(context[0].parsed.x);
             },
             label: function(context) {
+              if (context.parsed.y == null) return null;
               return context.dataset.label + ': ' + PowerLaw.formatPrice(context.parsed.y);
             }
           }
@@ -212,7 +241,7 @@ function initProjectionChart() {
 // Prepare projection chart data
 function prepareProjectionData(model, sigma, years) {
   const now = new Date();
-  const dataPoints = [];
+  const R = window.Retirement;
 
   // Historical data (last 5 years)
   const fiveYearsAgo = new Date(now.getFullYear() - 5, now.getMonth(), now.getDate());
@@ -230,6 +259,17 @@ function prepareProjectionData(model, sigma, years) {
   const upper2 = [];
   const lower2 = [];
 
+  // Cyclical overlay data
+  const cyclicalData = [];
+  const cyclicalUpper = [];
+  const cyclicalLower = [];
+
+  // Compute initialK from live price
+  let initialK = null;
+  if (livePrice && R) {
+    initialK = R.currentSigmaK(model, sigma, livePrice);
+  }
+
   for (let i = -60; i <= years * 12; i++) { // 5 years back + years forward
     const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
     const timestamp = date.getTime();
@@ -240,64 +280,135 @@ function prepareProjectionData(model, sigma, years) {
     lower1.push({ x: timestamp, y: PowerLaw.bandPrice(model, sigma, -1, date) });
     upper2.push({ x: timestamp, y: PowerLaw.bandPrice(model, sigma, 2, date) });
     lower2.push({ x: timestamp, y: PowerLaw.bandPrice(model, sigma, -2, date) });
+
+    // Cyclical path: only for future months
+    if (R && i >= 0) {
+      const yearIndex = i / 12;
+      const effectiveK = R.cyclicalSigmaK(yearIndex, {
+        bearBias: 0,
+        initialK: initialK
+      });
+      const cyclicalPrice = R.scenarioPrice(model, date, sigma, effectiveK);
+      cyclicalData.push({ x: timestamp, y: cyclicalPrice });
+
+      // Upper/lower cycle envelope: shift the cyclical wave by ~0.5σ
+      const upperK = R.cyclicalSigmaK(yearIndex, {
+        bearBias: 0,
+        amplitude: 1.0,
+        initialK: initialK != null ? Math.min(1, initialK + 0.5) : null
+      });
+      const lowerK = R.cyclicalSigmaK(yearIndex, {
+        bearBias: 0,
+        amplitude: 1.0,
+        initialK: initialK != null ? Math.max(-1, initialK - 0.5) : null
+      });
+      // Use +0.3σ above and -0.3σ below the cyclical path for a tight corridor
+      const upperPrice = R.scenarioPrice(model, date, sigma, Math.min(2, effectiveK + 0.3));
+      const lowerPrice = R.scenarioPrice(model, date, sigma, Math.max(-2, effectiveK - 0.3));
+      cyclicalUpper.push({ x: timestamp, y: upperPrice });
+      cyclicalLower.push({ x: timestamp, y: lowerPrice });
+    } else if (R && i < 0) {
+      cyclicalData.push({ x: timestamp, y: null });
+      cyclicalUpper.push({ x: timestamp, y: null });
+      cyclicalLower.push({ x: timestamp, y: null });
+    }
   }
 
-  return {
-    datasets: [
+  const datasets = [
+    {
+      label: '+2σ Band',
+      data: upper2,
+      borderColor: 'rgba(255, 23, 68, 0.3)',
+      backgroundColor: 'rgba(255, 23, 68, 0.05)',
+      fill: '+1',
+      borderWidth: 1,
+      pointRadius: 0
+    },
+    {
+      label: '+1σ Band',
+      data: upper1,
+      borderColor: 'rgba(255, 23, 68, 0.2)',
+      backgroundColor: 'rgba(117, 117, 117, 0.05)',
+      fill: '+1',
+      borderWidth: 1,
+      pointRadius: 0
+    },
+    {
+      label: 'Power Law Trend',
+      data: trendData,
+      borderColor: '#F7931A',
+      backgroundColor: 'transparent',
+      borderWidth: 2.5,
+      pointRadius: 0
+    },
+    {
+      label: '-1σ Band',
+      data: lower1,
+      borderColor: 'rgba(0, 200, 83, 0.2)',
+      backgroundColor: 'rgba(117, 117, 117, 0.05)',
+      fill: '-1',
+      borderWidth: 1,
+      pointRadius: 0
+    },
+    {
+      label: '-2σ Band',
+      data: lower2,
+      borderColor: 'rgba(0, 200, 83, 0.3)',
+      backgroundColor: 'rgba(0, 200, 83, 0.05)',
+      fill: '-1',
+      borderWidth: 1,
+      pointRadius: 0
+    },
+    {
+      label: 'Historical Price',
+      data: historicalPrices,
+      borderColor: '#000000',
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      pointRadius: 0
+    }
+  ];
+
+  // Cyclical overlay datasets (hidden unless toggle is on)
+  if (R) {
+    datasets.push(
       {
-        label: '+2σ Band',
-        data: upper2,
-        borderColor: 'rgba(255, 23, 68, 0.3)',
-        backgroundColor: 'rgba(255, 23, 68, 0.05)',
+        label: 'Cyclical Upper (1σ)',
+        data: cyclicalUpper,
+        borderColor: showCycleOverlay ? 'rgba(156, 39, 176, 0.15)' : 'transparent',
+        backgroundColor: showCycleOverlay ? 'rgba(156, 39, 176, 0.06)' : 'transparent',
         fill: '+1',
-        borderWidth: 1,
-        pointRadius: 0
+        borderWidth: showCycleOverlay ? 1 : 0,
+        pointRadius: 0,
+        spanGaps: false,
+        hidden: !showCycleOverlay
       },
       {
-        label: '+1σ Band',
-        data: upper1,
-        borderColor: 'rgba(255, 23, 68, 0.2)',
-        backgroundColor: 'rgba(117, 117, 117, 0.05)',
-        fill: '+1',
-        borderWidth: 1,
-        pointRadius: 0
-      },
-      {
-        label: 'Power Law Trend',
-        data: trendData,
-        borderColor: '#F7931A',
+        label: 'Cyclical Price Path',
+        data: cyclicalData,
+        borderColor: showCycleOverlay ? '#9C27B0' : 'transparent',
         backgroundColor: 'transparent',
-        borderWidth: 2.5,
-        pointRadius: 0
+        borderWidth: showCycleOverlay ? 2.5 : 0,
+        pointRadius: 0,
+        borderDash: [6, 3],
+        spanGaps: false,
+        hidden: !showCycleOverlay
       },
       {
-        label: '-1σ Band',
-        data: lower1,
-        borderColor: 'rgba(0, 200, 83, 0.2)',
-        backgroundColor: 'rgba(117, 117, 117, 0.05)',
+        label: 'Cyclical Lower (1σ)',
+        data: cyclicalLower,
+        borderColor: showCycleOverlay ? 'rgba(156, 39, 176, 0.15)' : 'transparent',
+        backgroundColor: showCycleOverlay ? 'rgba(156, 39, 176, 0.06)' : 'transparent',
         fill: '-1',
-        borderWidth: 1,
-        pointRadius: 0
-      },
-      {
-        label: '-2σ Band',
-        data: lower2,
-        borderColor: 'rgba(0, 200, 83, 0.3)',
-        backgroundColor: 'rgba(0, 200, 83, 0.05)',
-        fill: '-1',
-        borderWidth: 1,
-        pointRadius: 0
-      },
-      {
-        label: 'Historical Price',
-        data: historicalPrices,
-        borderColor: '#000000',
-        backgroundColor: 'transparent',
-        borderWidth: 1.5,
-        pointRadius: 0
+        borderWidth: showCycleOverlay ? 1 : 0,
+        pointRadius: 0,
+        spanGaps: false,
+        hidden: !showCycleOverlay
       }
-    ]
-  };
+    );
+  }
+
+  return { datasets };
 }
 
 // Setup controls
@@ -306,6 +417,36 @@ function setupControls() {
   const slider = document.getElementById('date-slider');
   slider.addEventListener('input', updateSliderDisplay);
   updateSliderDisplay(); // Initial update
+
+  // Horizon buttons
+  document.querySelectorAll('.zoom-btn[data-years]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.zoom-btn[data-years]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      projectionYears = parseInt(btn.dataset.years);
+      rebuildChart();
+    });
+  });
+
+  // Cycle overlay toggle
+  const cycleToggle = document.getElementById('cycle-overlay-toggle');
+  if (cycleToggle) {
+    cycleToggle.addEventListener('change', () => {
+      showCycleOverlay = cycleToggle.checked;
+      rebuildChart();
+    });
+  }
+}
+
+// Rebuild chart with current settings
+function rebuildChart() {
+  const sigma = sigmaCache[currentModel].sigma;
+  const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
+
+  if (projectionChart) {
+    projectionChart.data = chartData;
+    projectionChart.update();
+  }
 }
 
 // Update slider display
@@ -333,17 +474,8 @@ function updateAll() {
   populateProjectionTable();
   populateMilestoneTable();
   updateSliderDisplay();
-
-  // Update chart
-  const sigma = sigmaCache[currentModel].sigma;
-  const chartData = prepareProjectionData(currentModel, sigma, 20);
-  projectionChart.data = chartData;
-  projectionChart.update();
+  rebuildChart();
 }
-
-// Add date adapter for Chart.js
-// Note: Chart.js needs a date adapter for time scales
-// We'll use a simple approach with timestamps
 
 // Start
 init();

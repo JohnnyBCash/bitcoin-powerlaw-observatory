@@ -188,6 +188,25 @@
         <p>If the power law continues to hold, here's what the models suggest for Bitcoin's long-term trend. Remember: these are trend values, not price predictions.</p>
       </section>
 
+      <!-- Projection Chart — lead with the graph -->
+      <div class="chart-container" style="height: 480px; margin-bottom: 0;">
+        <canvas id="projection-chart" aria-label="Bitcoin power law projection chart" role="img"></canvas>
+      </div>
+
+      <!-- Chart controls: horizon + cycle overlay toggle -->
+      <div class="chart-controls" style="margin-bottom: var(--spacing-xl);">
+        <div class="zoom-group" role="group" aria-label="Projection horizon">
+          <button class="zoom-btn" data-years="5">5Y</button>
+          <button class="zoom-btn" data-years="10">10Y</button>
+          <button class="zoom-btn active" data-years="20">20Y</button>
+          <button class="zoom-btn" data-years="30">30Y</button>
+        </div>
+        <label style="display: flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 500; color: var(--gray); cursor: pointer;">
+          <input type="checkbox" id="cycle-overlay-toggle" style="accent-color: var(--orange); width: 16px; height: 16px; cursor: pointer;">
+          Show cyclical price path
+        </label>
+      </div>
+
       <!-- Disclaimer -->
       <div class="disclaimer">
         <p><strong>Important:</strong> These projections represent the power law trend line only. Actual prices oscillate around the trend, often dramatically. This is not financial advice or a price guarantee. Focus on the long-term adoption math, not short-term speculation.</p>
@@ -263,12 +282,6 @@
             <!-- Populated by JS -->
           </tbody>
         </table>
-      </div>
-
-      <!-- Projection Chart -->
-      <h2 style="margin-top: var(--spacing-xxl);">20-Year Projection</h2>
-      <div class="chart-container" style="height: 400px;">
-        <canvas id="projection-chart" aria-label="Bitcoin power law projection chart" role="img"></canvas>
       </div>
 
       <!-- ═══════════════════════════════════════════════════════════════════ -->
@@ -373,6 +386,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../js/powerlaw.js"></script>
+  <script src="../js/retirement.js"></script>
   <script src="../js/future.js"></script>
   <script src="../js/time-travel.js"></script>
   <script>
