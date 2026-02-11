@@ -32,13 +32,14 @@ const MILESTONE_PRICES = [
 // Initialize
 async function init() {
   await loadHistoricalData();
-  fetchLivePrice();
+  await fillRecentPriceGap();
   calculateSigmas();
   populateTimeline();
   populateProjectionTable();
   populateMilestoneTable();
   initProjectionChart();
   setupControls();
+  fetchLivePrice();
 }
 
 // Load historical data
@@ -51,13 +52,59 @@ async function loadHistoricalData() {
   }
 }
 
-// Fetch live BTC price for initialK calculation
+// Fetch recent daily prices from CoinGecko to fill the gap between
+// the static btc_historical.json and today
+async function fillRecentPriceGap() {
+  if (historicalData.length === 0) return;
+
+  const lastDate = new Date(historicalData[historicalData.length - 1].date);
+  const now = new Date();
+  const gapDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+
+  if (gapDays <= 1) return;
+
+  try {
+    const fetchDays = Math.min(gapDays + 2, 90);
+    const response = await fetch(
+      `https://api.coingecko.com/api/v3/coins/bitcoin/market_chart?vs_currency=usd&days=${fetchDays}&interval=daily`
+    );
+    const data = await response.json();
+
+    if (!data.prices || data.prices.length === 0) return;
+
+    const lastTimestamp = lastDate.getTime();
+    let added = 0;
+
+    for (const [timestamp, price] of data.prices) {
+      if (timestamp > lastTimestamp + 12 * 60 * 60 * 1000) {
+        const date = new Date(timestamp);
+        const dateStr = date.toISOString().split('T')[0];
+
+        const alreadyExists = historicalData.some(d => d.date === dateStr);
+        if (!alreadyExists) {
+          historicalData.push({ date: dateStr, price: price });
+          added++;
+        }
+      }
+    }
+
+    if (added > 0) {
+      console.log(`Future page: filled ${added} days of price data from CoinGecko`);
+    }
+  } catch (error) {
+    console.warn('Could not fill price gap from CoinGecko:', error);
+  }
+}
+
+// Fetch live BTC price for initialK calculation and rebuild chart
 async function fetchLivePrice() {
   try {
     const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
     const data = await res.json();
     if (data.bitcoin && data.bitcoin.usd) {
       livePrice = data.bitcoin.usd;
+      // Rebuild chart so cyclical overlay uses the correct starting position
+      if (projectionChart) rebuildChart();
     }
   } catch (e) {
     console.warn('Live price fetch failed:', e);
