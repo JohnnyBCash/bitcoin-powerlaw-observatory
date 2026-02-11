@@ -202,19 +202,35 @@ function populateProjectionTable() {
   }
 }
 
+// Mijlpaaldatum berekenen voor een specifieke sigma-band
+function milestoneDateForBand(targetPrice, model, k) {
+  const sigma = sigmaCache[model].sigma;
+  // Equivalent trendprijs die nodig is zodat band k het doelprijs bereikt
+  const adjustedTarget = targetPrice / Math.pow(10, k * sigma);
+  return PowerLaw.milestoneDateForPrice(adjustedTarget, model);
+}
+
 // Mijlpaalsprijstabel vullen
 function populateMilestoneTable() {
   const tbody = document.getElementById('milestone-table');
   tbody.innerHTML = '';
 
-  for (const price of MILESTONE_PRICES) {
-    const milestoneDate = PowerLaw.milestoneDateForPrice(price, 'santostasi');
+  const bands = [2, 1, 0, -1, -2]; // +2σ, +1σ, trend, -1σ, -2σ
 
+  for (const price of MILESTONE_PRICES) {
     const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><strong>${PowerLaw.formatPrice(price)}</strong></td>
-      <td>${PowerLaw.formatDate(milestoneDate)}</td>
-    `;
+    let cells = `<td><strong>${PowerLaw.formatPrice(price)}</strong></td>`;
+
+    for (const k of bands) {
+      const date = milestoneDateForBand(price, 'santostasi', k);
+      const now = new Date();
+      const isPast = date < now;
+      const style = isPast ? ' style="color: var(--gray); font-style: italic;"' : '';
+      const label = isPast ? 'Verleden' : PowerLaw.formatDate(date);
+      cells += `<td${style}>${label}</td>`;
+    }
+
+    tr.innerHTML = cells;
     tbody.appendChild(tr);
   }
 }
