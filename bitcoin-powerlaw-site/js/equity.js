@@ -8,13 +8,13 @@
   const R  = window.Retirement;
 
   const DEFAULTS = {
-    loanAmount:         50000,
-    loanDurationYears:  10,
+    loanAmount:         100000,
+    loanDurationYears:  15,
     loanInterestRate:   0.045,
     interestOnly:       false,
 
-    homeValue:          500000,
-    mortgageBalance:    300000,
+    homeValue:          400000,
+    mortgageBalance:    200000,
     mortgageRate:       0.035,
 
     buyNow:             true,

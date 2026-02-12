@@ -54,7 +54,7 @@
         <div class="input-grid">
           <div class="input-group">
             <label for="eq-loan-amount">Leenbedrag (<span id="eq-currency-label">&euro;</span>)</label>
-            <input type="number" id="eq-loan-amount" value="50000" min="1000" step="1000">
+            <input type="number" id="eq-loan-amount" value="100000" min="1000" step="1000">
           </div>
           <div class="input-group">
             <label for="eq-currency">Valuta</label>
@@ -65,7 +65,7 @@
           </div>
           <div class="input-group">
             <label for="eq-duration">Looptijd (jaren)</label>
-            <input type="number" id="eq-duration" value="10" min="1" max="30">
+            <input type="number" id="eq-duration" value="15" min="1" max="30">
           </div>
           <div class="input-group">
             <label for="eq-interest-rate">Rente</label>
@@ -83,17 +83,19 @@
           <span class="toggle-label" id="eq-interest-only-label">Aflossingsvrij: UIT</span>
         </div>
 
+        <p class="rate-note" style="font-size: 0.8125rem; color: var(--gray); margin-top: var(--spacing-xs);">Let op: deze rekentool gaat uit van een vaste rente voor de gehele looptijd. Bij variabele rente kunnen de werkelijke kosten aanzienlijk afwijken.</p>
+
         <!-- Woning & Hypotheek -->
         <div class="loans-toggle-section">
           <h3>Woning &amp; Hypotheek</h3>
           <div class="input-grid">
             <div class="input-group">
               <label for="eq-home-value">Woningwaarde (<span id="eq-currency-label2">&euro;</span>)</label>
-              <input type="number" id="eq-home-value" value="500000" min="0" step="10000">
+              <input type="number" id="eq-home-value" value="400000" min="0" step="10000">
             </div>
             <div class="input-group">
               <label for="eq-mortgage-balance">Huidig hypotheeksaldo (<span id="eq-currency-label3">&euro;</span>)</label>
-              <input type="number" id="eq-mortgage-balance" value="300000" min="0" step="10000">
+              <input type="number" id="eq-mortgage-balance" value="200000" min="0" step="10000">
             </div>
             <div class="input-group">
               <label for="eq-mortgage-rate">Hypotheekrente</label>
@@ -135,7 +137,7 @@
             </div>
             <div class="input-group">
               <label>Huidige BTC-prijs</label>
-              <div id="eq-live-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;">Laden...</div>
+              <div id="eq-live-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;"><span class="price-loading"></span></div>
             </div>
           </div>
 
@@ -173,7 +175,7 @@
 
         <!-- Scenario -->
         <div class="loans-toggle-section">
-          <h3>Prijsscenario</h3>
+          <h3>Prijsscenario <span class="scenario-info" title="Scenario's modelleren verschillende paden die de Bitcoin-prijs kan volgen op basis van de machtswettrend.">?</span></h3>
           <div class="input-grid">
             <div class="input-group">
               <label for="eq-scenario">Scenario</label>
@@ -185,6 +187,9 @@
                 <option value="smooth_deep_bear">Diepe Bear (vlak &minus;2&sigma; onder trend)</option>
               </select>
             </div>
+          </div>
+          <div class="scenario-descriptions" style="font-size: 0.8125rem; color: var(--gray); margin-top: var(--spacing-xs);">
+            <div id="eq-scenario-desc">Hausse-baisse cycli rond de machtswettrend met geleidelijk langere periodes &mdash; het meest realistische historische patroon.</div>
           </div>
         </div>
 
@@ -278,16 +283,39 @@
         </div>
       </section>
 
+      <!-- ── Kruisverwijzingen ────────────────────────────── -->
+      <section class="cross-links">
+        <h3>Ontdek Meer Tools</h3>
+        <div class="cross-links-grid">
+          <a href="dca.html" class="cross-link-card">
+            <strong>DCA Rekentool</strong>
+            <span>Simuleer geleidelijk investeren in Bitcoin over tijd</span>
+          </a>
+          <a href="retirement.html" class="cross-link-card">
+            <strong>Pensioen Rekentool</strong>
+            <span>Plan je Bitcoin-ondersteunde pensioenopname</span>
+          </a>
+          <a href="balance-sheet.html" class="cross-link-card">
+            <strong>Balans Rekentool</strong>
+            <span>Model bedrijfsmatige Bitcoin-allocatie</span>
+          </a>
+          <a href="future.html" class="cross-link-card">
+            <strong>Toekomstprojecties</strong>
+            <span>Verken machtswet prijsprojecties en mijlpalen</span>
+          </a>
+        </div>
+      </section>
+
     </div>
   </main>
 
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
-        <div class="footer-section">
-          <h4>Methodologie</h4>
+        <details class="footer-section methodology-accordion">
+          <summary><h4 style="display: inline; cursor: pointer;">Methodologie</h4></summary>
           <p>Machtswet trend: verwacht groeipad. Scenario-engine modelleert cyclische afwijking rond trend. Leningaflossing volgt standaard annuïtair of aflossingsvrij schema.</p>
-        </div>
+        </details>
         <div class="footer-section">
           <h4>Disclaimer</h4>
           <p>Geen financieel advies. Alleen voor educatieve doeleinden.</p>
@@ -538,6 +566,139 @@
     .comparison-winner {
       background: rgba(0, 200, 83, 0.08);
       font-weight: 600;
+    }
+
+    /* Laadanimatie voor BTC-prijs */
+    .price-loading {
+      display: inline-block;
+      width: 100px;
+      height: 1.1rem;
+      background: linear-gradient(90deg, var(--gray-light) 25%, #e8e8e8 50%, var(--gray-light) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+      vertical-align: middle;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    /* Scenario info badge */
+    .scenario-info {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--gray-light);
+      color: var(--gray);
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: help;
+      vertical-align: middle;
+      margin-left: var(--spacing-xs);
+    }
+
+    /* Kruisverwijzingen sectie */
+    .cross-links {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .cross-links h3 {
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .cross-links-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .cross-link-card {
+      display: block;
+      padding: var(--spacing-md);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      color: var(--black);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .cross-link-card:hover {
+      border-color: var(--orange);
+      box-shadow: 0 2px 8px rgba(247, 147, 26, 0.1);
+      opacity: 1;
+    }
+
+    .cross-link-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.9375rem;
+    }
+
+    .cross-link-card span {
+      font-size: 0.8125rem;
+      color: var(--gray);
+    }
+
+    /* Methodologie accordion */
+    .methodology-accordion summary {
+      list-style: none;
+      cursor: pointer;
+    }
+    .methodology-accordion summary::-webkit-details-marker {
+      display: none;
+    }
+    .methodology-accordion summary h4::after {
+      content: ' +';
+      font-weight: 400;
+      color: var(--gray);
+    }
+    .methodology-accordion[open] summary h4::after {
+      content: ' \2212';
+    }
+    .methodology-accordion p {
+      margin-top: var(--spacing-xs);
+    }
+
+    /* Invoervalidatie */
+    .validation-msg {
+      font-size: 0.8125rem;
+      color: var(--red);
+      margin-top: 2px;
+      display: none;
+    }
+    .validation-msg.visible {
+      display: block;
+    }
+
+    /* Mobiel-responsieve tabellen met vaste eerste kolom */
+    @media (max-width: 768px) {
+      .table-container {
+        position: relative;
+      }
+      .table-container table {
+        min-width: 700px;
+      }
+      .table-container th:first-child,
+      .table-container td:first-child {
+        position: sticky;
+        left: 0;
+        background: var(--white);
+        z-index: 2;
+        box-shadow: 2px 0 4px rgba(0,0,0,0.06);
+      }
+      .table-container thead th:first-child {
+        z-index: 3;
+      }
+      .table-container tr:hover td:first-child {
+        background: var(--gray-light);
+      }
     }
 
     @media print {

@@ -64,7 +64,7 @@
     if (!el) return;
     if (livePrice) {
       el.textContent = fmtCurrency(livePrice);
-    } else {
+    } else if (!el.querySelector('.price-loading')) {
       el.textContent = 'Unavailable';
     }
   }
@@ -115,6 +115,59 @@
     el.textContent = fmtCurrency(price);
   }
 
+  // ── Scenario Descriptions ────────────────────────────────────
+  const scenarioDescriptions = {
+    cyclical: 'Boom-bust cycles around the power law trend with gradually lengthening periods \u2014 the most realistic historical pattern.',
+    cyclical_bear: 'Same cyclical pattern but spending 60% of the time below trend \u2014 a pessimistic but plausible path.',
+    smooth_trend: 'Price follows the power law trend exactly with no volatility \u2014 an idealised baseline.',
+    smooth_bear: 'Price stays flat at 1 standard deviation below the trend for the entire period \u2014 a persistent bear market.',
+    smooth_deep_bear: 'Price stays flat at 2 standard deviations below trend \u2014 an extreme, prolonged downturn.'
+  };
+
+  function updateScenarioDescription() {
+    const el = $('eq-scenario-desc');
+    if (!el) return;
+    const mode = $('eq-scenario').value;
+    el.textContent = scenarioDescriptions[mode] || '';
+  }
+
+  // ── Input Validation ────────────────────────────────────────
+  function validateInputs() {
+    const loanAmount      = parseFloat($('eq-loan-amount').value) || 0;
+    const homeValue       = parseFloat($('eq-home-value').value) || 0;
+    const mortgageBalance = parseFloat($('eq-mortgage-balance').value) || 0;
+    const duration        = parseInt($('eq-duration').value) || 0;
+    const rate            = parseFloat($('eq-interest-rate').value) || 0;
+
+    clearValidation();
+
+    if (loanAmount > 0 && homeValue > 0 && loanAmount > (homeValue - mortgageBalance)) {
+      showValidation('eq-loan-amount', 'Loan exceeds available home equity');
+    }
+    if (rate === 0) {
+      showValidation('eq-interest-rate', '0% rate is unrealistic for most loans');
+    }
+    if (duration > 30) {
+      showValidation('eq-duration', 'Durations over 30 years are unusual');
+    }
+  }
+
+  function showValidation(inputId, msg) {
+    let el = document.querySelector('#' + inputId + ' ~ .validation-msg');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'validation-msg';
+      const input = $(inputId);
+      if (input) input.parentNode.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearValidation() {
+    document.querySelectorAll('.validation-msg').forEach(el => el.classList.remove('visible'));
+  }
+
   // ── Gather User Inputs ────────────────────────────────────────
   function getParams() {
     const scenarioMode = $('eq-scenario').value;
@@ -126,13 +179,13 @@
     }
 
     return {
-      loanAmount:        toUSD(parseFloat($('eq-loan-amount').value) || 50000),
-      loanDurationYears: parseInt($('eq-duration').value) || 10,
+      loanAmount:        toUSD(parseFloat($('eq-loan-amount').value) || 100000),
+      loanDurationYears: parseInt($('eq-duration').value) || 15,
       loanInterestRate:  parseFloat($('eq-interest-rate').value) / 100,
       interestOnly:      $('eq-interest-only').checked,
 
-      homeValue:         toUSD(parseFloat($('eq-home-value').value) || 500000),
-      mortgageBalance:   toUSD(parseFloat($('eq-mortgage-balance').value) || 300000),
+      homeValue:         toUSD(parseFloat($('eq-home-value').value) || 400000),
+      mortgageBalance:   toUSD(parseFloat($('eq-mortgage-balance').value) || 200000),
       mortgageRate:      parseFloat($('eq-mortgage-rate').value) / 100,
 
       buyNow,
@@ -223,14 +276,22 @@
     if (fy) fy.addEventListener('change', updateFuturePrice);
     if (fm) fm.addEventListener('change', updateFuturePrice);
 
-    // Scenario change updates future price
+    // Scenario change updates future price + description
     const scn = $('eq-scenario');
-    if (scn) scn.addEventListener('change', updateFuturePrice);
+    if (scn) {
+      scn.addEventListener('change', () => {
+        updateFuturePrice();
+        updateScenarioDescription();
+      });
+    }
 
-    // Auto-update equity/LTV on relevant input changes
+    // Auto-update equity/LTV and validation on relevant input changes
     ['eq-home-value', 'eq-mortgage-balance', 'eq-loan-amount'].forEach(id => {
       const el = $(id);
-      if (el) el.addEventListener('input', updateEquityDisplay);
+      if (el) el.addEventListener('input', () => {
+        updateEquityDisplay();
+        validateInputs();
+      });
     });
   }
 
@@ -328,13 +389,13 @@
   function resetDefaults() {
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
 
-    $('eq-loan-amount').value      = 50000;
+    $('eq-loan-amount').value      = 100000;
     $('eq-currency').value         = 'USD';
-    $('eq-duration').value         = 10;
+    $('eq-duration').value         = 15;
     $('eq-interest-rate').value    = 4.5;
     $('eq-interest-only').checked  = false;
-    $('eq-home-value').value       = 500000;
-    $('eq-mortgage-balance').value = 300000;
+    $('eq-home-value').value       = 400000;
+    $('eq-mortgage-balance').value = 200000;
     $('eq-mortgage-rate').value    = 3.5;
     $('eq-buy-timing').value       = 'now';
     $('eq-future-year').value      = 2026;

@@ -76,7 +76,7 @@
     if (!el) return;
     if (livePrice) {
       el.textContent = fmtCurrency(livePrice);
-    } else {
+    } else if (!el.querySelector('.price-loading')) {
       el.textContent = 'Niet beschikbaar';
     }
   }
@@ -127,6 +127,59 @@
     el.textContent = fmtCurrency(price);
   }
 
+  // ── Scenario Beschrijvingen ──────────────────────────────────
+  const scenarioDescriptions = {
+    cyclical: 'Hausse-baisse cycli rond de machtswettrend met geleidelijk langere periodes \u2014 het meest realistische historische patroon.',
+    cyclical_bear: 'Hetzelfde cyclische patroon maar 60% van de tijd onder trend \u2014 een pessimistisch maar plausibel pad.',
+    smooth_trend: 'Prijs volgt de machtswettrend exact zonder volatiliteit \u2014 een ge\u00EFdealiseerde basislijn.',
+    smooth_bear: 'Prijs blijft vlak op 1 standaarddeviatie onder de trend voor de gehele periode \u2014 een aanhoudende bearmarkt.',
+    smooth_deep_bear: 'Prijs blijft vlak op 2 standaarddeviaties onder trend \u2014 een extreme, langdurige neergang.'
+  };
+
+  function updateScenarioDescription() {
+    const el = $('eq-scenario-desc');
+    if (!el) return;
+    const mode = $('eq-scenario').value;
+    el.textContent = scenarioDescriptions[mode] || '';
+  }
+
+  // ── Invoervalidatie ─────────────────────────────────────────
+  function validateInputs() {
+    const loanAmount      = parseFloat($('eq-loan-amount').value) || 0;
+    const homeValue       = parseFloat($('eq-home-value').value) || 0;
+    const mortgageBalance = parseFloat($('eq-mortgage-balance').value) || 0;
+    const duration        = parseInt($('eq-duration').value) || 0;
+    const rate            = parseFloat($('eq-interest-rate').value) || 0;
+
+    clearValidation();
+
+    if (loanAmount > 0 && homeValue > 0 && loanAmount > (homeValue - mortgageBalance)) {
+      showValidation('eq-loan-amount', 'Lening overschrijdt beschikbare overwaarde');
+    }
+    if (rate === 0) {
+      showValidation('eq-interest-rate', '0% rente is onrealistisch voor de meeste leningen');
+    }
+    if (duration > 30) {
+      showValidation('eq-duration', 'Looptijden boven 30 jaar zijn ongebruikelijk');
+    }
+  }
+
+  function showValidation(inputId, msg) {
+    let el = document.querySelector('#' + inputId + ' ~ .validation-msg');
+    if (!el) {
+      el = document.createElement('div');
+      el.className = 'validation-msg';
+      const input = $(inputId);
+      if (input) input.parentNode.appendChild(el);
+    }
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+
+  function clearValidation() {
+    document.querySelectorAll('.validation-msg').forEach(el => el.classList.remove('visible'));
+  }
+
   // ── Gebruikersinvoer Verzamelen ───────────────────────────────
   function getParams() {
     const scenarioMode = $('eq-scenario').value;
@@ -138,13 +191,13 @@
     }
 
     return {
-      loanAmount:        toUSD(parseFloat($('eq-loan-amount').value) || 50000),
-      loanDurationYears: parseInt($('eq-duration').value) || 10,
+      loanAmount:        toUSD(parseFloat($('eq-loan-amount').value) || 100000),
+      loanDurationYears: parseInt($('eq-duration').value) || 15,
       loanInterestRate:  parseFloat($('eq-interest-rate').value) / 100,
       interestOnly:      $('eq-interest-only').checked,
 
-      homeValue:         toUSD(parseFloat($('eq-home-value').value) || 500000),
-      mortgageBalance:   toUSD(parseFloat($('eq-mortgage-balance').value) || 300000),
+      homeValue:         toUSD(parseFloat($('eq-home-value').value) || 400000),
+      mortgageBalance:   toUSD(parseFloat($('eq-mortgage-balance').value) || 200000),
       mortgageRate:      parseFloat($('eq-mortgage-rate').value) / 100,
 
       buyNow,
@@ -233,14 +286,22 @@
     if (fy) fy.addEventListener('change', updateFuturePrice);
     if (fm) fm.addEventListener('change', updateFuturePrice);
 
-    // Scenario wijziging update toekomstige prijs
+    // Scenario wijziging update toekomstige prijs + beschrijving
     const scn = $('eq-scenario');
-    if (scn) scn.addEventListener('change', updateFuturePrice);
+    if (scn) {
+      scn.addEventListener('change', () => {
+        updateFuturePrice();
+        updateScenarioDescription();
+      });
+    }
 
-    // Auto-update overwaarde/LTV bij relevante invoerwijzigingen
+    // Auto-update overwaarde/LTV en validatie bij relevante invoerwijzigingen
     ['eq-home-value', 'eq-mortgage-balance', 'eq-loan-amount'].forEach(id => {
       const el = $(id);
-      if (el) el.addEventListener('input', updateEquityDisplay);
+      if (el) el.addEventListener('input', () => {
+        updateEquityDisplay();
+        validateInputs();
+      });
     });
   }
 
@@ -332,13 +393,13 @@
   function resetDefaults() {
     try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* negeren */ }
 
-    $('eq-loan-amount').value      = 50000;
+    $('eq-loan-amount').value      = 100000;
     $('eq-currency').value         = 'EUR';
-    $('eq-duration').value         = 10;
+    $('eq-duration').value         = 15;
     $('eq-interest-rate').value    = 4.5;
     $('eq-interest-only').checked  = false;
-    $('eq-home-value').value       = 500000;
-    $('eq-mortgage-balance').value = 300000;
+    $('eq-home-value').value       = 400000;
+    $('eq-mortgage-balance').value = 200000;
     $('eq-mortgage-rate').value    = 3.5;
     $('eq-buy-timing').value       = 'now';
     $('eq-future-year').value      = 2026;
