@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balans Rekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Ontdek de impact van het alloceren van bedrijfswinst naar Bitcoin. Bekijk hoe een BTC-reserve de marges kan verlagen, R&D kan financieren en veerkracht kan opbouwen.">
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Machtswet Observatorium
+      </a>
+      <nav class="nav" aria-label="Hoofdnavigatie">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">Geschiedenis</a>
+        <a href="future.html">Toekomst</a>
+        <a href="dca.html">DCA</a>
+        <a href="equity.html">Hypotheek</a>
+        <a href="balance-sheet.html" class="active">Balans</a>
+        <a href="retirement.html">Pensioen</a>
+        <a href="about.html">Over</a>
+      </nav>
+      <div class="lang-toggle">
+        <a href="../../pages/balance-sheet.html" class="lang-link">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="balance-sheet.html" class="lang-link active">NL</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Bitcoin op de Balans</h1>
+        <p>Wat als uw bedrijf een deel van de winst in Bitcoin zou alloceren? Ontdek hoe een zakelijke BTC-reserve uw balans kan versterken, lagere marges mogelijk maakt om concurrerend te blijven, R&amp;D kan financieren en veerkracht biedt tegen economische tegenwind.</p>
+      </section>
+
+      <div class="disclaimer">
+        <p><strong>Belangrijk:</strong> Dit is een educatieve tool gebaseerd op machtswetmodellen, geen financieel advies. Het alloceren van bedrijfsmiddelen naar Bitcoin brengt aanzienlijk risico met zich mee. Het model gaat ervan uit dat de machtswet van toepassing blijft. Werkelijke resultaten zullen afwijken. Doe altijd uw eigen onderzoek en raadpleeg een financieel adviseur.</p>
+      </div>
+
+      <!-- ── Invoer ──────────────────────────────────────── -->
+      <div class="card" id="bs-input-section">
+
+        <!-- Bedrijfsfinanciën -->
+        <h3>Bedrijfsfinanciën</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="bs-annual-revenue">Jaaromzet (<span id="bs-currency-label">&euro;</span>)</label>
+            <input type="number" id="bs-annual-revenue" value="1000000" min="10000" step="10000">
+          </div>
+          <div class="input-group">
+            <label for="bs-currency">Valuta</label>
+            <select id="bs-currency">
+              <option value="EUR" selected>&euro; EUR</option>
+              <option value="USD">$ USD</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="bs-net-margin">Nettowinstmarge</label>
+            <input type="range" id="bs-net-margin" min="1" max="50" step="0.5" value="10">
+            <div class="slider-value"><span id="bs-net-margin-value">10</span>%</div>
+          </div>
+          <div class="input-group">
+            <label for="bs-revenue-growth">Jaarlijkse omzetgroei</label>
+            <input type="range" id="bs-revenue-growth" min="0" max="20" step="0.5" value="5">
+            <div class="slider-value"><span id="bs-revenue-growth-value">5</span>%</div>
+          </div>
+        </div>
+
+        <!-- BTC-allocatiestrategie -->
+        <div class="loans-toggle-section">
+          <h3>BTC-allocatiestrategie</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="bs-strategy">Strategie</label>
+              <select id="bs-strategy">
+                <option value="monthly_profit" selected>Maandelijks vanuit winst</option>
+                <option value="annual_lump">Jaarlijkse eenmalige storting</option>
+                <option value="initial_plus_monthly">Startinvestering + maandelijks vanuit winst</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="bs-allocation-pct">% van winst naar BTC</label>
+              <input type="range" id="bs-allocation-pct" min="5" max="50" step="1" value="20">
+              <div class="slider-value"><span id="bs-allocation-pct-value">20</span>%</div>
+            </div>
+          </div>
+
+          <!-- Startinvestering (alleen bij initial_plus_monthly) -->
+          <div id="bs-initial-section" class="hidden" style="margin-top: var(--spacing-md);">
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="bs-initial-treasury">Startinvestering (<span id="bs-currency-label2">&euro;</span>)</label>
+                <input type="number" id="bs-initial-treasury" value="100000" min="0" step="10000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projectie-instellingen -->
+        <div class="loans-toggle-section">
+          <h3>Projectie-instellingen</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="bs-time-horizon">Tijdshorizon</label>
+              <input type="range" id="bs-time-horizon" min="3" max="20" step="1" value="10">
+              <div class="slider-value"><span id="bs-time-horizon-value">10</span> jaar</div>
+            </div>
+            <div class="input-group">
+              <label for="bs-scenario">Prijsscenario</label>
+              <select id="bs-scenario">
+                <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde perioden)</option>
+                <option value="cyclical_bear">Bear-cyclus (60% onder trend)</option>
+                <option value="smooth_trend">Stabiele trend (blijft op trend)</option>
+                <option value="smooth_bear">Bear (vlak &minus;1&sigma; onder trend)</option>
+                <option value="smooth_deep_bear">Diepe bear (vlak &minus;2&sigma; onder trend)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Huidige BTC-prijs</label>
+              <div id="bs-live-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;">Laden...</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="calculate-btn" id="bs-calculate-btn">Bereken balansimpact</button>
+        <button class="calculate-btn secondary" id="bs-compare-btn">Vergelijk alle scenario's</button>
+
+        <div class="action-buttons hidden" id="bs-action-buttons">
+          <button class="calculate-btn secondary" id="bs-export-pdf-btn">&#128196; Opslaan als PDF</button>
+          <button class="calculate-btn secondary" id="bs-reset-btn">&#8634; Standaardwaarden</button>
+        </div>
+
+        <!-- Statusbanner -->
+        <div id="bs-status-banner" class="status-banner hidden">
+          <div class="status-icon" id="bs-status-icon"></div>
+          <div class="status-content">
+            <div class="status-headline" id="bs-status-headline"></div>
+            <div class="status-detail" id="bs-status-detail"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Samenvatting ────────────────────────────────── -->
+      <section id="bs-results-section" class="hidden">
+        <h2>Reserve-samenvatting</h2>
+        <div class="dashboard" id="bs-summary-cards"></div>
+      </section>
+
+      <!-- ── Grafiek ─────────────────────────────────────── -->
+      <section id="bs-chart-section" class="hidden">
+        <h2>Balansimpact</h2>
+        <p>Het groene vlak toont de waarde van uw BTC-reserve. Het oranje vlak toont de cumulatieve allocatie. Het verschil daartussen is uw ongerealiseerde winst (of verlies).</p>
+        <div class="chart-container" style="position: relative; height: 420px;">
+          <canvas id="bs-value-chart" aria-label="Bitcoin reservewaarde versus cumulatieve allocatie over tijd"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Strategische inzichten ──────────────────────── -->
+      <section id="bs-insights-section" class="hidden">
+        <h2>Strategische inzichten</h2>
+        <div class="dashboard" id="bs-insight-cards"></div>
+      </section>
+
+      <!-- ── Jaar-voor-jaar tabel ────────────────────────── -->
+      <section id="bs-table-section" class="hidden">
+        <h2>Jaar-voor-jaar overzicht</h2>
+        <div class="table-container">
+          <div class="weekly-table-wrapper" style="max-height: 500px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Jaar</th>
+                  <th>Omzet</th>
+                  <th>Winst</th>
+                  <th>BTC gealloceerd</th>
+                  <th>BTC-prijs</th>
+                  <th>BTC-bezit</th>
+                  <th>Reservewaarde</th>
+                  <th>Reserve ROI</th>
+                  <th>Eff. marge</th>
+                </tr>
+              </thead>
+              <tbody id="bs-yearly-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Scenariovergelijking ─────────────────────────── -->
+      <section id="bs-comparison-section" class="hidden">
+        <h2>Scenariovergelijking</h2>
+        <p>Hoe uw BTC-reserve presteert onder elk prijsscenario.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Eindwaarde reserve</th>
+                <th>Totaal gealloceerd</th>
+                <th>Winst / Verlies</th>
+                <th>ROI</th>
+                <th>Eff. marge</th>
+                <th>Veerkracht</th>
+              </tr>
+            </thead>
+            <tbody id="bs-comparison-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Belangrijk inzicht ───────────────────────────── -->
+      <section id="bs-insight-section" class="hidden">
+        <div class="info-box">
+          <h4>Belangrijk inzicht</h4>
+          <p id="bs-insight-text"></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Methodologie</h4>
+          <p>Machtswettrend: verwacht groeipad. Scenario-engine modelleert cyclische afwijking rond de trend. Bedrijfsomzet groeit met het opgegeven jaarlijkse percentage. BTC-allocatie volgt de gekozen strategie.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Disclaimer</h4>
+          <p>Geen financieel advies. Uitsluitend voor educatieve doeleinden.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>Dit is geen financieel advies. Het alloceren van bedrijfsmiddelen naar Bitcoin brengt aanzienlijk risico met zich mee. Historische modelfit garandeert geen toekomstige prestaties.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Paginaspecifieke stijlen -->
+  <style>
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .input-group label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    .input-group input[type="number"],
+    .input-group select {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      background: var(--white);
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .slider-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--orange);
+      text-align: center;
+    }
+
+    .loans-toggle-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .hidden { display: none; }
+
+    .calculate-btn {
+      display: inline-block;
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: var(--spacing-md);
+      margin-right: var(--spacing-sm);
+    }
+
+    .calculate-btn:not(.secondary) {
+      background: var(--orange);
+      color: var(--white);
+    }
+
+    .calculate-btn:not(.secondary):hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .calculate-btn.secondary {
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--gray-border);
+    }
+
+    .calculate-btn.secondary:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius);
+      margin-top: var(--spacing-lg);
+      border-left: 4px solid;
+      animation: statusFadeIn 0.3s ease-out;
+    }
+
+    @keyframes statusFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-banner.status-green {
+      background: rgba(0, 200, 83, 0.08);
+      border-left-color: var(--green);
+    }
+
+    .status-banner.status-amber {
+      background: rgba(247, 147, 26, 0.08);
+      border-left-color: var(--orange);
+    }
+
+    .status-banner.status-red {
+      background: rgba(255, 23, 68, 0.08);
+      border-left-color: var(--red);
+    }
+
+    .status-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .status-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-headline {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .status-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .status-detail strong {
+      color: var(--black);
+    }
+
+    .roi-positive { color: var(--green); font-weight: 600; }
+    .roi-negative { color: var(--red); font-weight: 600; }
+
+    .comparison-winner {
+      background: rgba(0, 200, 83, 0.08);
+      font-weight: 600;
+    }
+
+    .insight-card {
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      border: 1px solid var(--gray-border);
+    }
+
+    .insight-card h4 {
+      margin-bottom: var(--spacing-xs);
+      color: var(--black);
+    }
+
+    .insight-metric {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--orange);
+      margin: var(--spacing-sm) 0;
+    }
+
+    .insight-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    @media print {
+      .header, .footer, .nav, .hero, .disclaimer,
+      .calculate-btn, .action-buttons,
+      #bs-input-section { display: none !important; }
+      .hidden { display: block !important; }
+      body { background: white; }
+      .container { max-width: 100%; padding: 0; }
+      section { page-break-inside: avoid; margin-bottom: 1rem; }
+      .chart-container { height: 300px !important; }
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="../../js/powerlaw.js"></script>
+  <script src="../../js/retirement.js"></script>
+  <script src="../../js/balance-sheet.js"></script>
+  <script src="../js/balance-sheet-ui.js"></script>
+</body>
+</html>

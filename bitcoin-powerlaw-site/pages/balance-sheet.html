@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balance Sheet Calculator - Bitcoin Power Law Observatory</title>
+  <meta name="description" content="Explore the impact of allocating business profits to Bitcoin. See how a BTC treasury could lower margins, fund R&D, and build resilience.">
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="header">
+    <div class="container">
+      <a href="../index.html" class="logo">
+        <span class="logo-icon">&#x20BF;</span>
+        Power Law Observatory
+      </a>
+      <nav class="nav" aria-label="Main navigation">
+        <a href="../index.html">Dashboard</a>
+        <a href="history.html">History</a>
+        <a href="future.html">Future</a>
+        <a href="dca.html">DCA</a>
+        <a href="equity.html">Mortgage</a>
+        <a href="balance-sheet.html" class="active">Balance Sheet</a>
+        <a href="retirement.html">Retirement</a>
+        <a href="about.html">About</a>
+      </nav>
+      <div class="lang-toggle">
+        <a href="balance-sheet.html" class="lang-link active">EN</a>
+        <span class="lang-sep">|</span>
+        <a href="../nl/pages/balance-sheet.html" class="lang-link">NL</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="container">
+      <section class="hero">
+        <h1>Bitcoin on the Balance Sheet</h1>
+        <p>What if your business allocated a portion of profits to Bitcoin? Explore how a corporate BTC treasury could strengthen your balance sheet, enable lower margins to stay competitive, fund R&amp;D, and build resilience against downturns.</p>
+      </section>
+
+      <div class="disclaimer">
+        <p><strong>Important:</strong> This is an educational tool based on power law models, not financial advice. Allocating business funds to Bitcoin carries significant risk. The model assumes the power law continues to hold. Real outcomes will vary. Always do your own research and consult a financial adviser.</p>
+      </div>
+
+      <!-- ── Input Section ──────────────────────────────── -->
+      <div class="card" id="bs-input-section">
+
+        <!-- Business Financials -->
+        <h3>Business Financials</h3>
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="bs-annual-revenue">Annual Revenue (<span id="bs-currency-label">$</span>)</label>
+            <input type="number" id="bs-annual-revenue" value="1000000" min="10000" step="10000">
+          </div>
+          <div class="input-group">
+            <label for="bs-currency">Currency</label>
+            <select id="bs-currency">
+              <option value="USD" selected>$ USD</option>
+              <option value="EUR">&euro; EUR</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <label for="bs-net-margin">Net Profit Margin</label>
+            <input type="range" id="bs-net-margin" min="1" max="50" step="0.5" value="10">
+            <div class="slider-value"><span id="bs-net-margin-value">10</span>%</div>
+          </div>
+          <div class="input-group">
+            <label for="bs-revenue-growth">Annual Revenue Growth</label>
+            <input type="range" id="bs-revenue-growth" min="0" max="20" step="0.5" value="5">
+            <div class="slider-value"><span id="bs-revenue-growth-value">5</span>%</div>
+          </div>
+        </div>
+
+        <!-- BTC Allocation Strategy -->
+        <div class="loans-toggle-section">
+          <h3>BTC Allocation Strategy</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="bs-strategy">Strategy</label>
+              <select id="bs-strategy">
+                <option value="monthly_profit" selected>Monthly from profit</option>
+                <option value="annual_lump">Annual lump sum from profit</option>
+                <option value="initial_plus_monthly">Initial investment + monthly from profit</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label for="bs-allocation-pct">% of Profit to BTC</label>
+              <input type="range" id="bs-allocation-pct" min="5" max="50" step="1" value="20">
+              <div class="slider-value"><span id="bs-allocation-pct-value">20</span>%</div>
+            </div>
+          </div>
+
+          <!-- Initial treasury (only for initial_plus_monthly) -->
+          <div id="bs-initial-section" class="hidden" style="margin-top: var(--spacing-md);">
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="bs-initial-treasury">Initial Treasury Investment (<span id="bs-currency-label2">$</span>)</label>
+                <input type="number" id="bs-initial-treasury" value="100000" min="0" step="10000">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Projection Settings -->
+        <div class="loans-toggle-section">
+          <h3>Projection Settings</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="bs-time-horizon">Time Horizon</label>
+              <input type="range" id="bs-time-horizon" min="3" max="20" step="1" value="10">
+              <div class="slider-value"><span id="bs-time-horizon-value">10</span> years</div>
+            </div>
+            <div class="input-group">
+              <label for="bs-scenario">Price Scenario</label>
+              <select id="bs-scenario">
+                <option value="cyclical" selected>Cyclical (&plusmn;1&sigma;, lengthening periods)</option>
+                <option value="cyclical_bear">Bear Bias Cycles (60% below trend)</option>
+                <option value="smooth_trend">Smooth Trend (stays on trend)</option>
+                <option value="smooth_bear">Bear (flat &minus;1&sigma; below trend)</option>
+                <option value="smooth_deep_bear">Deep Bear (flat &minus;2&sigma; below trend)</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Current BTC Price</label>
+              <div id="bs-live-price" style="font-size: 1.1rem; font-weight: 600; padding-top: 0.3rem;">Loading...</div>
+            </div>
+          </div>
+        </div>
+
+        <button class="calculate-btn" id="bs-calculate-btn">Calculate Balance Sheet Impact</button>
+        <button class="calculate-btn secondary" id="bs-compare-btn">Compare All Scenarios</button>
+
+        <!-- Action buttons — shown after first calculation -->
+        <div class="action-buttons hidden" id="bs-action-buttons">
+          <button class="calculate-btn secondary" id="bs-export-pdf-btn">&#128196; Save as PDF</button>
+          <button class="calculate-btn secondary" id="bs-reset-btn">&#8634; Reset Defaults</button>
+        </div>
+
+        <!-- Status Banner -->
+        <div id="bs-status-banner" class="status-banner hidden">
+          <div class="status-icon" id="bs-status-icon"></div>
+          <div class="status-content">
+            <div class="status-headline" id="bs-status-headline"></div>
+            <div class="status-detail" id="bs-status-detail"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Summary Cards ──────────────────────────────── -->
+      <section id="bs-results-section" class="hidden">
+        <h2>Treasury Summary</h2>
+        <div class="dashboard" id="bs-summary-cards">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- ── Value Chart ────────────────────────────────── -->
+      <section id="bs-chart-section" class="hidden">
+        <h2>Balance Sheet Impact</h2>
+        <p>Green area shows your BTC treasury value. Orange shows cumulative capital allocated. The gap between them is your unrealised gain (or loss).</p>
+        <div class="chart-container" style="position: relative; height: 420px;">
+          <canvas id="bs-value-chart" aria-label="Bitcoin treasury value versus cumulative allocation over time"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Strategic Insights ─────────────────────────── -->
+      <section id="bs-insights-section" class="hidden">
+        <h2>Strategic Insights</h2>
+        <div class="dashboard" id="bs-insight-cards">
+          <!-- Populated by JS: 3 insight cards -->
+        </div>
+      </section>
+
+      <!-- ── Year-by-Year Table ─────────────────────────── -->
+      <section id="bs-table-section" class="hidden">
+        <h2>Year-by-Year Breakdown</h2>
+        <div class="table-container">
+          <div class="weekly-table-wrapper" style="max-height: 500px;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Year</th>
+                  <th>Revenue</th>
+                  <th>Profit</th>
+                  <th>BTC Allocated</th>
+                  <th>BTC Price</th>
+                  <th>BTC Holdings</th>
+                  <th>Treasury Value</th>
+                  <th>Treasury ROI</th>
+                  <th>Eff. Margin</th>
+                </tr>
+              </thead>
+              <tbody id="bs-yearly-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Scenario Comparison ────────────────────────── -->
+      <section id="bs-comparison-section" class="hidden">
+        <h2>Scenario Comparison</h2>
+        <p>How your BTC treasury performs under each price scenario.</p>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Scenario</th>
+                <th>Final Treasury</th>
+                <th>Total Allocated</th>
+                <th>Gain / Loss</th>
+                <th>ROI</th>
+                <th>Eff. Margin</th>
+                <th>Resilience</th>
+              </tr>
+            </thead>
+            <tbody id="bs-comparison-body"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ── Key Insight ────────────────────────────────── -->
+      <section id="bs-insight-section" class="hidden">
+        <div class="info-box">
+          <h4>Key Insight</h4>
+          <p id="bs-insight-text"></p>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Methodology</h4>
+          <p>Power law trend: expected growth path. Scenario engine models cyclical deviation around trend. Business revenue grows at the specified annual rate. BTC allocation follows the chosen strategy.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Disclaimer</h4>
+          <p>Not financial advice. For educational purposes only.</p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>This is not financial advice. Allocating business funds to Bitcoin carries significant risk. Historical model fit does not guarantee future performance.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Page-specific styles -->
+  <style>
+    .chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    section {
+      position: relative;
+      z-index: 1;
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .input-group label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--gray);
+    }
+
+    .input-group input[type="number"],
+    .input-group select {
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      background: var(--white);
+    }
+
+    .input-group input:focus,
+    .input-group select:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .slider-value {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--orange);
+      text-align: center;
+    }
+
+    .loans-toggle-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .hidden { display: none; }
+
+    .calculate-btn {
+      display: inline-block;
+      padding: var(--spacing-sm) var(--spacing-xl);
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: var(--spacing-md);
+      margin-right: var(--spacing-sm);
+    }
+
+    .calculate-btn:not(.secondary) {
+      background: var(--orange);
+      color: var(--white);
+    }
+
+    .calculate-btn:not(.secondary):hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .calculate-btn.secondary {
+      background: var(--white);
+      color: var(--black);
+      border: 1px solid var(--gray-border);
+    }
+
+    .calculate-btn.secondary:hover {
+      border-color: var(--orange);
+      color: var(--orange);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius);
+      margin-top: var(--spacing-lg);
+      border-left: 4px solid;
+      animation: statusFadeIn 0.3s ease-out;
+    }
+
+    @keyframes statusFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-banner.status-green {
+      background: rgba(0, 200, 83, 0.08);
+      border-left-color: var(--green);
+    }
+
+    .status-banner.status-amber {
+      background: rgba(247, 147, 26, 0.08);
+      border-left-color: var(--orange);
+    }
+
+    .status-banner.status-red {
+      background: rgba(255, 23, 68, 0.08);
+      border-left-color: var(--red);
+    }
+
+    .status-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .status-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .status-headline {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .status-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    .status-detail strong {
+      color: var(--black);
+    }
+
+    .roi-positive { color: var(--green); font-weight: 600; }
+    .roi-negative { color: var(--red); font-weight: 600; }
+
+    .comparison-winner {
+      background: rgba(0, 200, 83, 0.08);
+      font-weight: 600;
+    }
+
+    /* Insight cards */
+    .insight-card {
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      border: 1px solid var(--gray-border);
+    }
+
+    .insight-card h4 {
+      margin-bottom: var(--spacing-xs);
+      color: var(--black);
+    }
+
+    .insight-metric {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--orange);
+      margin: var(--spacing-sm) 0;
+    }
+
+    .insight-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    @media print {
+      .header, .footer, .nav, .hero, .disclaimer,
+      .calculate-btn, .action-buttons,
+      #bs-input-section { display: none !important; }
+      .hidden { display: block !important; }
+      body { background: white; }
+      .container { max-width: 100%; padding: 0; }
+      section { page-break-inside: avoid; margin-bottom: 1rem; }
+      .chart-container { height: 300px !important; }
+    }
+  </style>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+  <script src="../js/powerlaw.js"></script>
+  <script src="../js/retirement.js"></script>
+  <script src="../js/balance-sheet.js"></script>
+  <script src="../js/balance-sheet-ui.js"></script>
+</body>
+</html>
