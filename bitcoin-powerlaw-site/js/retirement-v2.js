@@ -173,7 +173,9 @@
       // Dynamic SWR on navigation fund value
       const bridgeValue = bridgeBTC * price;
       const swrRate = dynamicSWR(price, trend, params);
-      const targetWithdrawal = Math.min(bridgeValue * swrRate, annualBurn);
+      // Always withdraw at least annual burn — expenses are non-negotiable
+      // SWR scales UP in euphoria but never scales below what the user needs
+      const targetWithdrawal = Math.max(bridgeValue * swrRate, annualBurn);
 
       let btcSold = 0;
       let actualWithdrawal = 0;
@@ -550,7 +552,7 @@
         // Dynamic SWR
         const btcValue = bridgeBTC * price;
         const swrRate = dynamicSWR(price, trend, baseParams);
-        const target = Math.min(btcValue * swrRate, annualBurn);
+        const target = Math.max(btcValue * swrRate, annualBurn);
 
         // Sell BTC to meet target
         if (target > 0 && bridgeBTC > 0) {
