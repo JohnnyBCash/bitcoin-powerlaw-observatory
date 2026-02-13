@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
-  <meta name="description" content="Plan je pensioen met het Brug/Eeuwig raamwerk. Splits je Bitcoin stack in actief inkomen en onuitputtelijke reserves met machtswetprojecties.">
+  <title>Stormnavigatie Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Plan je pensioen met het Stormnavigatie raamwerk. Splits je Bitcoin stack in een Navigatiefonds en Eeuwige Helft met machtswetprojecties.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,8 +38,8 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Brug/Eeuwig Pensioenrekentool</h1>
-        <p>De helft van je stack koopt je vrijheid. De andere helft doorstaat de storm en wordt onuitputtelijk.</p>
+        <h1>Stormnavigatie Pensioenrekentool</h1>
+        <p>Het Navigatiefonds koopt je vrijheid. De Eeuwige Helft doorstaat de storm en wordt onuitputtelijk.</p>
       </section>
 
       <div class="disclaimer">
@@ -83,12 +83,12 @@
           </div>
         </div>
 
-        <!-- Brug/Eeuwig Verdeling -->
+        <!-- Navigatiefonds / Eeuwig Verdeling -->
         <div class="split-section">
-          <h3>Brug / Eeuwig Verdeling</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">De Brughelft financiert je leven tijdens de stormperiode. De Eeuwige Helft groeit langs de machtswet totdat opnames verwaarloosbaar worden.</p>
+          <h3>Navigatiefonds / Eeuwig Verdeling</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Het Navigatiefonds financiert je leven tijdens de stormperiode. De Eeuwige Helft groeit langs de machtswet totdat opnames verwaarloosbaar worden.</p>
           <div class="split-slider-row">
-            <span class="split-label">Brug: <strong id="v2-split-bridge-value">50</strong>%</span>
+            <span class="split-label">Fonds: <strong id="v2-split-bridge-value">50</strong>%</span>
             <input type="range" id="v2-bridge-split" min="10" max="90" step="5" value="50">
             <span class="split-label">Eeuwig: <strong id="v2-split-forever-value">50</strong>%</span>
           </div>
@@ -104,11 +104,6 @@
             </div>
 
             <div class="input-group">
-              <label for="v2-income-floor">Maandelijks Inkomstenminimum (<span class="v2-currency-label">$</span>)</label>
-              <input type="number" id="v2-income-floor" value="2000" min="500" step="100">
-            </div>
-
-            <div class="input-group">
               <label for="v2-retirement-year">Startjaar Pensioen</label>
               <div class="year-input-row">
                 <input type="number" id="v2-retirement-year" value="2030" min="2024" max="2060" step="1">
@@ -120,6 +115,12 @@
               <label for="v2-spending-growth">Jaarlijkse Uitgavengroei (%)</label>
               <input type="range" id="v2-spending-growth" min="0" max="12" step="0.5" value="6.5">
               <div class="slider-value"><span id="v2-spending-growth-value">6.5</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label>Eeuwige Helft SWR</label>
+              <div class="slider-value" id="v2-forever-swr-display" style="font-size: 1.125rem;">&mdash;</div>
+              <div style="color: var(--gray); font-size: 0.8rem;">25% &times; verwacht rendement voor pensioenjaar</div>
             </div>
 
             <div class="input-group">
@@ -153,97 +154,6 @@
             <div class="input-group">
               <label for="v2-annual-burn-er">Jaarlijkse Uitgaven bij Pensioen (<span class="v2-currency-label">$</span>)</label>
               <input type="number" id="v2-annual-burn-er" value="50000" min="1000" step="1000">
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Strategie Opties (alleen Vrijheid Nu) ─── -->
-        <div id="v2-strategy-section" class="strategy-section">
-          <h3>Strategie Opties</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Schakel geavanceerde strategieen aan/uit om hun impact op de overleving van je Brughelft te zien.</p>
-
-          <!-- Kelly Criterium -->
-          <div class="toggle-switch-row">
-            <label class="toggle-switch">
-              <input type="checkbox" id="v2-kelly-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Kelly Criterium: BTC/Goud Allocatie</span>
-          </div>
-          <div id="v2-kelly-params" class="strategy-params hidden">
-            <div class="input-grid">
-              <div class="input-group">
-                <label for="v2-kelly-fraction">Kelly Fractie (%)</label>
-                <input type="range" id="v2-kelly-fraction" min="25" max="100" step="5" value="50">
-                <div class="slider-value"><span id="v2-kelly-fraction-value">50</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-gold-return">Verwacht Goudrendement (%/jr)</label>
-                <input type="range" id="v2-gold-return" min="3" max="12" step="0.5" value="7.5">
-                <div class="slider-value"><span id="v2-gold-return-value">7.5</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-gold-allocation">Initiele Goud Allocatie (%)</label>
-                <input type="range" id="v2-gold-allocation" min="10" max="60" step="5" value="30">
-                <div class="slider-value"><span id="v2-gold-allocation-value">30</span>%</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Leningen Faciliteit -->
-          <div class="toggle-switch-row">
-            <label class="toggle-switch">
-              <input type="checkbox" id="v2-loans-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">BTC-Gedekte Leningfaciliteit</span>
-          </div>
-          <div id="v2-loans-params" class="strategy-params hidden">
-            <div class="input-grid">
-              <div class="input-group">
-                <label for="v2-loan-ltv">Maximale LTV (%)</label>
-                <input type="range" id="v2-loan-ltv" min="10" max="50" step="5" value="30">
-                <div class="slider-value"><span id="v2-loan-ltv-value">30</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-loan-interest">Leningrente (%/jr)</label>
-                <input type="range" id="v2-loan-interest" min="3" max="15" step="0.5" value="8">
-                <div class="slider-value"><span id="v2-loan-interest-value">8</span>%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Geografische Arbitrage -->
-        <div class="geo-section">
-          <h3>Geografische Arbitrage</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Pas je uitgaven aan op basis van kosten van levensonderhoud in verschillende landen.</p>
-          <div class="input-grid">
-            <div class="input-group">
-              <label for="v2-geo-country">Land / Regio</label>
-              <select id="v2-geo-country">
-                <option value="us" selected>Verenigde Staten (100%)</option>
-                <option value="uk">Verenigd Koninkrijk (95%)</option>
-                <option value="nl">Nederland (90%)</option>
-                <option value="de">Duitsland (85%)</option>
-                <option value="es">Spanje (70%)</option>
-                <option value="pt">Portugal (65%)</option>
-                <option value="cz">Tsjechi&euml; (55%)</option>
-                <option value="mx">Mexico (45%)</option>
-                <option value="th">Thailand (40%)</option>
-                <option value="co">Colombia (40%)</option>
-                <option value="vn">Vietnam (35%)</option>
-                <option value="id">Indonesi&euml; (35%)</option>
-                <option value="custom">Aangepast</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label>Kostenvermenigvuldiger</label>
-              <div class="slider-value" style="font-size: 1.125rem;"><span id="v2-geo-multiplier-value">100</span>% van VS basis</div>
-            </div>
-            <div class="input-group hidden" id="v2-geo-custom-group">
-              <label for="v2-geo-custom">Aangepaste Vermenigvuldiger (%)</label>
-              <input type="number" id="v2-geo-custom" value="100" min="10" max="200" step="5">
             </div>
           </div>
         </div>
@@ -284,12 +194,12 @@
         </div>
       </section>
 
-      <!-- ── Brughelft Grafiek ─────────────────────────── -->
+      <!-- ── Navigatiefonds Grafiek ──────────────────────── -->
       <section id="v2-bridge-chart-section" class="hidden">
-        <h2>Brughelft Projectie</h2>
-        <p>Je actieve kapitaal: opnames, herbalancering en de tactische strijd om de storm te overleven.</p>
+        <h2>Navigatiefonds Projectie</h2>
+        <p>Je actieve kapitaal: opnames en de tactische strijd om de storm te overleven.</p>
         <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="v2-bridge-chart" aria-label="Brughelft projectie over tijd"></canvas>
+          <canvas id="v2-bridge-chart" aria-label="Navigatiefonds projectie over tijd"></canvas>
         </div>
       </section>
 
@@ -311,14 +221,14 @@
       <!-- ── Vergelijkingssectie ──────────────────────── -->
       <section id="v2-comparison-section" class="hidden">
         <h2>Scenariovergelijking</h2>
-        <p>Hoe je Brug/Eeuwig plan standhoudt onder verschillende prijsscenario's.</p>
+        <p>Hoe je Stormnavigatie plan standhoudt onder verschillende prijsscenario's.</p>
         <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>Scenario</th>
                 <th>Stormperiode</th>
-                <th>Brug Overleeft</th>
+                <th>Fonds Overleeft</th>
                 <th>Minimale BTC</th>
                 <th>Gem. SWR</th>
               </tr>
@@ -342,8 +252,8 @@
                   <th>SWR</th>
                   <th>Opname</th>
                   <th>BTC Verkocht</th>
-                  <th>Brug BTC</th>
-                  <th>Brugwaarde</th>
+                  <th>Fonds BTC</th>
+                  <th>Fondswaarde</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -356,7 +266,7 @@
       <!-- ── Kernpunt ───────────────────────────────── -->
       <section id="v2-insight-section" class="hidden">
         <div class="info-box">
-          <h4>Het Brug/Eeuwig Inzicht</h4>
+          <h4>Het Stormnavigatie Inzicht</h4>
           <p id="v2-insight-text"></p>
         </div>
       </section>
@@ -371,10 +281,10 @@
       <!-- ── Monte Carlo Analyse ─────────────────────── -->
       <section id="v2-montecarlo-section" class="hidden">
         <h2>Monte Carlo Analyse</h2>
-        <p>200 willekeurige prijssimulaties rond de machtswettrend. Hoe vaak overleeft je Brughelft de storm?</p>
+        <p>200 willekeurige prijssimulaties rond de machtswettrend. Hoe vaak overleeft je Navigatiefonds de storm?</p>
         <div id="v2-montecarlo-summary" style="margin-bottom: var(--spacing-md);"></div>
         <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo brug overlevingskans banden"></canvas>
+          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo navigatiefonds overlevingskans banden"></canvas>
         </div>
       </section>
 
@@ -386,7 +296,7 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4>Methodologie</h4>
-          <p>Brughelft: actieve onttrekking met dynamisch opnamepercentage (past aan 1%&ndash;6% op basis van prijs vs. machtsweettrend). Eeuwige Helft: passieve groei langs machtswetcurve. Stormperiode: jaren totdat uitgaven &lt; 1% van Eeuwige waarde.</p>
+          <p>Navigatiefonds: actieve onttrekking met dynamisch opnamepercentage (past aan 1%&ndash;6% op basis van prijs vs. machtswettrend). Eeuwige Helft: passieve groei langs machtswetcurve. Stormperiode: jaren totdat uitgaven onder het duurzame opnamepercentage (25% &times; verwacht rendement) van de Eeuwige waarde komen.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
@@ -500,12 +410,6 @@
       border-top: 1px solid var(--gray-border);
     }
 
-    .geo-section {
-      margin-top: var(--spacing-xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-border);
-    }
-
     .split-slider-row {
       display: flex;
       align-items: center;
@@ -526,71 +430,6 @@
 
     .split-label:last-child {
       text-align: right;
-    }
-
-    /* Strategie Sectie */
-    .strategy-section {
-      margin-top: var(--spacing-xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-border);
-    }
-
-    .strategy-params {
-      margin-top: var(--spacing-sm);
-      margin-bottom: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--gray-light);
-      border-radius: var(--border-radius);
-    }
-
-    .toggle-switch-row {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      margin: var(--spacing-md) 0;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 52px;
-      height: 28px;
-      flex-shrink: 0;
-    }
-
-    .toggle-switch input { display: none; }
-
-    .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: var(--gray-border);
-      border-radius: 28px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 22px;
-      height: 22px;
-      left: 3px;
-      top: 3px;
-      background: var(--white);
-      border-radius: 50%;
-      transition: transform 0.3s;
-    }
-
-    .toggle-switch input:checked + .toggle-slider {
-      background: var(--orange);
-    }
-
-    .toggle-switch input:checked + .toggle-slider::before {
-      transform: translateX(24px);
-    }
-
-    .toggle-label {
-      font-weight: 500;
-      font-size: 0.9375rem;
     }
 
     /* Knoppen */
@@ -754,10 +593,8 @@
 
     /* Tabel statussen */
     .status-ok { color: var(--green); }
-    .status-borrow { color: var(--orange); }
     .status-ruin { color: var(--red); font-weight: 700; }
     .status-sell { color: var(--gray); }
-    .gold-cell { color: #B8860B; }
 
     @media print {
       .header, .footer, .nav, .hero, .disclaimer,

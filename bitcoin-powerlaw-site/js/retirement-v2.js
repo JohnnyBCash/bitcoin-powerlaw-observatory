@@ -1,5 +1,6 @@
-// Bitcoin Retirement Calculator V2 — Bridge/Forever Framework
-// Splits stack into Bridge Half (active decumulation) and Forever Half (power law growth)
+// Bitcoin Retirement Calculator V2 — Navigation Fund / Forever Half Framework
+// Splits stack into Navigation Fund (active decumulation through storm) and Forever Half (power law growth)
+// Forever Half SWR derived from power law math: 25% × E[return] where E[return] = β / (t × ln10)
 // Depends on: window.PowerLaw (PL), window.Retirement (R)
 
 (function() {
@@ -12,7 +13,7 @@
   const DEFAULTS = {
     // Stack
     totalBTC: 1.0,
-    bridgeSplitPct: 0.50,        // 50% bridge, 50% forever
+    bridgeSplitPct: 0.50,        // 50% navigation fund, 50% forever
 
     // Mode
     mode: 'freedom_now',          // 'freedom_now' | 'end_result'
@@ -20,7 +21,6 @@
     // Spending (Freedom Now)
     annualBurnUSD: 50000,
     spendingGrowthRate: 0.065,    // 6.5% annual
-    floorMonthlyUSD: 2000,        // minimum monthly income floor
 
     // Accumulation (End Result)
     additionalYears: 5,
@@ -34,37 +34,40 @@
     sigma: 0.3,
     scenarioMode: 'cyclical',
 
-    // Dynamic SWR thresholds
+    // Dynamic SWR thresholds (for Navigation Fund active drawdown)
     swrHighMultiple: 2.0,         // above: withdraw more
     swrLowMultiple: 0.5,          // below: withdraw less
     swrNormalRate: 0.04,          // 4% base
     swrHighRate: 0.06,            // 6% in euphoria
     swrLowRate: 0.01,             // 1% in deep bear
-
-    // Kelly Criterion (Phase 2)
-    kellyEnabled: false,
-    kellyFraction: 0.5,
-    goldReturnRate: 0.075,        // 7.5% expected gold return
-    goldVolatility: 0.15,
-    initialGoldPct: 0.30,         // 30% of bridge in gold initially
-
-    // Loan Facility (Phase 2)
-    loansEnabled: false,
-    loanLTV: 0.30,
-    loanInterestRate: 0.08,
-
-    // Storm period
-    stormThreshold: 0.01,         // inexhaustible when burn < 1% of forever value
   };
+
+
+  // ── Forever Half Safe Withdrawal Rate ───────────────────────
+  // SWR = 25% × E[return], where E[return] = β / (t_years × ln(10))
+  // t_years = years since Bitcoin genesis (Jan 3, 2009)
+  // This rate naturally decreases as BTC matures:
+  //   2030 (t≈21.5): SWR ≈ 2.87%
+  //   2040 (t≈31.5): SWR ≈ 1.96%
+  //   2050 (t≈41.5): SWR ≈ 1.49%
+  function foreverSWR(year) {
+    var date = new Date(year, 6, 1); // mid-year
+    var tYears = PL.yearsSinceGenesis(date);
+    if (tYears <= 0) return 0.03; // safety guard
+    var beta = PL.MODELS['santostasi'].beta; // 5.688
+    var expectedReturn = beta / (tYears * Math.LN10);
+    return 0.25 * expectedReturn;
+  }
 
 
   // ── Storm Period Calculation ────────────────────────────────
   // Find the year when the Forever Half becomes "inexhaustible":
-  // annualBurn / foreverValue < stormThreshold
+  // annualBurn / foreverValue < foreverSWR(year)
+  // The threshold is dynamic — derived from the power law expected return
   function computeStormPeriod(params) {
     const {
       totalBTC, bridgeSplitPct, annualBurnUSD, spendingGrowthRate,
-      model, sigma, scenarioMode, retirementYear, stormThreshold,
+      model, sigma, scenarioMode, retirementYear,
       maxProjectionYears, initialK
     } = params;
 
@@ -76,20 +79,22 @@
 
     for (let i = 0; i <= maxProjectionYears; i++) {
       const year = retirementYear + i;
-      const date = new Date(year, 6, 1); // mid-year
+      const date = new Date(year, 6, 1);
       const effectiveK = R.resolveScenarioK(scenarioMode, i, initialK);
       const price = R.scenarioPrice(model, date, sigma, effectiveK);
       const foreverValue = foreverBTC * price;
       const inflatedBurn = annualBurnUSD * Math.pow(1 + spendingGrowthRate, i);
+      const threshold = foreverSWR(year);
       const ratio = inflatedBurn / foreverValue;
 
-      if (ratio < stormThreshold) {
+      if (ratio < threshold) {
         return {
           stormYears: i,
           stormEndYear: year,
           foreverValueAtEnd: foreverValue,
           burnAtEnd: inflatedBurn,
-          ratioAtEnd: ratio
+          ratioAtEnd: ratio,
+          swrAtEnd: threshold
         };
       }
     }
@@ -136,81 +141,23 @@
   }
 
 
-  // ── Kelly Criterion Allocation (Phase 2) ────────────────────
-  // Compute optimal BTC/Gold split for bridge half
-  function kellyAllocation(yearIndex, params) {
-    const {
-      model, retirementYear, kellyFraction,
-      goldReturnRate, goldVolatility, sigma
-    } = params;
-
-    const date = new Date(retirementYear + yearIndex, 0, 1);
-    const btcExpectedReturn = R.instantaneousCAGR(model, date);
-
-    // BTC volatility from sigma (annualized log-scale → linear approx)
-    // sigma ≈ 0.3 in log10 space → convert to natural log → annualized
-    const btcVolatility = sigma * Math.log(10); // ~0.69
-
-    const riskFree = 0.04; // rough risk-free rate
-
-    // Kelly fraction for BTC: f* = (E[r] - rf) / σ²
-    const rawKellyBTC = (btcExpectedReturn - riskFree) / (btcVolatility * btcVolatility);
-    const kellyBTC = Math.max(0, Math.min(1, rawKellyBTC * kellyFraction));
-
-    // Kelly fraction for gold
-    const rawKellyGold = (goldReturnRate - riskFree) / (goldVolatility * goldVolatility);
-    const kellyGold = Math.max(0, Math.min(1, rawKellyGold * kellyFraction));
-
-    // Normalize so they sum to 1
-    const total = kellyBTC + kellyGold;
-    if (total <= 0) return { btcPct: 0.5, goldPct: 0.5 };
-
-    return {
-      btcPct: kellyBTC / total,
-      goldPct: kellyGold / total
-    };
-  }
-
-
-  // ── Bridge Half Simulation ─────────────────────────────────
-  // Year-by-year simulation of the Bridge Half with dynamic SWR
-  // Phase 1: BTC only with dynamic SWR
-  // Phase 2: + Gold allocation (Kelly) + Loan facility
+  // ── Navigation Fund Simulation ──────────────────────────────
+  // Year-by-year simulation of the Navigation Fund with dynamic SWR
+  // Pure BTC drawdown — sell to meet living expenses, survive the storm
   function simulateBridge(params) {
     const {
       totalBTC, bridgeSplitPct, annualBurnUSD, spendingGrowthRate,
-      floorMonthlyUSD, model, sigma, scenarioMode, retirementYear,
-      maxProjectionYears, initialK,
-      kellyEnabled, initialGoldPct, goldReturnRate,
-      loansEnabled, loanLTV, loanInterestRate
+      model, sigma, scenarioMode, retirementYear,
+      maxProjectionYears, initialK
     } = params;
 
     let bridgeBTC = totalBTC * bridgeSplitPct;
-    let bridgeGoldUSD = 0;
-    let loanBalance = 0;
-    let totalInterestPaid = 0;
     let annualBurn = annualBurnUSD;
-    const floorAnnual = floorMonthlyUSD * 12;
-
-    // Phase 2: Initialize gold allocation from bridge value
-    if (kellyEnabled && initialGoldPct > 0) {
-      const startDate = new Date(retirementYear, 6, 1);
-      const effectiveK0 = R.resolveScenarioK(scenarioMode, 0, initialK);
-      const startPrice = R.scenarioPrice(model, startDate, sigma, effectiveK0);
-      const bridgeValueUSD = bridgeBTC * startPrice;
-      const goldValueTarget = bridgeValueUSD * initialGoldPct;
-      // Sell some BTC to buy gold
-      const btcToSell = goldValueTarget / startPrice;
-      if (btcToSell < bridgeBTC) {
-        bridgeBTC -= btcToSell;
-        bridgeGoldUSD = goldValueTarget;
-      }
-    }
 
     const storm = computeStormPeriod(params);
     const simYears = storm.stormYears === Infinity
       ? maxProjectionYears
-      : Math.max(storm.stormYears + 5, 30); // simulate past storm + 5 year buffer
+      : Math.max(storm.stormYears + 5, 30);
 
     const results = [];
     let ruinYear = null;
@@ -223,131 +170,32 @@
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
 
-      // Phase 2: Grow gold balance
-      if (kellyEnabled && bridgeGoldUSD > 0) {
-        bridgeGoldUSD *= (1 + goldReturnRate);
-      }
-
-      // Phase 2: Accrue loan interest
-      if (loansEnabled && loanBalance > 0) {
-        const interest = loanBalance * loanInterestRate;
-        loanBalance += interest;
-        totalInterestPaid += interest;
-      }
-
-      // Dynamic SWR on total bridge value
-      const btcValueUSD = bridgeBTC * price;
-      const totalBridgeValue = btcValueUSD + bridgeGoldUSD - loanBalance;
+      // Dynamic SWR on navigation fund value
+      const bridgeValue = bridgeBTC * price;
       const swrRate = dynamicSWR(price, trend, params);
-      let targetWithdrawal = Math.max(totalBridgeValue * swrRate, floorAnnual);
-      // Don't withdraw more than the burn
-      targetWithdrawal = Math.min(targetWithdrawal, annualBurn);
-      // But ensure at least the floor
-      targetWithdrawal = Math.max(targetWithdrawal, Math.min(floorAnnual, annualBurn));
+      const targetWithdrawal = Math.min(bridgeValue * swrRate, annualBurn);
 
-      let actualWithdrawal = 0;
       let btcSold = 0;
-      let goldSold = 0;
-      let borrowed = 0;
+      let actualWithdrawal = 0;
       let yearStatus = 'OK';
 
-      // Withdrawal logic:
-      // 1. If Kelly enabled and gold available: sell gold first when BTC is undervalued
-      // 2. If loans enabled and BTC undervalued: borrow instead of selling BTC
-      // 3. Otherwise: sell BTC
-
-      const remaining = targetWithdrawal;
-
-      if (kellyEnabled && bridgeGoldUSD > 0 && multiple < 1.0) {
-        // BTC undervalued: sell gold first
-        const goldToSell = Math.min(bridgeGoldUSD, remaining);
-        bridgeGoldUSD -= goldToSell;
-        goldSold = goldToSell;
-        actualWithdrawal += goldToSell;
-      }
-
-      if (actualWithdrawal < targetWithdrawal && loansEnabled && multiple < 1.0) {
-        // Still need more, try to borrow
-        const cashNeeded = targetWithdrawal - actualWithdrawal;
-        const maxBorrow = Math.max(0, (bridgeBTC * price * loanLTV) - loanBalance);
-        const toBorrow = Math.min(cashNeeded, maxBorrow);
-        if (toBorrow > 0) {
-          loanBalance += toBorrow;
-          borrowed = toBorrow;
-          actualWithdrawal += toBorrow;
-          yearStatus = 'BORROWING';
-        }
-      }
-
-      if (actualWithdrawal < targetWithdrawal) {
-        // Sell BTC for the rest
-        const cashNeeded = targetWithdrawal - actualWithdrawal;
-        const btcNeeded = cashNeeded / price;
+      if (targetWithdrawal > 0 && bridgeBTC > 0) {
+        const btcNeeded = targetWithdrawal / price;
 
         if (btcNeeded >= bridgeBTC) {
-          // Ruin
+          // Ruin — not enough BTC
           btcSold = bridgeBTC;
-          actualWithdrawal += bridgeBTC * price;
+          actualWithdrawal = bridgeBTC * price;
           bridgeBTC = 0;
           ruinYear = year;
           yearStatus = 'RUIN';
         } else {
           btcSold = btcNeeded;
           bridgeBTC -= btcNeeded;
-          actualWithdrawal += cashNeeded;
-          if (yearStatus === 'OK') {
-            yearStatus = multiple >= 1.0 ? 'SELLING' : 'FORCED_SELL';
-          }
+          actualWithdrawal = targetWithdrawal;
+          yearStatus = multiple >= 1.0 ? 'SELLING' : 'FORCED_SELL';
         }
       }
-
-      // Phase 2: Repay loans when overvalued and have surplus
-      if (loansEnabled && loanBalance > 0 && multiple > 1.5 && bridgeBTC > 0) {
-        const surplusForRepay = btcValueUSD * 0.1; // repay with 10% of BTC value
-        const repayAmount = Math.min(loanBalance, surplusForRepay);
-        const btcForRepay = repayAmount / price;
-        if (btcForRepay < bridgeBTC) {
-          bridgeBTC -= btcForRepay;
-          loanBalance -= repayAmount;
-          yearStatus = 'SELL_AND_REPAY';
-        }
-      }
-
-      // Phase 2: Kelly rebalance (annually)
-      if (kellyEnabled && bridgeBTC > 0 && !ruinYear) {
-        const kelly = kellyAllocation(i, params);
-        const currentBTCValue = bridgeBTC * price;
-        const currentTotal = currentBTCValue + bridgeGoldUSD;
-        if (currentTotal > 0) {
-          const targetBTCValue = currentTotal * kelly.btcPct;
-          const targetGoldValue = currentTotal * kelly.goldPct;
-          const diff = targetBTCValue - currentBTCValue;
-          // Only rebalance if off by more than 10%
-          if (Math.abs(diff) > currentTotal * 0.10) {
-            if (diff > 0 && bridgeGoldUSD > 0) {
-              // Buy BTC, sell gold
-              const transfer = Math.min(diff, bridgeGoldUSD);
-              bridgeGoldUSD -= transfer;
-              bridgeBTC += transfer / price;
-            } else if (diff < 0 && bridgeBTC > 0) {
-              // Sell BTC, buy gold
-              const transfer = Math.min(-diff, currentBTCValue * 0.5); // cap at 50% of BTC
-              bridgeBTC -= transfer / price;
-              bridgeGoldUSD += transfer;
-            }
-          }
-        }
-      }
-
-      // Liquidation check
-      let liquidationPrice = 0;
-      let isLiquidationRisk = false;
-      if (loanBalance > 0 && bridgeBTC > 0) {
-        liquidationPrice = loanBalance / (bridgeBTC * loanLTV);
-        isLiquidationRisk = price < liquidationPrice * 1.2;
-      }
-
-      const portfolioValue = (bridgeBTC * price) + bridgeGoldUSD - loanBalance;
 
       results.push({
         year,
@@ -361,14 +209,8 @@
         targetWithdrawal,
         actualWithdrawal,
         btcSold,
-        goldSold,
-        borrowed,
-        loanBalance,
-        liquidationPrice,
-        isLiquidationRisk,
         bridgeBTC,
-        bridgeGoldUSD,
-        bridgeValueUSD: portfolioValue,
+        bridgeValueUSD: bridgeBTC * price,
         status: yearStatus
       });
 
@@ -380,10 +222,8 @@
             yearIndex: j,
             price: 0, trend: 0, multiple: 0, effectiveK: 0,
             swrRate: 0, annualBurn: 0, targetWithdrawal: 0,
-            actualWithdrawal: 0, btcSold: 0, goldSold: 0,
-            borrowed: 0, loanBalance: 0, liquidationPrice: 0,
-            isLiquidationRisk: false, bridgeBTC: 0,
-            bridgeGoldUSD: 0, bridgeValueUSD: 0, status: 'RUIN'
+            actualWithdrawal: 0, btcSold: 0,
+            bridgeBTC: 0, bridgeValueUSD: 0, status: 'RUIN'
           });
         }
         break;
@@ -397,7 +237,6 @@
       results,
       ruinYear,
       stormPeriod: storm,
-      totalInterestPaid,
       bridgeSurvivesStorm: !ruinYear || ruinYear > (storm.stormEndYear || Infinity)
     };
   }
@@ -405,11 +244,12 @@
 
   // ── Forever Half Projection ────────────────────────────────
   // Simple projection showing forever half value vs annual burn
+  // Uses foreverSWR(year) for the inexhaustibility threshold
   function simulateForever(params) {
     const {
       totalBTC, bridgeSplitPct, annualBurnUSD, spendingGrowthRate,
       model, sigma, scenarioMode, retirementYear, maxProjectionYears,
-      stormThreshold, initialK
+      initialK
     } = params;
 
     const foreverBTC = totalBTC * (1 - bridgeSplitPct);
@@ -423,10 +263,11 @@
       const price = R.scenarioPrice(model, date, sigma, effectiveK);
       const foreverValue = foreverBTC * price;
       const inflatedBurn = annualBurnUSD * Math.pow(1 + spendingGrowthRate, i);
+      const threshold = foreverSWR(year);
       const ratio = inflatedBurn / foreverValue;
-      const safeWithdrawal = foreverValue * stormThreshold;
+      const safeWithdrawal = foreverValue * threshold;
 
-      if (ratio < stormThreshold && inexhaustibleYear === null) {
+      if (ratio < threshold && inexhaustibleYear === null) {
         inexhaustibleYear = year;
       }
 
@@ -439,7 +280,8 @@
         annualBurn: inflatedBurn,
         burnToValueRatio: ratio,
         safeWithdrawal,
-        isInexhaustible: ratio < stormThreshold
+        foreverSWRRate: threshold,
+        isInexhaustible: ratio < threshold
       });
     }
 
@@ -448,7 +290,7 @@
 
 
   // ── End Result Mode: Accumulation Simulation ───────────────
-  // Stack more BTC for N years, then compute Bridge/Forever outcome
+  // Stack more BTC for N years, then compute Navigation/Forever outcome
   function simulateEndResult(params) {
     const {
       totalBTC, monthlyDCAUSD, additionalYears, incomeGrowthRate,
@@ -492,7 +334,7 @@
       monthlyDCA *= (1 + incomeGrowthRate);
     }
 
-    // Now run Bridge/Forever from retirement year
+    // Now run Navigation/Forever from retirement year
     const retirementYear = currentYear + additionalYears;
     const retirementParams = {
       ...params,
@@ -514,12 +356,11 @@
 
 
   // ── Find Minimum Total BTC ─────────────────────────────────
-  // Binary search: smallest totalBTC where bridge survives storm
+  // Binary search: smallest totalBTC where navigation fund survives storm
   function findMinimumTotal(baseParams) {
     let lo = 0.001;
     let hi = 100;
 
-    // Quick check if even 100 BTC isn't enough
     const testHigh = simulateBridge({ ...baseParams, totalBTC: hi });
     if (!testHigh.bridgeSurvivesStorm) {
       hi = 1000;
@@ -550,12 +391,11 @@
 
 
   // ── Find Maximum Safe Burn ─────────────────────────────────
-  // Binary search: highest annual burn where bridge survives storm
+  // Binary search: highest annual burn where navigation fund survives storm
   function findMaxBurn(baseParams) {
     let lo = 1000;
     let hi = baseParams.annualBurnUSD;
 
-    // Quick check if current burn already works
     const testCurrent = simulateBridge(baseParams);
     if (testCurrent.bridgeSurvivesStorm) {
       return { maxBurn: hi, alreadySafe: true };
@@ -577,31 +417,22 @@
   }
 
 
-  // ── Bridge Summary Stats ───────────────────────────────────
+  // ── Navigation Fund Summary Stats ───────────────────────────
   function bridgeSummary(bridgeResult) {
     const r = bridgeResult.results.filter(y => y.status !== 'RUIN');
     if (r.length === 0) return null;
 
     const totalBTCSold = r.reduce((s, y) => s + y.btcSold, 0);
-    const totalGoldSold = r.reduce((s, y) => s + y.goldSold, 0);
-    const totalBorrowed = r.reduce((s, y) => s + y.borrowed, 0);
     const totalWithdrawn = r.reduce((s, y) => s + y.actualWithdrawal, 0);
     const avgSWR = r.reduce((s, y) => s + y.swrRate, 0) / r.length;
-    const borrowYears = r.filter(y => y.status === 'BORROWING').length;
 
     return {
       yearsBeforeRuin: r.length,
       totalBTCSold,
-      totalGoldSold,
-      totalBorrowed,
       totalWithdrawn,
       avgSWR,
-      borrowYears,
-      totalInterestPaid: bridgeResult.totalInterestPaid,
       finalBridgeBTC: r[r.length - 1].bridgeBTC,
       finalBridgeValue: r[r.length - 1].bridgeValueUSD,
-      finalGoldUSD: r[r.length - 1].bridgeGoldUSD,
-      finalLoanBalance: r[r.length - 1].loanBalance,
       bridgeSurvivesStorm: bridgeResult.bridgeSurvivesStorm
     };
   }
@@ -653,7 +484,7 @@
     const endSummary = bridgeSummary(endResult.bridgeResult);
     const endStorm = endResult.bridgeResult.stormPeriod;
 
-    // Compare at same future date (retirementYear + 30 years for Freedom, endResult retirement + 30 for End Result)
+    // Compare at year 30 into retirement for both paths
     const freedomForeverAt30 = freedomForever.results.find(r => r.yearIndex === 30) || freedomForever.results[freedomForever.results.length - 1];
     const endForeverAt30 = endResult.foreverResult.results.find(r => r.yearIndex === 30) || endResult.foreverResult.results[endResult.foreverResult.results.length - 1];
 
@@ -664,7 +495,7 @@
         stormYears: freedomStorm.stormYears,
         bridgeSurvives: freedomBridge.bridgeSurvivesStorm,
         ruinYear: freedomBridge.ruinYear,
-        yearsOfFreedom: baseParams.additionalYears, // extra years of freedom vs End Result
+        yearsOfFreedom: baseParams.additionalYears,
         totalWithdrawn: freedomSummary ? freedomSummary.totalWithdrawn : 0,
         foreverValueAt30: freedomForeverAt30 ? freedomForeverAt30.foreverValueUSD : 0,
         avgSWR: freedomSummary ? freedomSummary.avgSWR : 0
@@ -688,34 +519,18 @@
 
   // ── Monte Carlo Simulation ────────────────────────────────
   // Run N random simulations with log-normal returns around the power law trend
-  // Returns percentile bands (10th, 25th, 50th, 75th, 90th) for bridge survival
+  // Prices clamped at -2σ (power law absolute floor — never breached historically)
+  // Returns percentile bands for navigation fund survival
   function monteCarloSurvival(baseParams, numSims) {
     numSims = numSims || 200;
     const years = baseParams.maxProjectionYears || 50;
     const results = [];
+    const sigma = baseParams.sigma;
 
     for (let sim = 0; sim < numSims; sim++) {
-      // Generate a random scenario: perturbation around the power law trend
-      // Use log-normal noise with historical volatility (~0.3 in log10 space)
       let bridgeBTC = baseParams.totalBTC * baseParams.bridgeSplitPct;
-      let bridgeGoldUSD = 0;
-      let loanBalance = 0;
       let annualBurn = baseParams.annualBurnUSD;
-      const floorAnnual = baseParams.floorMonthlyUSD * 12;
       let ruinYear = null;
-
-      // Initialize gold if Kelly enabled
-      if (baseParams.kellyEnabled && baseParams.initialGoldPct > 0) {
-        const startDate = new Date(baseParams.retirementYear, 6, 1);
-        const startPrice = PL.trendPrice(baseParams.model, startDate);
-        const bridgeValue = bridgeBTC * startPrice;
-        const goldTarget = bridgeValue * baseParams.initialGoldPct;
-        const btcToSell = goldTarget / startPrice;
-        if (btcToSell < bridgeBTC) {
-          bridgeBTC -= btcToSell;
-          bridgeGoldUSD = goldTarget;
-        }
-      }
 
       const yearlyBTC = [];
 
@@ -726,71 +541,25 @@
         const date = new Date(year, 6, 1);
         const trend = PL.trendPrice(baseParams.model, date);
 
-        // Random log-normal perturbation: log10(price) = log10(trend) + N(0, sigma)
-        const logNoise = gaussianRandom() * baseParams.sigma;
+        // Random log-normal perturbation: log10(price) = log10(trend) + N(0, σ)
+        // Clamped at -2σ: the power law absolute floor (never breached in BTC history)
+        var logNoise = gaussianRandom() * sigma;
+        logNoise = Math.max(logNoise, -2 * sigma);
         const price = trend * Math.pow(10, logNoise);
-
-        const multiple = price / trend;
-
-        // Grow gold
-        if (baseParams.kellyEnabled && bridgeGoldUSD > 0) {
-          bridgeGoldUSD *= (1 + baseParams.goldReturnRate);
-        }
-
-        // Accrue loan interest
-        if (baseParams.loansEnabled && loanBalance > 0) {
-          loanBalance += loanBalance * baseParams.loanInterestRate;
-        }
 
         // Dynamic SWR
         const btcValue = bridgeBTC * price;
-        const totalBridgeValue = btcValue + bridgeGoldUSD - loanBalance;
         const swrRate = dynamicSWR(price, trend, baseParams);
-        let target = Math.max(totalBridgeValue * swrRate, floorAnnual);
-        target = Math.min(target, annualBurn);
-        target = Math.max(target, Math.min(floorAnnual, annualBurn));
+        const target = Math.min(btcValue * swrRate, annualBurn);
 
-        let actual = 0;
-
-        // Sell gold first in bear
-        if (baseParams.kellyEnabled && bridgeGoldUSD > 0 && multiple < 1.0) {
-          const goldToSell = Math.min(bridgeGoldUSD, target);
-          bridgeGoldUSD -= goldToSell;
-          actual += goldToSell;
-        }
-
-        // Borrow if needed
-        if (actual < target && baseParams.loansEnabled && multiple < 1.0) {
-          const needed = target - actual;
-          const maxBorrow = Math.max(0, bridgeBTC * price * baseParams.loanLTV - loanBalance);
-          const toBorrow = Math.min(needed, maxBorrow);
-          if (toBorrow > 0) {
-            loanBalance += toBorrow;
-            actual += toBorrow;
-          }
-        }
-
-        // Sell BTC for remainder
-        if (actual < target) {
-          const needed = target - actual;
-          const btcNeeded = needed / price;
+        // Sell BTC to meet target
+        if (target > 0 && bridgeBTC > 0) {
+          const btcNeeded = target / price;
           if (btcNeeded >= bridgeBTC) {
-            actual += bridgeBTC * price;
             bridgeBTC = 0;
             ruinYear = year;
           } else {
             bridgeBTC -= btcNeeded;
-            actual += needed;
-          }
-        }
-
-        // Repay loans in bull
-        if (baseParams.loansEnabled && loanBalance > 0 && multiple > 1.5 && bridgeBTC > 0) {
-          const repay = Math.min(loanBalance, btcValue * 0.1);
-          const btcForRepay = repay / price;
-          if (btcForRepay < bridgeBTC) {
-            bridgeBTC -= btcForRepay;
-            loanBalance -= repay;
           }
         }
 
@@ -813,7 +582,7 @@
       !r.ruinYear || r.ruinYear > baseParams.retirementYear + stormYears
     ).length;
 
-    // Bridge BTC percentiles at each year
+    // Navigation fund BTC percentiles at each year
     const percentileBands = [];
     for (let i = 0; i < years; i++) {
       const vals = results.map(r => r.yearlyBTC[i]).sort((a, b) => a - b);
@@ -853,31 +622,12 @@
   }
 
 
-  // ── Geographic Arbitrage ──────────────────────────────────
-  // Cost-of-living multipliers relative to US average
-  var GEO_MULTIPLIERS = {
-    'us': { label: 'United States', multiplier: 1.00 },
-    'uk': { label: 'United Kingdom', multiplier: 0.95 },
-    'nl': { label: 'Netherlands', multiplier: 0.90 },
-    'de': { label: 'Germany', multiplier: 0.85 },
-    'es': { label: 'Spain', multiplier: 0.70 },
-    'pt': { label: 'Portugal', multiplier: 0.65 },
-    'cz': { label: 'Czech Republic', multiplier: 0.55 },
-    'mx': { label: 'Mexico', multiplier: 0.45 },
-    'th': { label: 'Thailand', multiplier: 0.40 },
-    'vn': { label: 'Vietnam', multiplier: 0.35 },
-    'co': { label: 'Colombia', multiplier: 0.40 },
-    'id': { label: 'Indonesia', multiplier: 0.35 },
-    'custom': { label: 'Custom', multiplier: 1.00 }
-  };
-
-
   // ── Export ───────────────────────────────────────────────────
   window.RetirementV2 = {
     DEFAULTS,
+    foreverSWR,
     computeStormPeriod,
     dynamicSWR,
-    kellyAllocation,
     simulateBridge,
     simulateForever,
     simulateEndResult,
@@ -886,8 +636,7 @@
     bridgeSummary,
     compareScenarios,
     sideBySide,
-    monteCarloSurvival,
-    GEO_MULTIPLIERS
+    monteCarloSurvival
   };
 
 })();

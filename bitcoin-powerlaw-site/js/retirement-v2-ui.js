@@ -1,5 +1,5 @@
 // Bitcoin Retirement Calculator V2 - UI Handler
-// Bridge/Forever Framework with Freedom Now & End Result modes
+// Navigation Fund / Forever Half Framework with Freedom Now & End Result modes
 (function() {
   'use strict';
 
@@ -18,7 +18,7 @@
 
   const STORAGE_KEY = 'btcRetirement_v2_settings';
 
-  // ── Currency Support ──────────────────────────────────────────
+  // ── Currency Support ──────────────────────────────────────
   let currency = 'USD';
   let eurRate = null;
 
@@ -86,19 +86,11 @@
       initialK,
       annualBurnUSD: toUSD(parseFloat($('v2-annual-burn').value) || 50000),
       spendingGrowthRate: parseFloat($('v2-spending-growth').value) / 100,
-      floorMonthlyUSD: toUSD(parseFloat($('v2-income-floor').value) || 2000),
       retirementYear: retYear,
       additionalYears: parseInt($('v2-additional-years')?.value) || 5,
       monthlyDCAUSD: toUSD(parseFloat($('v2-monthly-dca')?.value) || 500),
       incomeGrowthRate: parseFloat($('v2-income-growth')?.value) / 100 || 0.03,
       swrNormalRate: parseFloat($('v2-swr-normal')?.value) / 100 || 0.04,
-      kellyEnabled: $('v2-kelly-toggle')?.checked || false,
-      kellyFraction: parseFloat($('v2-kelly-fraction')?.value) / 100 || 0.5,
-      goldReturnRate: parseFloat($('v2-gold-return')?.value) / 100 || 0.075,
-      initialGoldPct: parseFloat($('v2-gold-allocation')?.value) / 100 || 0.30,
-      loansEnabled: $('v2-loans-toggle')?.checked || false,
-      loanLTV: parseFloat($('v2-loan-ltv')?.value) / 100 || 0.30,
-      loanInterestRate: parseFloat($('v2-loan-interest')?.value) / 100 || 0.08,
     };
 
     return params;
@@ -111,11 +103,10 @@
     loadSettings();
     setupModeToggle();
     setupSliders();
-    setupStrategyToggles();
     setupCurrencyToggle();
     setupStartNow();
     setupButtons();
-    setupGeoArbitrage();
+    setupForeverSWRDisplay();
     updateModeVisibility();
   }
 
@@ -146,11 +137,9 @@
     if (currentMode === 'freedom_now') {
       show('v2-freedom-inputs');
       hide('v2-endresult-inputs');
-      show('v2-strategy-section');
     } else {
       hide('v2-freedom-inputs');
       show('v2-endresult-inputs');
-      hide('v2-strategy-section');
     }
   }
 
@@ -166,11 +155,6 @@
       },
       { input: 'v2-spending-growth', display: 'v2-spending-growth-value' },
       { input: 'v2-swr-normal', display: 'v2-swr-value' },
-      { input: 'v2-kelly-fraction', display: 'v2-kelly-fraction-value' },
-      { input: 'v2-gold-return', display: 'v2-gold-return-value' },
-      { input: 'v2-gold-allocation', display: 'v2-gold-allocation-value' },
-      { input: 'v2-loan-ltv', display: 'v2-loan-ltv-value' },
-      { input: 'v2-loan-interest', display: 'v2-loan-interest-value' },
       { input: 'v2-income-growth', display: 'v2-income-growth-value' }
     ];
 
@@ -186,24 +170,6 @@
         }
       });
     });
-  }
-
-  function setupStrategyToggles() {
-    const kellyToggle = $('v2-kelly-toggle');
-    const kellyParams = $('v2-kelly-params');
-    if (kellyToggle && kellyParams) {
-      kellyToggle.addEventListener('change', () => {
-        kellyParams.classList.toggle('hidden', !kellyToggle.checked);
-      });
-    }
-
-    const loansToggle = $('v2-loans-toggle');
-    const loansParams = $('v2-loans-params');
-    if (loansToggle && loansParams) {
-      loansToggle.addEventListener('change', () => {
-        loansParams.classList.toggle('hidden', !loansToggle.checked);
-      });
-    }
   }
 
   function setupCurrencyToggle() {
@@ -222,7 +188,10 @@
     if (!btn) return;
     btn.addEventListener('click', () => {
       const yearInput = $('v2-retirement-year');
-      if (yearInput) yearInput.value = new Date().getFullYear();
+      if (yearInput) {
+        yearInput.value = new Date().getFullYear();
+        updateForeverSWRDisplay();
+      }
     });
   }
 
@@ -246,48 +215,20 @@
     if (pdfBtn) pdfBtn.addEventListener('click', exportPDF);
   }
 
-  function setupGeoArbitrage() {
-    const geoSelect = $('v2-geo-country');
-    const customInput = $('v2-geo-custom');
-    if (!geoSelect) return;
-
-    geoSelect.addEventListener('change', () => {
-      const code = geoSelect.value;
-      if (customInput) {
-        customInput.classList.toggle('hidden', code !== 'custom');
-      }
-      applyGeoMultiplier();
-    });
-
-    if (customInput) {
-      customInput.addEventListener('change', applyGeoMultiplier);
-    }
+  // ── Forever SWR Display ─────────────────────────────────────
+  function setupForeverSWRDisplay() {
+    const yearInput = $('v2-retirement-year');
+    if (!yearInput) return;
+    yearInput.addEventListener('input', updateForeverSWRDisplay);
+    updateForeverSWRDisplay();
   }
 
-  function applyGeoMultiplier() {
-    const geoSelect = $('v2-geo-country');
-    if (!geoSelect) return;
-    const code = geoSelect.value;
-    const geo = V2.GEO_MULTIPLIERS[code];
-    if (!geo) return;
-
-    let multiplier = geo.multiplier;
-    if (code === 'custom') {
-      multiplier = parseFloat($('v2-geo-custom')?.value) / 100 || 1.0;
-    }
-
-    const display = $('v2-geo-multiplier-value');
-    if (display) display.textContent = (multiplier * 100).toFixed(0);
-
-    // Update the annual burn field with the geo-adjusted value
-    const burnInput = $('v2-annual-burn');
-    const baseBurn = parseFloat(burnInput?.dataset.baseBurn || burnInput?.value) || 50000;
-    if (burnInput && !burnInput.dataset.baseBurn) {
-      burnInput.dataset.baseBurn = burnInput.value;
-    }
-    if (burnInput) {
-      burnInput.value = Math.round(baseBurn * multiplier);
-    }
+  function updateForeverSWRDisplay() {
+    const display = $('v2-forever-swr-display');
+    if (!display) return;
+    const year = parseInt($('v2-retirement-year')?.value) || 2030;
+    const swr = V2.foreverSWR(year);
+    display.textContent = (swr * 100).toFixed(2) + '%';
   }
 
   // ── Main Calculation ────────────────────────────────────────
@@ -364,7 +305,6 @@
 
     const tbody = $('v2-comparison-body');
     if (!tbody) return;
-    // Clear table body safely
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
     comparison.forEach(row => {
@@ -373,8 +313,6 @@
       const surviveClass = row.bridgeSurvives ? 'status-ok' : 'status-ruin';
       const surviveText = row.bridgeSurvives ? 'Survives' : (row.ruinYear ? 'Ruin ' + row.ruinYear : 'Fails');
       const minText = row.minTotal === Infinity ? 'Impossible' : row.minTotal.toFixed(3) + ' BTC';
-
-      const cells = document.createDocumentFragment();
 
       const td1 = document.createElement('td');
       const strong = document.createElement('strong');
@@ -428,20 +366,13 @@
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
       headline.textContent = 'You can retire. Storm period: ' + storm.stormYears + ' years.';
-      const bridgeBTC = (params.totalBTC * params.bridgeSplitPct).toFixed(4);
+      const fundBTC = (params.totalBTC * params.bridgeSplitPct).toFixed(4);
       const foreverBTC = (params.totalBTC * (1 - params.bridgeSplitPct)).toFixed(4);
-      let detailParts = ['Your Bridge Half (' + bridgeBTC + ' BTC) sustains you through the storm. Your Forever Half (' + foreverBTC + ' BTC) becomes inexhaustible by ' + storm.stormEndYear + '.'];
-      const strategies = [];
-      if (params.kellyEnabled) strategies.push('Kelly BTC/Gold allocation');
-      if (params.loansEnabled) strategies.push('BTC-backed loans');
-      if (strategies.length > 0) {
-        detailParts.push('Active strategies: ' + strategies.join(', ') + '.');
-      }
-      detail.textContent = detailParts.join(' ');
+      detail.textContent = 'Your Navigation Fund (' + fundBTC + ' BTC) sustains you through the storm. Your Forever Half (' + foreverBTC + ' BTC) becomes inexhaustible by ' + storm.stormEndYear + '.';
     } else if (bridgeResult.ruinYear) {
       banner.classList.add('status-red');
       icon.textContent = '\uD83D\uDED1';
-      headline.textContent = 'Bridge depleted in ' + bridgeResult.ruinYear;
+      headline.textContent = 'Navigation Fund depleted in ' + bridgeResult.ruinYear;
       const minResult = V2.findMinimumTotal(params);
       const burnResult = V2.findMaxBurn(params);
       let fixText = '';
@@ -482,12 +413,12 @@
       banner.classList.add('status-green');
       icon.textContent = '\uD83D\uDCCA';
       headline.textContent = 'After ' + params.additionalYears + ' more years: ' + result.finalBTC.toFixed(4) + ' BTC';
-      detail.textContent = 'At retirement (' + result.retirementYear + '), your storm period is ' + storm.stormYears + ' years. Your Bridge Half survives and your Forever Half becomes inexhaustible.';
+      detail.textContent = 'At retirement (' + result.retirementYear + '), your storm period is ' + storm.stormYears + ' years. Your Navigation Fund survives and your Forever Half becomes inexhaustible.';
     } else {
       banner.classList.add('status-amber');
       icon.textContent = '\u26A0\uFE0F';
       headline.textContent = 'After ' + params.additionalYears + ' more years: ' + result.finalBTC.toFixed(4) + ' BTC';
-      detail.textContent = 'At retirement (' + result.retirementYear + ') you would have ' + result.finalBTC.toFixed(4) + ' BTC, but the Bridge Half may not survive the storm. Consider stacking longer.';
+      detail.textContent = 'At retirement (' + result.retirementYear + ') you would have ' + result.finalBTC.toFixed(4) + ' BTC, but the Navigation Fund may not survive the storm. Consider stacking longer.';
     }
 
     banner.classList.remove('hidden');
@@ -498,10 +429,9 @@
     const content = $('v2-storm-content');
     if (!content) return;
 
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
-    // Clear existing content
     content.textContent = '';
 
     const wrapper = document.createElement('div');
@@ -529,10 +459,14 @@
       const row = document.createElement('div');
       row.className = 'storm-metrics-row';
 
+      // Compute the SWR at storm end for display
+      const swrAtEnd = storm.swrAtEnd || V2.foreverSWR(storm.stormEndYear);
+      const swrPct = (swrAtEnd * 100).toFixed(2);
+
       const metrics = [
         { label: 'Storm Period', value: storm.stormYears + ' years' },
         { label: 'Storm Ends', value: '' + storm.stormEndYear },
-        { label: 'Bridge Half', value: bridgeBTC.toFixed(4) + ' BTC' },
+        { label: 'Navigation Fund', value: fundBTC.toFixed(4) + ' BTC' },
         { label: 'Forever Half', value: foreverBTC.toFixed(4) + ' BTC' }
       ];
 
@@ -554,14 +488,14 @@
 
       const p = document.createElement('p');
       p.style.cssText = 'color: var(--gray); margin-top: var(--spacing-md);';
-      p.textContent = 'Survive the storm, and your Forever Half becomes practically inexhaustible. By ' + storm.stormEndYear + ', your annual burn is less than 1% of your Forever Half value.';
+      p.textContent = 'Survive the storm, and your Forever Half becomes practically inexhaustible. By ' + storm.stormEndYear + ', your annual burn is less than ' + swrPct + '% of your Forever Half value — the sustainable withdrawal rate for that year.';
       wrapper.appendChild(p);
     }
 
     content.appendChild(wrapper);
   }
 
-  // ── Bridge Half Chart ───────────────────────────────────────
+  // ── Navigation Fund Chart ─────────────────────────────────
   function renderBridgeChart(bridgeResult, params) {
     const ctx = $('v2-bridge-chart');
     if (!ctx) return;
@@ -574,7 +508,7 @@
 
     const datasets = [
       {
-        label: 'Bridge BTC',
+        label: 'Navigation Fund BTC',
         data: data.map(r => r.bridgeBTC),
         borderColor: '#F7931A',
         backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -595,7 +529,7 @@
         yAxisID: 'yVal'
       },
       {
-        label: 'Bridge Value (' + currency + ')',
+        label: 'Fund Value (' + currency + ')',
         data: data.map(r => Math.max(0, r.bridgeValueUSD) * rate),
         borderColor: '#00C853',
         borderWidth: 2,
@@ -604,32 +538,6 @@
         yAxisID: 'yVal'
       }
     ];
-
-    if (params.kellyEnabled && data.some(r => r.bridgeGoldUSD > 0)) {
-      datasets.push({
-        label: 'Gold Balance (' + currency + ')',
-        data: data.map(r => r.bridgeGoldUSD * rate),
-        borderColor: '#FFD700',
-        borderWidth: 2,
-        borderDash: [3, 3],
-        pointRadius: 0,
-        tension: 0.2,
-        yAxisID: 'yVal'
-      });
-    }
-
-    if (params.loansEnabled && data.some(r => r.loanBalance > 0)) {
-      datasets.push({
-        label: 'Loan Balance (' + currency + ')',
-        data: data.map(r => r.loanBalance * rate),
-        borderColor: '#9C27B0',
-        borderWidth: 2,
-        borderDash: [3, 3],
-        pointRadius: 0,
-        tension: 0.2,
-        yAxisID: 'yVal'
-      });
-    }
 
     bridgeChart = new Chart(ctx, {
       type: 'line',
@@ -654,7 +562,7 @@
           x: { grid: { display: false }, ticks: { maxTicksLimit: 15 } },
           yBTC: {
             type: 'linear', position: 'left', beginAtZero: true,
-            title: { display: true, text: 'Bridge BTC' },
+            title: { display: true, text: 'Navigation Fund BTC' },
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: { callback: v => v.toFixed(3) }
           },
@@ -712,7 +620,7 @@
             tension: 0.2
           },
           {
-            label: '1% Safe Withdrawal (' + currency + ')',
+            label: 'Forever SWR (' + currency + ')',
             data: data.map(r => r.safeWithdrawal * rate),
             borderColor: '#F7931A',
             borderWidth: 1,
@@ -842,11 +750,11 @@
     container.textContent = '';
 
     const storm = bridgeResult.stormPeriod;
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
     if (!summary) {
-      const card = buildCard('Result', 'RUIN', 'Bridge depleted in year ' + bridgeResult.ruinYear, 'var(--red)');
+      const card = buildCard('Result', 'RUIN', 'Navigation Fund depleted in year ' + bridgeResult.ruinYear, 'var(--red)');
       container.appendChild(card);
       return;
     }
@@ -856,21 +764,14 @@
 
     const cards = [
       buildCard('Storm Period', stormText, storm.stormEndYear ? 'Ends ' + storm.stormEndYear : 'Forever Half never crosses threshold', stormColor, true),
-      buildCard('Bridge Survives', summary.bridgeSurvivesStorm ? 'Yes' : 'No', summary.yearsBeforeRuin + ' years of income', summary.bridgeSurvivesStorm ? 'var(--green)' : 'var(--red)', true),
-      buildCard('Bridge Split', bridgeBTC.toFixed(4) + ' BTC', (params.bridgeSplitPct * 100).toFixed(0) + '% of ' + params.totalBTC.toFixed(4) + ' BTC total'),
+      buildCard('Fund Survives', summary.bridgeSurvivesStorm ? 'Yes' : 'No', summary.yearsBeforeRuin + ' years of income', summary.bridgeSurvivesStorm ? 'var(--green)' : 'var(--red)', true),
+      buildCard('Fund Split', fundBTC.toFixed(4) + ' BTC', (params.bridgeSplitPct * 100).toFixed(0) + '% of ' + params.totalBTC.toFixed(4) + ' BTC total'),
       buildCard('Forever Half', foreverBTC.toFixed(4) + ' BTC', storm.stormEndYear ? 'Inexhaustible by ' + storm.stormEndYear : 'Grows along power law'),
-      buildCard('Total BTC Sold', summary.totalBTCSold.toFixed(4), 'of ' + bridgeBTC.toFixed(4) + ' bridge BTC'),
+      buildCard('Total BTC Sold', summary.totalBTCSold.toFixed(4), 'of ' + fundBTC.toFixed(4) + ' fund BTC'),
       buildCard('Average SWR', (summary.avgSWR * 100).toFixed(2) + '%', 'Dynamic rate'),
       buildCard('Total Withdrawn', fmtCurrency(summary.totalWithdrawn), 'Over ' + summary.yearsBeforeRuin + ' years'),
-      buildCard('Final Bridge', fmtBTC(summary.finalBridgeBTC) + ' BTC', fmtCurrency(summary.finalBridgeValue) + ' value'),
+      buildCard('Final Fund', fmtBTC(summary.finalBridgeBTC) + ' BTC', fmtCurrency(summary.finalBridgeValue) + ' value'),
     ];
-
-    if (params.kellyEnabled) {
-      cards.push(buildCard('Final Gold', fmtCurrency(summary.finalGoldUSD), 'Kelly BTC/Gold allocation'));
-    }
-    if (params.loansEnabled && summary.totalInterestPaid > 0) {
-      cards.push(buildCard('Interest Paid', fmtCurrency(summary.totalInterestPaid), summary.borrowYears + ' years borrowing'));
-    }
 
     cards.forEach(c => container.appendChild(c));
   }
@@ -902,18 +803,14 @@
   function renderYearlyTable(bridgeResult, params) {
     const tbody = $('v2-yearly-table-body');
     if (!tbody) return;
-    // Clear table body safely
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    // Update table headers dynamically based on active strategies
+    // Update table headers
     const thead = tbody.parentElement ? tbody.parentElement.querySelector('thead tr') : null;
     if (thead) {
       while (thead.firstChild) thead.removeChild(thead.firstChild);
-      var baseHeaders = ['Year', 'BTC Price', 'Multiple', 'SWR', 'Withdrawal', 'BTC Sold'];
-      if (params.kellyEnabled) baseHeaders.push('Gold Sold', 'Gold Balance');
-      if (params.loansEnabled) baseHeaders.push('Borrowed', 'Loan Balance');
-      baseHeaders.push('Bridge BTC', 'Bridge Value', 'Status');
-      baseHeaders.forEach(function(text) {
+      var headers = ['Year', 'BTC Price', 'Multiple', 'SWR', 'Withdrawal', 'BTC Sold', 'Fund BTC', 'Fund Value', 'Status'];
+      headers.forEach(function(text) {
         var th = document.createElement('th');
         th.textContent = text;
         thead.appendChild(th);
@@ -927,9 +824,6 @@
       let statusText = 'OK';
       switch (row.status) {
         case 'RUIN': statusClass = 'status-ruin'; statusText = 'RUIN'; break;
-        case 'BORROWING': statusClass = 'status-borrow'; statusText = 'Borrow'; break;
-        case 'FORCED_SELL': statusClass = 'status-ruin'; statusText = 'Forced Sell'; break;
-        case 'SELL_AND_REPAY': statusClass = 'status-sell'; statusText = 'Sell + Repay'; break;
         case 'SELLING': statusClass = 'status-ok'; statusText = 'Sell'; break;
       }
 
@@ -939,23 +833,11 @@
         { text: row.multiple > 0 ? row.multiple.toFixed(2) + '\u00d7' : '—', className: 'multiple-cell ' + (row.multiple < 1 ? 'under' : row.multiple > 1.5 ? 'over' : 'fair') },
         { text: row.swrRate > 0 ? (row.swrRate * 100).toFixed(1) + '%' : '—' },
         { text: row.actualWithdrawal > 0 ? fmtCurrency(row.actualWithdrawal) : '—' },
-        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '—' }
-      ];
-
-      if (params.kellyEnabled) {
-        cells.push({ text: row.goldSold > 0 ? fmtCurrency(row.goldSold) : '—' });
-        cells.push({ text: row.bridgeGoldUSD > 0 ? fmtCurrency(row.bridgeGoldUSD) : '—', className: 'gold-cell' });
-      }
-      if (params.loansEnabled) {
-        cells.push({ text: row.borrowed > 0 ? fmtCurrency(row.borrowed) : '—' });
-        cells.push({ text: row.loanBalance > 0 ? fmtCurrency(row.loanBalance) : '—', className: row.isLiquidationRisk ? 'status-ruin' : '' });
-      }
-
-      cells.push(
+        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '—' },
         { text: row.bridgeBTC > 0 ? fmtBTC(row.bridgeBTC) : '0' },
         { text: row.bridgeValueUSD > 0 ? fmtCurrency(row.bridgeValueUSD) : '—' },
         { text: statusText, className: statusClass }
-      );
+      ];
 
       cells.forEach(c => {
         const td = document.createElement('td');
@@ -971,7 +853,6 @@
       });
 
       if (row.status === 'RUIN') tr.style.background = 'rgba(255, 23, 68, 0.05)';
-      if (row.status === 'BORROWING') tr.style.background = 'rgba(247, 147, 26, 0.05)';
 
       tbody.appendChild(tr);
     });
@@ -983,42 +864,32 @@
     if (!el) return;
 
     const storm = bridgeResult.stormPeriod;
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
     el.textContent = '';
 
     if (storm.stormYears !== Infinity) {
+      const swrAtEnd = storm.swrAtEnd || V2.foreverSWR(storm.stormEndYear);
+      const swrPct = (swrAtEnd * 100).toFixed(2);
+
       const p1 = document.createElement('span');
-      p1.textContent = 'The Bridge/Forever Framework: Your stack of ' + params.totalBTC + ' BTC is split into a Bridge Half (' + bridgeBTC.toFixed(4) + ' BTC) that funds your life through the storm period, and a Forever Half (' + foreverBTC.toFixed(4) + ' BTC) that grows until withdrawals become negligible. ';
+      p1.textContent = 'The Storm Navigation Framework: Your stack of ' + params.totalBTC + ' BTC is split into a Navigation Fund (' + fundBTC.toFixed(4) + ' BTC) that funds your life through the storm period, and a Forever Half (' + foreverBTC.toFixed(4) + ' BTC) that grows until withdrawals become negligible. ';
       el.appendChild(p1);
 
       const p2 = document.createElement('span');
-      p2.textContent = 'Your storm period is ' + storm.stormYears + ' years — that is how long until the power law makes your Forever Half so valuable that your burn rate becomes less than 1% of its value. ';
+      p2.textContent = 'Your storm period is ' + storm.stormYears + ' years — that is how long until the power law makes your Forever Half so valuable that your burn rate becomes less than ' + swrPct + '% of its value (the sustainable withdrawal rate for that year). ';
       el.appendChild(p2);
 
       if (summary && summary.bridgeSurvivesStorm) {
         const p3 = document.createElement('span');
         const survival = summary.yearsBeforeRuin > storm.stormYears ? 'easily survives' : 'just barely survives';
-        p3.textContent = 'Your Bridge Half ' + survival + ' the storm, using a dynamic withdrawal rate that averages ' + (summary.avgSWR * 100).toFixed(1) + '%. After ' + storm.stormEndYear + ', the hard part is over — the power law solves everything.';
+        p3.textContent = 'Your Navigation Fund ' + survival + ' the storm, using a dynamic withdrawal rate that averages ' + (summary.avgSWR * 100).toFixed(1) + '%. After ' + storm.stormEndYear + ', the hard part is over — the power law solves everything.';
         el.appendChild(p3);
       } else {
         const p3 = document.createElement('span');
-        p3.textContent = 'However, your Bridge Half depletes before the storm ends. You need either more BTC, lower spending, or a longer runway.';
+        p3.textContent = 'However, your Navigation Fund depletes before the storm ends. You need either more BTC, lower spending, or a longer runway.';
         el.appendChild(p3);
-      }
-
-      // Strategy-specific insights
-      if (params.kellyEnabled && summary) {
-        const pKelly = document.createElement('span');
-        pKelly.textContent = ' Kelly Criterion active: Bridge Half uses a BTC/Gold allocation (half-Kelly = ' + (params.kellyFraction * 100).toFixed(0) + '%) with ' + (params.initialGoldPct * 100).toFixed(0) + '% initial gold. Gold sold during bear markets: ' + fmtCurrency(summary.totalGoldSold) + '. Final gold balance: ' + fmtCurrency(summary.finalGoldUSD) + '.';
-        el.appendChild(pKelly);
-      }
-
-      if (params.loansEnabled && summary && summary.totalBorrowed > 0) {
-        const pLoans = document.createElement('span');
-        pLoans.textContent = ' Loan facility active: ' + summary.borrowYears + ' years of borrowing at ' + (params.loanLTV * 100).toFixed(0) + '% LTV. Total borrowed: ' + fmtCurrency(summary.totalBorrowed) + '. Interest paid: ' + fmtCurrency(summary.totalInterestPaid) + '. Final loan balance: ' + fmtCurrency(summary.finalLoanBalance) + '.';
-        el.appendChild(pLoans);
       }
     } else {
       el.textContent = 'Under this scenario, your Forever Half never becomes inexhaustible — your spending growth outpaces the power law appreciation. Consider a more optimistic scenario, reducing spending growth, or increasing your stack.';
@@ -1028,7 +899,7 @@
   // ── Settings Persistence ────────────────────────────────────
   function saveSettings() {
     const data = {
-      version: 2,
+      version: 3,
       savedAt: new Date().toISOString(),
       mode: currentMode,
       inputs: {}
@@ -1036,21 +907,14 @@
 
     const inputIds = [
       'v2-total-btc', 'v2-currency', 'v2-price-scenario', 'v2-bridge-split',
-      'v2-annual-burn', 'v2-spending-growth', 'v2-income-floor', 'v2-retirement-year',
+      'v2-annual-burn', 'v2-spending-growth', 'v2-retirement-year',
       'v2-swr-normal',
-      'v2-additional-years', 'v2-monthly-dca', 'v2-income-growth',
-      'v2-kelly-fraction', 'v2-gold-return', 'v2-gold-allocation',
-      'v2-loan-ltv', 'v2-loan-interest'
+      'v2-additional-years', 'v2-monthly-dca', 'v2-income-growth'
     ];
 
     inputIds.forEach(id => {
       const el = $(id);
       if (el) data.inputs[id] = el.type === 'checkbox' ? el.checked : el.value;
-    });
-
-    ['v2-kelly-toggle', 'v2-loans-toggle'].forEach(id => {
-      const el = $(id);
-      if (el) data.inputs[id] = el.checked;
     });
 
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1084,11 +948,6 @@
       const sliderDisplayMap = {
         'v2-spending-growth': 'v2-spending-growth-value',
         'v2-swr-normal': 'v2-swr-value',
-        'v2-kelly-fraction': 'v2-kelly-fraction-value',
-        'v2-gold-return': 'v2-gold-return-value',
-        'v2-gold-allocation': 'v2-gold-allocation-value',
-        'v2-loan-ltv': 'v2-loan-ltv-value',
-        'v2-loan-interest': 'v2-loan-interest-value',
         'v2-income-growth': 'v2-income-growth-value'
       };
 
@@ -1106,20 +965,14 @@
         if (d2) d2.textContent = 100 - parseFloat(splitEl.value);
       }
 
-      const kellyToggle = $('v2-kelly-toggle');
-      const kellyParams = $('v2-kelly-params');
-      if (kellyToggle && kellyParams) kellyParams.classList.toggle('hidden', !kellyToggle.checked);
-
-      const loansToggle = $('v2-loans-toggle');
-      const loansParams = $('v2-loans-params');
-      if (loansToggle && loansParams) loansParams.classList.toggle('hidden', !loansToggle.checked);
-
       if (data.inputs['v2-currency']) {
         currency = data.inputs['v2-currency'];
         document.querySelectorAll('.v2-currency-label').forEach(el => {
           el.textContent = getCurrencySymbol();
         });
       }
+
+      updateForeverSWRDisplay();
     } catch (e) {
       console.warn('Failed to load settings:', e);
     }
@@ -1134,18 +987,12 @@
     $('v2-bridge-split').value = 50;
     $('v2-annual-burn').value = 50000;
     $('v2-spending-growth').value = 6.5;
-    $('v2-income-floor').value = 2000;
     $('v2-retirement-year').value = 2030;
     $('v2-swr-normal').value = 4;
 
     if ($('v2-additional-years')) $('v2-additional-years').value = 5;
     if ($('v2-monthly-dca')) $('v2-monthly-dca').value = 500;
     if ($('v2-income-growth')) $('v2-income-growth').value = 3;
-
-    if ($('v2-kelly-toggle')) $('v2-kelly-toggle').checked = false;
-    if ($('v2-loans-toggle')) $('v2-loans-toggle').checked = false;
-    if ($('v2-kelly-params')) $('v2-kelly-params').classList.add('hidden');
-    if ($('v2-loans-params')) $('v2-loans-params').classList.add('hidden');
 
     const defaults = {
       'v2-split-bridge-value': '50', 'v2-split-forever-value': '50',
@@ -1163,6 +1010,7 @@
       btn.classList.toggle('active', btn.dataset.mode === 'freedom_now');
     });
     updateModeVisibility();
+    updateForeverSWRDisplay();
   }
 
   // ── PDF Export ──────────────────────────────────────────────
@@ -1194,7 +1042,7 @@
       y += 3;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('\u20BF Bridge/Forever Retirement Plan', M, y);
+      doc.text('\u20BF Storm Navigation Retirement Plan', M, y);
       doc.setFontSize(6);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120);
@@ -1254,7 +1102,7 @@
       doc.setTextColor(160);
       doc.text('Not financial advice. Power law models are educational projections, not guarantees.', W / 2, y, { align: 'center' });
 
-      const filename = 'btc_bridge_forever_' + params.totalBTC + 'btc_' + new Date().toISOString().split('T')[0] + '.pdf';
+      const filename = 'btc_navigation_forever_' + params.totalBTC + 'btc_' + new Date().toISOString().split('T')[0] + '.pdf';
       doc.save(filename);
     } catch (err) {
       console.error('PDF generation failed:', err);
@@ -1296,7 +1144,6 @@
     const f = result.freedom;
     const e = result.endResult;
 
-    // Build comparison table
     const table = document.createElement('table');
     table.style.width = '100%';
     const thead = document.createElement('thead');
@@ -1314,7 +1161,7 @@
       ['Total BTC', f.totalBTC.toFixed(4) + ' BTC', e.totalBTC.toFixed(4) + ' BTC'],
       ['Retirement Year', '' + f.retirementYear, '' + e.retirementYear],
       ['Storm Period', f.stormYears === Infinity ? 'Indefinite' : f.stormYears + ' years', e.stormYears === Infinity ? 'Indefinite' : e.stormYears + ' years'],
-      ['Bridge Survives', f.bridgeSurvives ? 'Yes' : 'No (' + f.ruinYear + ')', e.bridgeSurvives ? 'Yes' : 'No (' + e.ruinYear + ')'],
+      ['Fund Survives', f.bridgeSurvives ? 'Yes' : 'No (' + f.ruinYear + ')', e.bridgeSurvives ? 'Yes' : 'No (' + e.ruinYear + ')'],
       ['Total Withdrawn', fmtCurrency(f.totalWithdrawn), fmtCurrency(e.totalWithdrawn)],
       ['Average SWR', (f.avgSWR * 100).toFixed(1) + '%', (e.avgSWR * 100).toFixed(1) + '%'],
       ['Forever Value @30yr', fmtCurrency(f.foreverValueAt30), fmtCurrency(e.foreverValueAt30)],
@@ -1349,7 +1196,7 @@
     verdict.style.marginTop = 'var(--spacing-md)';
     const verdictP = document.createElement('p');
     if (f.bridgeSurvives && !e.bridgeSurvives) {
-      verdictP.textContent = 'Freedom Now wins: you can retire today and your Bridge Half survives. Stacking longer actually hurts because you miss ' + f.yearsOfFreedom + ' years of freedom.';
+      verdictP.textContent = 'Freedom Now wins: you can retire today and your Navigation Fund survives. Stacking longer actually hurts because you miss ' + f.yearsOfFreedom + ' years of freedom.';
     } else if (!f.bridgeSurvives && e.bridgeSurvives) {
       verdictP.textContent = 'End Result wins: stacking ' + e.yearsWorking + ' more years adds ' + result.additionalBTC.toFixed(4) + ' BTC, making the difference between ruin and survival.';
     } else if (f.bridgeSurvives && e.bridgeSurvives) {
@@ -1469,7 +1316,7 @@
           x: { grid: { display: false }, ticks: { maxTicksLimit: 15 } },
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'Bridge BTC Remaining' },
+            title: { display: true, text: 'Navigation Fund BTC Remaining' },
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: { callback: function(v) { return v.toFixed(2); } }
           }

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Retirement Calculator - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Plan retirement with the Bridge/Forever framework. Split your Bitcoin stack into active income and inexhaustible reserves using power law projections.">
+  <meta name="description" content="Plan retirement with the Storm Navigation framework. Split your Bitcoin stack into a Navigation Fund and Forever Half using power law projections.">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,8 +38,8 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Bridge/Forever Retirement Calculator</h1>
-        <p>Half your stack buys you freedom. The other half weathers the storm and becomes inexhaustible.</p>
+        <h1>Storm Navigation Retirement Calculator</h1>
+        <p>Half your stack navigates the storm. The other half grows forever along the power law.</p>
       </section>
 
       <div class="disclaimer">
@@ -83,12 +83,12 @@
           </div>
         </div>
 
-        <!-- Bridge/Forever Split -->
+        <!-- Navigation Fund / Forever Split -->
         <div class="split-section">
-          <h3>Bridge / Forever Split</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">The Bridge Half funds your life through the storm period. The Forever Half grows along the power law until withdrawals become negligible.</p>
+          <h3>Navigation Fund / Forever Split</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">The Navigation Fund sustains you through the storm period. The Forever Half grows along the power law until withdrawals become negligible.</p>
           <div class="split-slider-row">
-            <span class="split-label">Bridge: <strong id="v2-split-bridge-value">50</strong>%</span>
+            <span class="split-label">Fund: <strong id="v2-split-bridge-value">50</strong>%</span>
             <input type="range" id="v2-bridge-split" min="10" max="90" step="5" value="50">
             <span class="split-label">Forever: <strong id="v2-split-forever-value">50</strong>%</span>
           </div>
@@ -101,11 +101,6 @@
             <div class="input-group">
               <label for="v2-annual-burn">Annual Burn Rate (<span class="v2-currency-label">$</span>)</label>
               <input type="number" id="v2-annual-burn" value="50000" min="1000" step="1000">
-            </div>
-
-            <div class="input-group">
-              <label for="v2-income-floor">Monthly Income Floor (<span class="v2-currency-label">$</span>)</label>
-              <input type="number" id="v2-income-floor" value="2000" min="500" step="100">
             </div>
 
             <div class="input-group">
@@ -126,6 +121,12 @@
               <label for="v2-swr-normal">Base Withdrawal Rate (%)</label>
               <input type="range" id="v2-swr-normal" min="1" max="8" step="0.5" value="4">
               <div class="slider-value"><span id="v2-swr-value">4</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label>Forever Half SWR</label>
+              <div class="slider-value" id="v2-forever-swr-display" style="font-size: 1.125rem;">—</div>
+              <div style="color: var(--gray); font-size: 0.8rem;">25% &times; expected return for retirement year</div>
             </div>
           </div>
         </div>
@@ -153,97 +154,6 @@
             <div class="input-group">
               <label for="v2-annual-burn-er">Annual Burn at Retirement (<span class="v2-currency-label">$</span>)</label>
               <input type="number" id="v2-annual-burn-er" value="50000" min="1000" step="1000">
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Strategy Toggles (Freedom Now only) ─────── -->
-        <div id="v2-strategy-section" class="strategy-section">
-          <h3>Strategy Options</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Toggle advanced strategies on/off to see their impact on your Bridge Half survival.</p>
-
-          <!-- Kelly Criterion -->
-          <div class="toggle-switch-row">
-            <label class="toggle-switch">
-              <input type="checkbox" id="v2-kelly-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">Kelly Criterion: BTC/Gold Allocation</span>
-          </div>
-          <div id="v2-kelly-params" class="strategy-params hidden">
-            <div class="input-grid">
-              <div class="input-group">
-                <label for="v2-kelly-fraction">Kelly Fraction (%)</label>
-                <input type="range" id="v2-kelly-fraction" min="25" max="100" step="5" value="50">
-                <div class="slider-value"><span id="v2-kelly-fraction-value">50</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-gold-return">Expected Gold Return (%/yr)</label>
-                <input type="range" id="v2-gold-return" min="3" max="12" step="0.5" value="7.5">
-                <div class="slider-value"><span id="v2-gold-return-value">7.5</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-gold-allocation">Initial Gold Allocation (%)</label>
-                <input type="range" id="v2-gold-allocation" min="10" max="60" step="5" value="30">
-                <div class="slider-value"><span id="v2-gold-allocation-value">30</span>%</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Loan Facility -->
-          <div class="toggle-switch-row">
-            <label class="toggle-switch">
-              <input type="checkbox" id="v2-loans-toggle">
-              <span class="toggle-slider"></span>
-            </label>
-            <span class="toggle-label">BTC-Backed Loan Facility</span>
-          </div>
-          <div id="v2-loans-params" class="strategy-params hidden">
-            <div class="input-grid">
-              <div class="input-group">
-                <label for="v2-loan-ltv">Maximum LTV (%)</label>
-                <input type="range" id="v2-loan-ltv" min="10" max="50" step="5" value="30">
-                <div class="slider-value"><span id="v2-loan-ltv-value">30</span>%</div>
-              </div>
-              <div class="input-group">
-                <label for="v2-loan-interest">Loan Interest Rate (%/yr)</label>
-                <input type="range" id="v2-loan-interest" min="3" max="15" step="0.5" value="8">
-                <div class="slider-value"><span id="v2-loan-interest-value">8</span>%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Geographic Arbitrage -->
-        <div class="geo-section">
-          <h3>Geographic Arbitrage</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Adjust your burn rate based on cost of living in different countries.</p>
-          <div class="input-grid">
-            <div class="input-group">
-              <label for="v2-geo-country">Country / Region</label>
-              <select id="v2-geo-country">
-                <option value="us" selected>United States (100%)</option>
-                <option value="uk">United Kingdom (95%)</option>
-                <option value="nl">Netherlands (90%)</option>
-                <option value="de">Germany (85%)</option>
-                <option value="es">Spain (70%)</option>
-                <option value="pt">Portugal (65%)</option>
-                <option value="cz">Czech Republic (55%)</option>
-                <option value="mx">Mexico (45%)</option>
-                <option value="th">Thailand (40%)</option>
-                <option value="co">Colombia (40%)</option>
-                <option value="vn">Vietnam (35%)</option>
-                <option value="id">Indonesia (35%)</option>
-                <option value="custom">Custom</option>
-              </select>
-            </div>
-            <div class="input-group">
-              <label>Cost Multiplier</label>
-              <div class="slider-value" style="font-size: 1.125rem;"><span id="v2-geo-multiplier-value">100</span>% of US baseline</div>
-            </div>
-            <div class="input-group hidden" id="v2-geo-custom-group">
-              <label for="v2-geo-custom">Custom Multiplier (%)</label>
-              <input type="number" id="v2-geo-custom" value="100" min="10" max="200" step="5">
             </div>
           </div>
         </div>
@@ -284,12 +194,12 @@
         </div>
       </section>
 
-      <!-- ── Bridge Half Chart ─────────────────────────── -->
+      <!-- ── Navigation Fund Chart ─────────────────────── -->
       <section id="v2-bridge-chart-section" class="hidden">
-        <h2>Bridge Half Projection</h2>
-        <p>Your active capital: withdrawals, rebalancing, and the tactical fight to survive the storm.</p>
+        <h2>Navigation Fund Projection</h2>
+        <p>Your active capital: withdrawals and the tactical fight to survive the storm.</p>
         <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="v2-bridge-chart" aria-label="Bridge half projection over time"></canvas>
+          <canvas id="v2-bridge-chart" aria-label="Navigation Fund projection over time"></canvas>
         </div>
       </section>
 
@@ -311,14 +221,14 @@
       <!-- ── Comparison Section ────────────────────────── -->
       <section id="v2-comparison-section" class="hidden">
         <h2>Scenario Comparison</h2>
-        <p>How your Bridge/Forever plan holds up across different price scenarios.</p>
+        <p>How your Navigation Fund / Forever Half plan holds up across different price scenarios.</p>
         <div class="table-container">
           <table>
             <thead>
               <tr>
                 <th>Scenario</th>
                 <th>Storm Period</th>
-                <th>Bridge Survives</th>
+                <th>Fund Survives</th>
                 <th>Minimum BTC</th>
                 <th>Avg SWR</th>
               </tr>
@@ -342,8 +252,8 @@
                   <th>SWR</th>
                   <th>Withdrawal</th>
                   <th>BTC Sold</th>
-                  <th>Bridge BTC</th>
-                  <th>Bridge Value</th>
+                  <th>Fund BTC</th>
+                  <th>Fund Value</th>
                   <th>Status</th>
                 </tr>
               </thead>
@@ -356,7 +266,7 @@
       <!-- ── Key Insight ───────────────────────────────── -->
       <section id="v2-insight-section" class="hidden">
         <div class="info-box">
-          <h4>The Bridge/Forever Insight</h4>
+          <h4>The Storm Navigation Insight</h4>
           <p id="v2-insight-text"></p>
         </div>
       </section>
@@ -371,10 +281,10 @@
       <!-- ── Monte Carlo Analysis ──────────────────────── -->
       <section id="v2-montecarlo-section" class="hidden">
         <h2>Monte Carlo Analysis</h2>
-        <p>200 random price simulations around the power law trend. How often does your Bridge Half survive the storm?</p>
+        <p>200 random price simulations around the power law trend. How often does your Navigation Fund survive the storm?</p>
         <div id="v2-montecarlo-summary" style="margin-bottom: var(--spacing-md);"></div>
         <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo bridge survival confidence bands"></canvas>
+          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo Navigation Fund survival confidence bands"></canvas>
         </div>
       </section>
 
@@ -386,7 +296,7 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4>Methodology</h4>
-          <p>Bridge Half: active decumulation with dynamic withdrawal rate (adjusts 1%–6% based on price vs. power law trend). Forever Half: passive growth along power law curve. Storm period: years until burn &lt; 1% of Forever value.</p>
+          <p>Navigation Fund: active decumulation with dynamic withdrawal rate (adjusts 1%–6% based on price vs. power law trend). Forever Half: passive growth along power law curve. Storm period: years until burn &lt; Forever SWR (25% &times; expected return).</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
@@ -520,71 +430,6 @@
 
     .split-label:last-child {
       text-align: right;
-    }
-
-    /* Strategy Section */
-    .strategy-section {
-      margin-top: var(--spacing-xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-border);
-    }
-
-    .strategy-params {
-      margin-top: var(--spacing-sm);
-      margin-bottom: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--gray-light);
-      border-radius: var(--border-radius);
-    }
-
-    .toggle-switch-row {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      margin: var(--spacing-md) 0;
-    }
-
-    .toggle-switch {
-      position: relative;
-      width: 52px;
-      height: 28px;
-      flex-shrink: 0;
-    }
-
-    .toggle-switch input { display: none; }
-
-    .toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: var(--gray-border);
-      border-radius: 28px;
-      cursor: pointer;
-      transition: background 0.3s;
-    }
-
-    .toggle-slider::before {
-      content: '';
-      position: absolute;
-      width: 22px;
-      height: 22px;
-      left: 3px;
-      top: 3px;
-      background: var(--white);
-      border-radius: 50%;
-      transition: transform 0.3s;
-    }
-
-    .toggle-switch input:checked + .toggle-slider {
-      background: var(--orange);
-    }
-
-    .toggle-switch input:checked + .toggle-slider::before {
-      transform: translateX(24px);
-    }
-
-    .toggle-label {
-      font-weight: 500;
-      font-size: 0.9375rem;
     }
 
     /* Buttons */
@@ -748,16 +593,8 @@
 
     /* Table statuses */
     .status-ok { color: var(--green); }
-    .status-borrow { color: var(--orange); }
     .status-ruin { color: var(--red); font-weight: 700; }
     .status-sell { color: var(--gray); }
-    .gold-cell { color: #B8860B; }
-
-    .geo-section {
-      margin-top: var(--spacing-xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-border);
-    }
 
     @media print {
       .header, .footer, .nav, .hero, .disclaimer,

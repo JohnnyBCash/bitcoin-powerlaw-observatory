@@ -1,5 +1,5 @@
 // Bitcoin Pensioenrekentool V2 - UI Handler (NL)
-// Bridge/Forever Raamwerk met Vrijheid Nu & Eindresultaat modi
+// Navigatiefonds / Eeuwige Helft Raamwerk met Vrijheid Nu & Eindresultaat modi
 (function() {
   'use strict';
 
@@ -98,19 +98,11 @@
       initialK,
       annualBurnUSD: toUSD(parseFloat($('v2-annual-burn').value) || 50000),
       spendingGrowthRate: parseFloat($('v2-spending-growth').value) / 100,
-      floorMonthlyUSD: toUSD(parseFloat($('v2-income-floor').value) || 2000),
       retirementYear: retYear,
       additionalYears: parseInt($('v2-additional-years')?.value) || 5,
       monthlyDCAUSD: toUSD(parseFloat($('v2-monthly-dca')?.value) || 500),
       incomeGrowthRate: parseFloat($('v2-income-growth')?.value) / 100 || 0.03,
       swrNormalRate: parseFloat($('v2-swr-normal')?.value) / 100 || 0.04,
-      kellyEnabled: $('v2-kelly-toggle')?.checked || false,
-      kellyFraction: parseFloat($('v2-kelly-fraction')?.value) / 100 || 0.5,
-      goldReturnRate: parseFloat($('v2-gold-return')?.value) / 100 || 0.075,
-      initialGoldPct: parseFloat($('v2-gold-allocation')?.value) / 100 || 0.30,
-      loansEnabled: $('v2-loans-toggle')?.checked || false,
-      loanLTV: parseFloat($('v2-loan-ltv')?.value) / 100 || 0.30,
-      loanInterestRate: parseFloat($('v2-loan-interest')?.value) / 100 || 0.08,
     };
 
     return params;
@@ -123,11 +115,10 @@
     loadSettings();
     setupModeToggle();
     setupSliders();
-    setupStrategyToggles();
     setupCurrencyToggle();
     setupStartNow();
     setupButtons();
-    setupGeoArbitrage();
+    setupForeverSWRDisplay();
     updateModeVisibility();
   }
 
@@ -142,7 +133,7 @@
     }
   }
 
-  // ── Modus Schakelaar ─────────────────────────────────────────
+  // ── Modus Toggle ─────────────────────────────────────────────
   function setupModeToggle() {
     document.querySelectorAll('#v2-mode-toggle .toggle-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -158,11 +149,9 @@
     if (currentMode === 'freedom_now') {
       show('v2-freedom-inputs');
       hide('v2-endresult-inputs');
-      show('v2-strategy-section');
     } else {
       hide('v2-freedom-inputs');
       show('v2-endresult-inputs');
-      hide('v2-strategy-section');
     }
   }
 
@@ -178,11 +167,6 @@
       },
       { input: 'v2-spending-growth', display: 'v2-spending-growth-value' },
       { input: 'v2-swr-normal', display: 'v2-swr-value' },
-      { input: 'v2-kelly-fraction', display: 'v2-kelly-fraction-value' },
-      { input: 'v2-gold-return', display: 'v2-gold-return-value' },
-      { input: 'v2-gold-allocation', display: 'v2-gold-allocation-value' },
-      { input: 'v2-loan-ltv', display: 'v2-loan-ltv-value' },
-      { input: 'v2-loan-interest', display: 'v2-loan-interest-value' },
       { input: 'v2-income-growth', display: 'v2-income-growth-value' }
     ];
 
@@ -198,24 +182,6 @@
         }
       });
     });
-  }
-
-  function setupStrategyToggles() {
-    const kellyToggle = $('v2-kelly-toggle');
-    const kellyParams = $('v2-kelly-params');
-    if (kellyToggle && kellyParams) {
-      kellyToggle.addEventListener('change', () => {
-        kellyParams.classList.toggle('hidden', !kellyToggle.checked);
-      });
-    }
-
-    const loansToggle = $('v2-loans-toggle');
-    const loansParams = $('v2-loans-params');
-    if (loansToggle && loansParams) {
-      loansToggle.addEventListener('change', () => {
-        loansParams.classList.toggle('hidden', !loansToggle.checked);
-      });
-    }
   }
 
   function setupCurrencyToggle() {
@@ -234,7 +200,10 @@
     if (!btn) return;
     btn.addEventListener('click', () => {
       const yearInput = $('v2-retirement-year');
-      if (yearInput) yearInput.value = new Date().getFullYear();
+      if (yearInput) {
+        yearInput.value = new Date().getFullYear();
+        updateForeverSWRDisplay();
+      }
     });
   }
 
@@ -256,6 +225,22 @@
 
     const pdfBtn = $('v2-export-pdf-btn');
     if (pdfBtn) pdfBtn.addEventListener('click', exportPDF);
+  }
+
+  // ── Eeuwige Helft SWR Weergave ─────────────────────────────
+  function setupForeverSWRDisplay() {
+    const yearInput = $('v2-retirement-year');
+    if (!yearInput) return;
+    yearInput.addEventListener('input', updateForeverSWRDisplay);
+    updateForeverSWRDisplay();
+  }
+
+  function updateForeverSWRDisplay() {
+    const display = $('v2-forever-swr-display');
+    if (!display) return;
+    const year = parseInt($('v2-retirement-year')?.value) || 2030;
+    const swr = V2.foreverSWR(year);
+    display.textContent = (swr * 100).toFixed(2) + '%';
   }
 
   // ── Hoofdberekening ────────────────────────────────────────
@@ -332,7 +317,6 @@
 
     const tbody = $('v2-comparison-body');
     if (!tbody) return;
-    // Clear table body safely
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
     comparison.forEach(row => {
@@ -394,20 +378,13 @@
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
       headline.textContent = 'Je kunt met pensioen. Stormperiode: ' + storm.stormYears + ' jaar.';
-      const bridgeBTC = (params.totalBTC * params.bridgeSplitPct).toFixed(4);
+      const fundBTC = (params.totalBTC * params.bridgeSplitPct).toFixed(4);
       const foreverBTC = (params.totalBTC * (1 - params.bridgeSplitPct)).toFixed(4);
-      let detailParts = ['Je Brughelft (' + bridgeBTC + ' BTC) houdt je in leven tijdens de storm. Je Eeuwige Helft (' + foreverBTC + ' BTC) wordt onuitputtelijk tegen ' + storm.stormEndYear + '.'];
-      const strategies = [];
-      if (params.kellyEnabled) strategies.push('Kelly BTC/Goud allocatie');
-      if (params.loansEnabled) strategies.push('BTC-gedekte leningen');
-      if (strategies.length > 0) {
-        detailParts.push('Actieve strategie\u00EBn: ' + strategies.join(', ') + '.');
-      }
-      detail.textContent = detailParts.join(' ');
+      detail.textContent = 'Je Navigatiefonds (' + fundBTC + ' BTC) draagt je door de storm. Je Eeuwige Helft (' + foreverBTC + ' BTC) wordt onuitputtelijk tegen ' + storm.stormEndYear + '.';
     } else if (bridgeResult.ruinYear) {
       banner.classList.add('status-red');
       icon.textContent = '\uD83D\uDED1';
-      headline.textContent = 'Brug uitgeput in ' + bridgeResult.ruinYear;
+      headline.textContent = 'Navigatiefonds uitgeput in ' + bridgeResult.ruinYear;
       const minResult = V2.findMinimumTotal(params);
       const burnResult = V2.findMaxBurn(params);
       let fixText = '';
@@ -448,12 +425,12 @@
       banner.classList.add('status-green');
       icon.textContent = '\uD83D\uDCCA';
       headline.textContent = 'Na ' + params.additionalYears + ' jaar verder: ' + result.finalBTC.toFixed(4) + ' BTC';
-      detail.textContent = 'Bij pensioen (' + result.retirementYear + ') is je stormperiode ' + storm.stormYears + ' jaar. Je Brughelft overleeft en je Eeuwige Helft wordt onuitputtelijk.';
+      detail.textContent = 'Bij pensioen (' + result.retirementYear + ') is je stormperiode ' + storm.stormYears + ' jaar. Je Navigatiefonds overleeft en je Eeuwige Helft wordt onuitputtelijk.';
     } else {
       banner.classList.add('status-amber');
       icon.textContent = '\u26A0\uFE0F';
       headline.textContent = 'Na ' + params.additionalYears + ' jaar verder: ' + result.finalBTC.toFixed(4) + ' BTC';
-      detail.textContent = 'Bij pensioen (' + result.retirementYear + ') heb je ' + result.finalBTC.toFixed(4) + ' BTC, maar de Brughelft overleeft de storm mogelijk niet. Overweeg langer door te stapelen.';
+      detail.textContent = 'Bij pensioen (' + result.retirementYear + ') heb je ' + result.finalBTC.toFixed(4) + ' BTC, maar het Navigatiefonds overleeft de storm mogelijk niet. Overweeg langer door te stapelen.';
     }
 
     banner.classList.remove('hidden');
@@ -464,7 +441,7 @@
     const content = $('v2-storm-content');
     if (!content) return;
 
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
     content.textContent = '';
@@ -494,10 +471,13 @@
       const row = document.createElement('div');
       row.className = 'storm-metrics-row';
 
+      const swrAtEnd = storm.swrAtEnd || V2.foreverSWR(storm.stormEndYear);
+      const swrPct = (swrAtEnd * 100).toFixed(2);
+
       const metrics = [
         { label: 'Stormperiode', value: storm.stormYears + ' jaar' },
         { label: 'Storm Eindigt', value: '' + storm.stormEndYear },
-        { label: 'Brughelft', value: bridgeBTC.toFixed(4) + ' BTC' },
+        { label: 'Navigatiefonds', value: fundBTC.toFixed(4) + ' BTC' },
         { label: 'Eeuwige Helft', value: foreverBTC.toFixed(4) + ' BTC' }
       ];
 
@@ -519,14 +499,14 @@
 
       const p = document.createElement('p');
       p.style.cssText = 'color: var(--gray); margin-top: var(--spacing-md);';
-      p.textContent = 'Overleef de storm, en je Eeuwige Helft wordt praktisch onuitputtelijk. Tegen ' + storm.stormEndYear + ' zijn je jaarlijkse uitgaven minder dan 1% van de waarde van je Eeuwige Helft.';
+      p.textContent = 'Overleef de storm, en je Eeuwige Helft wordt praktisch onuitputtelijk. Tegen ' + storm.stormEndYear + ' zijn je jaarlijkse uitgaven minder dan ' + swrPct + '% van de waarde van je Eeuwige Helft \u2014 het duurzame opnamepercentage voor dat jaar.';
       wrapper.appendChild(p);
     }
 
     content.appendChild(wrapper);
   }
 
-  // ── Brughelft Grafiek ───────────────────────────────────────
+  // ── Navigatiefonds Grafiek ─────────────────────────────────
   function renderBridgeChart(bridgeResult, params) {
     const ctx = $('v2-bridge-chart');
     if (!ctx) return;
@@ -539,7 +519,7 @@
 
     const datasets = [
       {
-        label: 'Brug BTC',
+        label: 'Navigatiefonds BTC',
         data: data.map(r => r.bridgeBTC),
         borderColor: '#F7931A',
         backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -560,7 +540,7 @@
         yAxisID: 'yVal'
       },
       {
-        label: 'Brugwaarde (' + currency + ')',
+        label: 'Fondswaarde (' + currency + ')',
         data: data.map(r => Math.max(0, r.bridgeValueUSD) * rate),
         borderColor: '#00C853',
         borderWidth: 2,
@@ -569,32 +549,6 @@
         yAxisID: 'yVal'
       }
     ];
-
-    if (params.kellyEnabled && data.some(r => r.bridgeGoldUSD > 0)) {
-      datasets.push({
-        label: 'Goudsaldo (' + currency + ')',
-        data: data.map(r => r.bridgeGoldUSD * rate),
-        borderColor: '#FFD700',
-        borderWidth: 2,
-        borderDash: [3, 3],
-        pointRadius: 0,
-        tension: 0.2,
-        yAxisID: 'yVal'
-      });
-    }
-
-    if (params.loansEnabled && data.some(r => r.loanBalance > 0)) {
-      datasets.push({
-        label: 'Leningsaldo (' + currency + ')',
-        data: data.map(r => r.loanBalance * rate),
-        borderColor: '#9C27B0',
-        borderWidth: 2,
-        borderDash: [3, 3],
-        pointRadius: 0,
-        tension: 0.2,
-        yAxisID: 'yVal'
-      });
-    }
 
     bridgeChart = new Chart(ctx, {
       type: 'line',
@@ -610,7 +564,7 @@
               label: function(ctx) {
                 const val = ctx.raw;
                 if (ctx.dataset.yAxisID === 'yBTC') return ctx.dataset.label + ': ' + fmtBTC(val) + ' BTC';
-                return ctx.dataset.label + ': ' + sym + Math.round(val).toLocaleString('nl-NL');
+                return ctx.dataset.label + ': ' + sym + Math.round(val).toLocaleString();
               }
             }
           }
@@ -619,7 +573,7 @@
           x: { grid: { display: false }, ticks: { maxTicksLimit: 15 } },
           yBTC: {
             type: 'linear', position: 'left', beginAtZero: true,
-            title: { display: true, text: 'Brug BTC' },
+            title: { display: true, text: 'Navigatiefonds BTC' },
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: { callback: v => v.toFixed(3) }
           },
@@ -677,7 +631,7 @@
             tension: 0.2
           },
           {
-            label: '1% Veilige Opname (' + currency + ')',
+            label: 'Eeuwige SWR (' + currency + ')',
             data: data.map(r => r.safeWithdrawal * rate),
             borderColor: '#F7931A',
             borderWidth: 1,
@@ -696,7 +650,7 @@
           tooltip: {
             callbacks: {
               label: function(ctx) {
-                return ctx.dataset.label + ': ' + sym + Math.round(ctx.raw).toLocaleString('nl-NL');
+                return ctx.dataset.label + ': ' + sym + Math.round(ctx.raw).toLocaleString();
               }
             }
           }
@@ -749,7 +703,7 @@
             yAxisID: 'yBTC'
           },
           {
-            label: 'Portfoliowaarde (' + currency + ')',
+            label: 'Portefeuillewaarde (' + currency + ')',
             data: data.map(r => r.portfolioValueUSD * rate),
             borderColor: '#00C853',
             borderWidth: 2,
@@ -769,7 +723,7 @@
             callbacks: {
               label: function(ctx) {
                 if (ctx.dataset.yAxisID === 'yBTC') return ctx.dataset.label + ': ' + ctx.raw.toFixed(4) + ' BTC';
-                return ctx.dataset.label + ': ' + sym + Math.round(ctx.raw).toLocaleString('nl-NL');
+                return ctx.dataset.label + ': ' + sym + Math.round(ctx.raw).toLocaleString();
               }
             }
           }
@@ -807,11 +761,11 @@
     container.textContent = '';
 
     const storm = bridgeResult.stormPeriod;
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
     if (!summary) {
-      const card = buildCard('Resultaat', 'FAILLIET', 'Brug uitgeput in jaar ' + bridgeResult.ruinYear, 'var(--red)');
+      const card = buildCard('Resultaat', 'FAILLIET', 'Navigatiefonds uitgeput in jaar ' + bridgeResult.ruinYear, 'var(--red)');
       container.appendChild(card);
       return;
     }
@@ -820,22 +774,15 @@
     const stormColor = storm.stormYears === Infinity ? 'var(--red)' : 'var(--green)';
 
     const cards = [
-      buildCard('Stormperiode', stormText, storm.stormEndYear ? 'Eindigt ' + storm.stormEndYear : 'Eeuwige Helft bereikt drempel nooit', stormColor, true),
-      buildCard('Brug Overleeft', summary.bridgeSurvivesStorm ? 'Ja' : 'Nee', summary.yearsBeforeRuin + ' jaar inkomen', summary.bridgeSurvivesStorm ? 'var(--green)' : 'var(--red)', true),
-      buildCard('Brug Verdeling', bridgeBTC.toFixed(4) + ' BTC', (params.bridgeSplitPct * 100).toFixed(0) + '% van ' + params.totalBTC.toFixed(4) + ' BTC totaal'),
+      buildCard('Stormperiode', stormText, storm.stormEndYear ? 'Eindigt ' + storm.stormEndYear : 'Eeuwige Helft bereikt drempel niet', stormColor, true),
+      buildCard('Fonds Overleeft', summary.bridgeSurvivesStorm ? 'Ja' : 'Nee', summary.yearsBeforeRuin + ' jaar inkomen', summary.bridgeSurvivesStorm ? 'var(--green)' : 'var(--red)', true),
+      buildCard('Fondssplitsing', fundBTC.toFixed(4) + ' BTC', (params.bridgeSplitPct * 100).toFixed(0) + '% van ' + params.totalBTC.toFixed(4) + ' BTC totaal'),
       buildCard('Eeuwige Helft', foreverBTC.toFixed(4) + ' BTC', storm.stormEndYear ? 'Onuitputtelijk tegen ' + storm.stormEndYear : 'Groeit langs machtswet'),
-      buildCard('Totaal BTC Verkocht', summary.totalBTCSold.toFixed(4), 'van ' + bridgeBTC.toFixed(4) + ' brug BTC'),
-      buildCard('Gemiddelde SWR', (summary.avgSWR * 100).toFixed(2) + '%', 'Dynamisch tarief'),
+      buildCard('Totaal BTC Verkocht', summary.totalBTCSold.toFixed(4), 'van ' + fundBTC.toFixed(4) + ' fonds BTC'),
+      buildCard('Gemiddeld SWR', (summary.avgSWR * 100).toFixed(2) + '%', 'Dynamisch percentage'),
       buildCard('Totaal Opgenomen', fmtCurrency(summary.totalWithdrawn), 'Over ' + summary.yearsBeforeRuin + ' jaar'),
-      buildCard('Laatste Brug', fmtBTC(summary.finalBridgeBTC) + ' BTC', fmtCurrency(summary.finalBridgeValue) + ' waarde'),
+      buildCard('Eindsaldo Fonds', fmtBTC(summary.finalBridgeBTC) + ' BTC', fmtCurrency(summary.finalBridgeValue) + ' waarde'),
     ];
-
-    if (params.kellyEnabled) {
-      cards.push(buildCard('Laatste Goud', fmtCurrency(summary.finalGoldUSD), 'Kelly BTC/Goud allocatie'));
-    }
-    if (params.loansEnabled && summary.totalInterestPaid > 0) {
-      cards.push(buildCard('Rente Betaald', fmtCurrency(summary.totalInterestPaid), summary.borrowYears + ' jaar lenen'));
-    }
 
     cards.forEach(c => container.appendChild(c));
   }
@@ -867,18 +814,13 @@
   function renderYearlyTable(bridgeResult, params) {
     const tbody = $('v2-yearly-table-body');
     if (!tbody) return;
-    // Clear table body safely
     while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
 
-    // Update tabelkoppen dynamisch op basis van actieve strategieen
     const thead = tbody.parentElement ? tbody.parentElement.querySelector('thead tr') : null;
     if (thead) {
       while (thead.firstChild) thead.removeChild(thead.firstChild);
-      var baseHeaders = ['Jaar', 'BTC Prijs', 'Veelvoud', 'SWR', 'Opname', 'BTC Verkocht'];
-      if (params.kellyEnabled) baseHeaders.push('Goud Verkocht', 'Goudsaldo');
-      if (params.loansEnabled) baseHeaders.push('Geleend', 'Leningsaldo');
-      baseHeaders.push('Brug BTC', 'Brugwaarde', 'Status');
-      baseHeaders.forEach(function(text) {
+      var headers = ['Jaar', 'BTC Prijs', 'Multiple', 'SWR', 'Opname', 'BTC Verkocht', 'Fonds BTC', 'Fondswaarde', 'Status'];
+      headers.forEach(function(text) {
         var th = document.createElement('th');
         th.textContent = text;
         thead.appendChild(th);
@@ -892,9 +834,6 @@
       let statusText = 'OK';
       switch (row.status) {
         case 'RUIN': statusClass = 'status-ruin'; statusText = 'FAILLIET'; break;
-        case 'BORROWING': statusClass = 'status-borrow'; statusText = 'Lenen'; break;
-        case 'FORCED_SELL': statusClass = 'status-ruin'; statusText = 'Gedwongen Verkoop'; break;
-        case 'SELL_AND_REPAY': statusClass = 'status-sell'; statusText = 'Verkoop + Aflossing'; break;
         case 'SELLING': statusClass = 'status-ok'; statusText = 'Verkoop'; break;
       }
 
@@ -904,23 +843,11 @@
         { text: row.multiple > 0 ? row.multiple.toFixed(2) + '\u00d7' : '\u2014', className: 'multiple-cell ' + (row.multiple < 1 ? 'under' : row.multiple > 1.5 ? 'over' : 'fair') },
         { text: row.swrRate > 0 ? (row.swrRate * 100).toFixed(1) + '%' : '\u2014' },
         { text: row.actualWithdrawal > 0 ? fmtCurrency(row.actualWithdrawal) : '\u2014' },
-        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '\u2014' }
-      ];
-
-      if (params.kellyEnabled) {
-        cells.push({ text: row.goldSold > 0 ? fmtCurrency(row.goldSold) : '\u2014' });
-        cells.push({ text: row.bridgeGoldUSD > 0 ? fmtCurrency(row.bridgeGoldUSD) : '\u2014', className: 'gold-cell' });
-      }
-      if (params.loansEnabled) {
-        cells.push({ text: row.borrowed > 0 ? fmtCurrency(row.borrowed) : '\u2014' });
-        cells.push({ text: row.loanBalance > 0 ? fmtCurrency(row.loanBalance) : '\u2014', className: row.isLiquidationRisk ? 'status-ruin' : '' });
-      }
-
-      cells.push(
+        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '\u2014' },
         { text: row.bridgeBTC > 0 ? fmtBTC(row.bridgeBTC) : '0' },
         { text: row.bridgeValueUSD > 0 ? fmtCurrency(row.bridgeValueUSD) : '\u2014' },
         { text: statusText, className: statusClass }
-      );
+      ];
 
       cells.forEach(c => {
         const td = document.createElement('td');
@@ -936,7 +863,6 @@
       });
 
       if (row.status === 'RUIN') tr.style.background = 'rgba(255, 23, 68, 0.05)';
-      if (row.status === 'BORROWING') tr.style.background = 'rgba(247, 147, 26, 0.05)';
 
       tbody.appendChild(tr);
     });
@@ -948,42 +874,32 @@
     if (!el) return;
 
     const storm = bridgeResult.stormPeriod;
-    const bridgeBTC = params.totalBTC * params.bridgeSplitPct;
+    const fundBTC = params.totalBTC * params.bridgeSplitPct;
     const foreverBTC = params.totalBTC * (1 - params.bridgeSplitPct);
 
     el.textContent = '';
 
     if (storm.stormYears !== Infinity) {
+      const swrAtEnd = storm.swrAtEnd || V2.foreverSWR(storm.stormEndYear);
+      const swrPct = (swrAtEnd * 100).toFixed(2);
+
       const p1 = document.createElement('span');
-      p1.textContent = 'Het Brug/Eeuwig Raamwerk: Je stack van ' + params.totalBTC + ' BTC is gesplitst in een Brughelft (' + bridgeBTC.toFixed(4) + ' BTC) die je leven financiert tijdens de stormperiode, en een Eeuwige Helft (' + foreverBTC.toFixed(4) + ' BTC) die groeit totdat opnames verwaarloosbaar worden. ';
+      p1.textContent = 'Het Stormnavigatie Raamwerk: Je stack van ' + params.totalBTC + ' BTC is gesplitst in een Navigatiefonds (' + fundBTC.toFixed(4) + ' BTC) dat je leven financiert tijdens de stormperiode, en een Eeuwige Helft (' + foreverBTC.toFixed(4) + ' BTC) die groeit totdat opnames verwaarloosbaar worden. ';
       el.appendChild(p1);
 
       const p2 = document.createElement('span');
-      p2.textContent = 'Je stormperiode is ' + storm.stormYears + ' jaar \u2014 zo lang duurt het totdat de machtswet je Eeuwige Helft zo waardevol maakt dat je uitgaven minder dan 1% van de waarde bedragen. ';
+      p2.textContent = 'Je stormperiode is ' + storm.stormYears + ' jaar \u2014 zo lang duurt het totdat de machtswet je Eeuwige Helft zo waardevol maakt dat je uitgaven minder dan ' + swrPct + '% van de waarde bedragen (het duurzame opnamepercentage voor dat jaar). ';
       el.appendChild(p2);
 
       if (summary && summary.bridgeSurvivesStorm) {
         const p3 = document.createElement('span');
         const survival = summary.yearsBeforeRuin > storm.stormYears ? 'overleeft gemakkelijk' : 'overleeft net';
-        p3.textContent = 'Je Brughelft ' + survival + ' de storm, met een dynamisch opnamepercentage dat gemiddeld ' + (summary.avgSWR * 100).toFixed(1) + '% bedraagt. Na ' + storm.stormEndYear + ' is het moeilijke deel voorbij \u2014 de machtswet lost alles op.';
+        p3.textContent = 'Je Navigatiefonds ' + survival + ' de storm, met een dynamisch opnamepercentage dat gemiddeld ' + (summary.avgSWR * 100).toFixed(1) + '% bedraagt. Na ' + storm.stormEndYear + ' is het moeilijke deel voorbij \u2014 de machtswet lost alles op.';
         el.appendChild(p3);
       } else {
         const p3 = document.createElement('span');
-        p3.textContent = 'Echter, je Brughelft raakt op voordat de storm eindigt. Je hebt meer BTC nodig, lagere uitgaven, of een langere horizon.';
+        p3.textContent = 'Echter, je Navigatiefonds raakt op voordat de storm eindigt. Je hebt meer BTC nodig, lagere uitgaven, of een langere horizon.';
         el.appendChild(p3);
-      }
-
-      // Strategie-specifieke inzichten
-      if (params.kellyEnabled && summary) {
-        const pKelly = document.createElement('span');
-        pKelly.textContent = ' Kelly Criterium actief: Brughelft gebruikt BTC/Goud allocatie (half-Kelly = ' + (params.kellyFraction * 100).toFixed(0) + '%) met ' + (params.initialGoldPct * 100).toFixed(0) + '% initieel goud. Goud verkocht in bearmarkten: ' + fmtCurrency(summary.totalGoldSold) + '. Eindsaldo goud: ' + fmtCurrency(summary.finalGoldUSD) + '.';
-        el.appendChild(pKelly);
-      }
-
-      if (params.loansEnabled && summary && summary.totalBorrowed > 0) {
-        const pLoans = document.createElement('span');
-        pLoans.textContent = ' Leningfaciliteit actief: ' + summary.borrowYears + ' jaar lenen bij ' + (params.loanLTV * 100).toFixed(0) + '% LTV. Totaal geleend: ' + fmtCurrency(summary.totalBorrowed) + '. Rente betaald: ' + fmtCurrency(summary.totalInterestPaid) + '. Eindsaldo lening: ' + fmtCurrency(summary.finalLoanBalance) + '.';
-        el.appendChild(pLoans);
       }
     } else {
       el.textContent = 'Onder dit scenario wordt je Eeuwige Helft nooit onuitputtelijk \u2014 je uitgavengroei overtreft de machtswetwaardestijging. Overweeg een optimistischer scenario, lagere uitgavengroei, of een grotere stack.';
@@ -993,7 +909,7 @@
   // ── Instellingen Opslaan ────────────────────────────────────
   function saveSettings() {
     const data = {
-      version: 2,
+      version: 3,
       savedAt: new Date().toISOString(),
       mode: currentMode,
       inputs: {}
@@ -1001,21 +917,14 @@
 
     const inputIds = [
       'v2-total-btc', 'v2-currency', 'v2-price-scenario', 'v2-bridge-split',
-      'v2-annual-burn', 'v2-spending-growth', 'v2-income-floor', 'v2-retirement-year',
+      'v2-annual-burn', 'v2-spending-growth', 'v2-retirement-year',
       'v2-swr-normal',
-      'v2-additional-years', 'v2-monthly-dca', 'v2-income-growth',
-      'v2-kelly-fraction', 'v2-gold-return', 'v2-gold-allocation',
-      'v2-loan-ltv', 'v2-loan-interest'
+      'v2-additional-years', 'v2-monthly-dca', 'v2-income-growth'
     ];
 
     inputIds.forEach(id => {
       const el = $(id);
       if (el) data.inputs[id] = el.type === 'checkbox' ? el.checked : el.value;
-    });
-
-    ['v2-kelly-toggle', 'v2-loans-toggle'].forEach(id => {
-      const el = $(id);
-      if (el) data.inputs[id] = el.checked;
     });
 
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
@@ -1049,11 +958,6 @@
       const sliderDisplayMap = {
         'v2-spending-growth': 'v2-spending-growth-value',
         'v2-swr-normal': 'v2-swr-value',
-        'v2-kelly-fraction': 'v2-kelly-fraction-value',
-        'v2-gold-return': 'v2-gold-return-value',
-        'v2-gold-allocation': 'v2-gold-allocation-value',
-        'v2-loan-ltv': 'v2-loan-ltv-value',
-        'v2-loan-interest': 'v2-loan-interest-value',
         'v2-income-growth': 'v2-income-growth-value'
       };
 
@@ -1071,20 +975,14 @@
         if (d2) d2.textContent = 100 - parseFloat(splitEl.value);
       }
 
-      const kellyToggle = $('v2-kelly-toggle');
-      const kellyParams = $('v2-kelly-params');
-      if (kellyToggle && kellyParams) kellyParams.classList.toggle('hidden', !kellyToggle.checked);
-
-      const loansToggle = $('v2-loans-toggle');
-      const loansParams = $('v2-loans-params');
-      if (loansToggle && loansParams) loansParams.classList.toggle('hidden', !loansToggle.checked);
-
       if (data.inputs['v2-currency']) {
         currency = data.inputs['v2-currency'];
         document.querySelectorAll('.v2-currency-label').forEach(el => {
           el.textContent = getCurrencySymbol();
         });
       }
+
+      updateForeverSWRDisplay();
     } catch (e) {
       console.warn('Laden instellingen mislukt:', e);
     }
@@ -1099,18 +997,12 @@
     $('v2-bridge-split').value = 50;
     $('v2-annual-burn').value = 50000;
     $('v2-spending-growth').value = 6.5;
-    $('v2-income-floor').value = 2000;
     $('v2-retirement-year').value = 2030;
     $('v2-swr-normal').value = 4;
 
     if ($('v2-additional-years')) $('v2-additional-years').value = 5;
     if ($('v2-monthly-dca')) $('v2-monthly-dca').value = 500;
     if ($('v2-income-growth')) $('v2-income-growth').value = 3;
-
-    if ($('v2-kelly-toggle')) $('v2-kelly-toggle').checked = false;
-    if ($('v2-loans-toggle')) $('v2-loans-toggle').checked = false;
-    if ($('v2-kelly-params')) $('v2-kelly-params').classList.add('hidden');
-    if ($('v2-loans-params')) $('v2-loans-params').classList.add('hidden');
 
     const defaults = {
       'v2-split-bridge-value': '50', 'v2-split-forever-value': '50',
@@ -1128,17 +1020,18 @@
       btn.classList.toggle('active', btn.dataset.mode === 'freedom_now');
     });
     updateModeVisibility();
+    updateForeverSWRDisplay();
   }
 
   // ── PDF Export ──────────────────────────────────────────────
   function exportPDF() {
     if (typeof jspdf === 'undefined' && typeof window.jspdf === 'undefined') {
-      alert('PDF-bibliotheek niet geladen. Controleer je verbinding en ververs de pagina.');
+      alert('PDF-bibliotheek niet geladen. Controleer je verbinding en herlaad de pagina.');
       return;
     }
 
     const btn = $('v2-export-pdf-btn');
-    const originalText = btn.textContent;
+    const originalHTML = btn.textContent;
     btn.textContent = 'Genereren\u2026';
     btn.disabled = true;
 
@@ -1159,7 +1052,7 @@
       y += 3;
       doc.setFontSize(11);
       doc.setFont('helvetica', 'bold');
-      doc.text('\u20BF Brug/Eeuwig Pensioenplan', M, y);
+      doc.text('\u20BF Stormnavigatie Pensioenplan', M, y);
       doc.setFontSize(6);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120);
@@ -1174,7 +1067,7 @@
 
       const paramPairs = [
         ['Stack:', params.totalBTC + ' BTC'],
-        ['Verdeling:', (params.bridgeSplitPct * 100).toFixed(0) + '/' + ((1 - params.bridgeSplitPct) * 100).toFixed(0)],
+        ['Split:', (params.bridgeSplitPct * 100).toFixed(0) + '/' + ((1 - params.bridgeSplitPct) * 100).toFixed(0)],
         ['Uitgaven:', fmtCurrency(params.annualBurnUSD) + '/jr'],
         ['Start:', '' + params.retirementYear],
         ['Scenario:', scenarioLabelNL(params.scenarioMode)],
@@ -1219,14 +1112,14 @@
       doc.setTextColor(160);
       doc.text('Geen financieel advies. Machtswetmodellen zijn educatieve projecties, geen garanties.', W / 2, y, { align: 'center' });
 
-      const filename = 'btc_brug_eeuwig_' + params.totalBTC + 'btc_' + new Date().toISOString().split('T')[0] + '.pdf';
+      const filename = 'btc_navigatie_eeuwig_' + params.totalBTC + 'btc_' + new Date().toISOString().split('T')[0] + '.pdf';
       doc.save(filename);
     } catch (err) {
-      console.error('PDF generatie mislukt:', err);
-      alert('PDF generatie mislukt: ' + err.message);
+      console.error('PDF genereren mislukt:', err);
+      alert('PDF genereren mislukt: ' + err.message);
     }
 
-    btn.textContent = originalText;
+    btn.textContent = originalHTML;
     btn.disabled = false;
   }
 
@@ -1265,7 +1158,7 @@
     table.style.width = '100%';
     const thead = document.createElement('thead');
     const headRow = document.createElement('tr');
-    ['Metriek', 'Vrijheid Nu', 'Eindresultaat (' + e.yearsWorking + ' jr DCA)'].forEach(function(text) {
+    ['Metriek', 'Vrijheid Nu', 'Eindresultaat (' + e.yearsWorking + 'j DCA)'].forEach(function(text) {
       const th = document.createElement('th');
       th.textContent = text;
       headRow.appendChild(th);
@@ -1278,10 +1171,10 @@
       ['Totaal BTC', f.totalBTC.toFixed(4) + ' BTC', e.totalBTC.toFixed(4) + ' BTC'],
       ['Pensioenjaar', '' + f.retirementYear, '' + e.retirementYear],
       ['Stormperiode', f.stormYears === Infinity ? 'Onbepaald' : f.stormYears + ' jaar', e.stormYears === Infinity ? 'Onbepaald' : e.stormYears + ' jaar'],
-      ['Brug Overleeft', f.bridgeSurvives ? 'Ja' : 'Nee (' + f.ruinYear + ')', e.bridgeSurvives ? 'Ja' : 'Nee (' + e.ruinYear + ')'],
+      ['Fonds Overleeft', f.bridgeSurvives ? 'Ja' : 'Nee (' + f.ruinYear + ')', e.bridgeSurvives ? 'Ja' : 'Nee (' + e.ruinYear + ')'],
       ['Totaal Opgenomen', fmtCurrency(f.totalWithdrawn), fmtCurrency(e.totalWithdrawn)],
-      ['Gemiddelde SWR', (f.avgSWR * 100).toFixed(1) + '%', (e.avgSWR * 100).toFixed(1) + '%'],
-      ['Eeuwige Waarde @30jr', fmtCurrency(f.foreverValueAt30), fmtCurrency(e.foreverValueAt30)],
+      ['Gemiddeld SWR', (f.avgSWR * 100).toFixed(1) + '%', (e.avgSWR * 100).toFixed(1) + '%'],
+      ['Eeuwige Waarde @30j', fmtCurrency(f.foreverValueAt30), fmtCurrency(e.foreverValueAt30)],
       ['Extra Vrijheid', f.yearsOfFreedom + ' jaar eerder', e.yearsWorking + ' jaar langer werken']
     ];
 
@@ -1312,17 +1205,17 @@
     verdict.style.marginTop = 'var(--spacing-md)';
     const verdictP = document.createElement('p');
     if (f.bridgeSurvives && !e.bridgeSurvives) {
-      verdictP.textContent = 'Vrijheid Nu wint: je kunt vandaag met pensioen en je Brughelft overleeft. Langer stapelen helpt niet omdat je ' + f.yearsOfFreedom + ' jaar vrijheid mist.';
+      verdictP.textContent = 'Vrijheid Nu wint: je kunt vandaag met pensioen en je Navigatiefonds overleeft. Langer stapelen schaadt omdat je ' + f.yearsOfFreedom + ' jaar vrijheid mist.';
     } else if (!f.bridgeSurvives && e.bridgeSurvives) {
-      verdictP.textContent = 'Eindresultaat wint: ' + e.yearsWorking + ' jaar langer stapelen voegt ' + result.additionalBTC.toFixed(4) + ' BTC toe, het verschil tussen faillissement en overleven.';
+      verdictP.textContent = 'Eindresultaat wint: ' + e.yearsWorking + ' jaar langer stapelen voegt ' + result.additionalBTC.toFixed(4) + ' BTC toe, het verschil tussen failliet gaan en overleven.';
     } else if (f.bridgeSurvives && e.bridgeSurvives) {
       if (f.stormYears <= e.stormYears) {
         verdictP.textContent = 'Beide paden overleven, maar Vrijheid Nu geeft je ' + f.yearsOfFreedom + ' extra jaren vrijheid. De extra BTC van stapelen verkort de storm maar kost je tijd.';
       } else {
-        verdictP.textContent = 'Beide paden overleven. Eindresultaat geeft een kortere storm (' + e.stormYears + ' vs ' + f.stormYears + ' jaar) en ' + result.additionalBTC.toFixed(4) + ' meer BTC, ten koste van ' + e.yearsWorking + ' jaar werken.';
+        verdictP.textContent = 'Beide paden overleven. Eindresultaat geeft een kortere storm (' + e.stormYears + ' vs ' + f.stormYears + ' jaar) en ' + result.additionalBTC.toFixed(4) + ' meer BTC, tegen de kosten van ' + e.yearsWorking + ' jaar werken.';
       }
     } else {
-      verdictP.textContent = 'Geen van beide paden overleeft de storm. Je hebt meer BTC nodig, lagere uitgaven, of een ander scenario om pensioen te laten werken.';
+      verdictP.textContent = 'Geen van beide paden overleeft de storm. Je hebt meer BTC nodig, lagere uitgaven, of een ander scenario.';
     }
     verdict.appendChild(verdictP);
     container.appendChild(verdict);
@@ -1432,7 +1325,7 @@
           x: { grid: { display: false }, ticks: { maxTicksLimit: 15 } },
           y: {
             beginAtZero: true,
-            title: { display: true, text: 'Resterende Brug BTC' },
+            title: { display: true, text: 'Navigatiefonds BTC Resterend' },
             grid: { color: 'rgba(0,0,0,0.05)' },
             ticks: { callback: function(v) { return v.toFixed(2); } }
           }
@@ -1459,7 +1352,7 @@
       if (result.medianRuinYear) {
         const ruin = document.createElement('span');
         ruin.style.color = 'var(--gray)';
-        ruin.textContent = 'Mediaan faillissementsjaar: ' + result.medianRuinYear + ' (in ' + result.ruinCount + ' van ' + result.numSims + ' simulaties).';
+        ruin.textContent = 'Mediaan faillietjaar: ' + result.medianRuinYear + ' (in ' + result.ruinCount + ' van ' + result.numSims + ' simulaties).';
         summary.appendChild(ruin);
       } else {
         const noRuin = document.createElement('span');
@@ -1467,50 +1360,6 @@
         noRuin.textContent = 'Geen faillissement waargenomen in enige simulatie.';
         summary.appendChild(noRuin);
       }
-    }
-  }
-
-  // ── Geografische Arbitrage ─────────────────────────────────
-  function setupGeoArbitrage() {
-    const geoSelect = $('v2-geo-country');
-    const customInput = $('v2-geo-custom');
-    if (!geoSelect) return;
-
-    geoSelect.addEventListener('change', function() {
-      var code = geoSelect.value;
-      if (customInput) {
-        customInput.classList.toggle('hidden', code !== 'custom');
-      }
-      applyGeoMultiplier();
-    });
-
-    if (customInput) {
-      customInput.addEventListener('change', applyGeoMultiplier);
-    }
-  }
-
-  function applyGeoMultiplier() {
-    var geoSelect = $('v2-geo-country');
-    if (!geoSelect) return;
-    var code = geoSelect.value;
-    var geo = V2.GEO_MULTIPLIERS[code];
-    if (!geo) return;
-
-    var multiplier = geo.multiplier;
-    if (code === 'custom') {
-      multiplier = parseFloat($('v2-geo-custom')?.value) / 100 || 1.0;
-    }
-
-    var display = $('v2-geo-multiplier-value');
-    if (display) display.textContent = (multiplier * 100).toFixed(0);
-
-    var burnInput = $('v2-annual-burn');
-    var baseBurn = parseFloat(burnInput?.dataset.baseBurn || burnInput?.value) || 50000;
-    if (burnInput && !burnInput.dataset.baseBurn) {
-      burnInput.dataset.baseBurn = burnInput.value;
-    }
-    if (burnInput) {
-      burnInput.value = Math.round(baseBurn * multiplier);
     }
   }
 
