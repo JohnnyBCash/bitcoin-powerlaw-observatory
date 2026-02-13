@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Retirement Calculator - Bitcoin Power Law Observatory</title>
-  <meta name="description" content="Plan retirement on a Bitcoin standard using power law projections with optional bitcoin-backed loans.">
+  <meta name="description" content="Plan retirement with the Bridge/Forever framework. Split your Bitcoin stack into active income and inexhaustible reserves using power law projections.">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,175 +38,298 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Bitcoin Retirement Calculator</h1>
-        <p>How much bitcoin do you need to retire? Explore the math behind withdrawing from a power law asset, with or without bitcoin-backed loans.</p>
+        <h1>Bridge/Forever Retirement Calculator</h1>
+        <p>Half your stack buys you freedom. The other half weathers the storm and becomes inexhaustible.</p>
       </section>
 
       <div class="disclaimer">
         <p><strong>Important:</strong> This is an educational tool based on power law models, not financial advice. The model assumes the power law continues to hold. Real outcomes will vary. Always do your own research and consult professionals.</p>
       </div>
 
-      <!-- ── Input Section ──────────────────────────────── -->
-      <div class="card" id="input-section">
-        <h3>Your Parameters</h3>
+      <!-- ── Mode Toggle ─────────────────────────────── -->
+      <div class="mode-toggle" id="v2-mode-toggle">
+        <button class="toggle-btn active" data-mode="freedom_now">Freedom Now</button>
+        <button class="toggle-btn" data-mode="end_result">End Result</button>
+      </div>
 
+      <!-- ── Input Section ───────────────────────────── -->
+      <div class="card" id="v2-input-section">
+
+        <!-- Shared Inputs -->
+        <h3>Your Stack</h3>
         <div class="input-grid">
           <div class="input-group">
-            <label for="btc-holdings">Bitcoin Holdings (BTC)</label>
-            <input type="number" id="btc-holdings" value="1.0" min="0.01" step="0.01">
+            <label for="v2-total-btc">Total Bitcoin Holdings (BTC)</label>
+            <input type="number" id="v2-total-btc" value="1.0" min="0.001" step="0.01">
           </div>
 
           <div class="input-group">
-            <label for="currency">Currency</label>
-            <select id="currency">
+            <label for="v2-currency">Currency</label>
+            <select id="v2-currency">
               <option value="USD" selected>$ USD</option>
-              <option value="EUR">€ EUR</option>
+              <option value="EUR">&euro; EUR</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label for="annual-spend">Annual Spending (<span id="currency-label">USD</span>)</label>
-            <input type="number" id="annual-spend" value="50000" min="1000" step="1000">
-          </div>
-
-          <div class="input-group">
-            <label for="retirement-year">Retirement Start Year</label>
-            <div class="year-input-row">
-              <input type="number" id="retirement-year" value="2030" min="2024" max="2060" step="1">
-              <button type="button" class="now-btn" id="start-now-btn" title="Start retirement this year">Now</button>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="time-horizon">Time Horizon (years)</label>
-            <input type="number" id="time-horizon" value="30" min="5" max="50" step="1">
-          </div>
-
-          <div class="input-group">
-            <label for="m2-growth">Annual Spending Growth (%)</label>
-            <input type="range" id="m2-growth" min="0" max="12" step="0.5" value="6.5">
-            <div class="slider-value"><span id="m2-value">6.5</span>%</div>
-            <div class="spending-growth-hint hidden" id="spending-growth-hint">0% means fixed spending — your purchasing power will decline over time as prices rise</div>
-          </div>
-
-          <div class="input-group">
-            <label for="price-scenario">Price Scenario</label>
-            <select id="price-scenario">
-              <option value="cyclical" selected>Cyclical (±1σ, lengthening periods)</option>
+            <label for="v2-price-scenario">Price Scenario</label>
+            <select id="v2-price-scenario">
+              <option value="cyclical" selected>Cyclical (&plusmn;1&sigma;, lengthening periods)</option>
               <option value="cyclical_bear">Bear Bias Cycles (60% below trend)</option>
               <option value="smooth_trend">Smooth Trend (flat on trend)</option>
-              <option value="smooth_bear">Bear (flat −1σ below trend)</option>
-              <option value="smooth_deep_bear">Deep Bear (flat −2σ below trend)</option>
+              <option value="smooth_bear">Bear (flat &minus;1&sigma; below trend)</option>
+              <option value="smooth_deep_bear">Deep Bear (flat &minus;2&sigma; below trend)</option>
             </select>
           </div>
         </div>
 
-        <!-- ── Loans Toggle ──────────────────────────────── -->
-        <div class="loans-toggle-section">
-          <h3>Bitcoin-Backed Loans</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">When bitcoin is below the trend line, borrow against your stack instead of selling at unfavorable prices. This preserves your BTC but adds interest cost and liquidation risk.</p>
+        <!-- Bridge/Forever Split -->
+        <div class="split-section">
+          <h3>Bridge / Forever Split</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">The Bridge Half funds your life through the storm period. The Forever Half grows along the power law until withdrawals become negligible.</p>
+          <div class="split-slider-row">
+            <span class="split-label">Bridge: <strong id="v2-split-bridge-value">50</strong>%</span>
+            <input type="range" id="v2-bridge-split" min="10" max="90" step="5" value="50">
+            <span class="split-label">Forever: <strong id="v2-split-forever-value">50</strong>%</span>
+          </div>
+        </div>
 
+        <!-- ── Freedom Now Inputs ──────────────────────── -->
+        <div id="v2-freedom-inputs">
+          <h3>Living Expenses</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-annual-burn">Annual Burn Rate (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-annual-burn" value="50000" min="1000" step="1000">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-income-floor">Monthly Income Floor (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-income-floor" value="2000" min="500" step="100">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-retirement-year">Retirement Start Year</label>
+              <div class="year-input-row">
+                <input type="number" id="v2-retirement-year" value="2030" min="2024" max="2060" step="1">
+                <button type="button" class="now-btn" id="v2-start-now-btn" title="Start retirement this year">Now</button>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-spending-growth">Annual Spending Growth (%)</label>
+              <input type="range" id="v2-spending-growth" min="0" max="12" step="0.5" value="6.5">
+              <div class="slider-value"><span id="v2-spending-growth-value">6.5</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-swr-normal">Base Withdrawal Rate (%)</label>
+              <input type="range" id="v2-swr-normal" min="1" max="8" step="0.5" value="4">
+              <div class="slider-value"><span id="v2-swr-value">4</span>%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── End Result Inputs ───────────────────────── -->
+        <div id="v2-endresult-inputs" class="hidden">
+          <h3>Stacking Plan</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-additional-years">Years of Continued Stacking</label>
+              <input type="number" id="v2-additional-years" value="5" min="1" max="30" step="1">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-monthly-dca">Monthly DCA Amount (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-monthly-dca" value="500" min="50" step="50">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-income-growth">Annual Income Growth (%)</label>
+              <input type="range" id="v2-income-growth" min="0" max="10" step="0.5" value="3">
+              <div class="slider-value"><span id="v2-income-growth-value">3</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-annual-burn-er">Annual Burn at Retirement (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-annual-burn-er" value="50000" min="1000" step="1000">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Strategy Toggles (Freedom Now only) ─────── -->
+        <div id="v2-strategy-section" class="strategy-section">
+          <h3>Strategy Options</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Toggle advanced strategies on/off to see their impact on your Bridge Half survival.</p>
+
+          <!-- Kelly Criterion -->
           <div class="toggle-switch-row">
             <label class="toggle-switch">
-              <input type="checkbox" id="use-loans">
+              <input type="checkbox" id="v2-kelly-toggle">
               <span class="toggle-slider"></span>
             </label>
-            <span class="toggle-label" id="loans-label">Loans: OFF — Sell only</span>
+            <span class="toggle-label">Kelly Criterion: BTC/Gold Allocation</span>
           </div>
-
-          <div id="loan-params" class="loan-params hidden">
+          <div id="v2-kelly-params" class="strategy-params hidden">
             <div class="input-grid">
               <div class="input-group">
-                <label for="loan-ltv">Loan-to-Value (%)</label>
-                <input type="range" id="loan-ltv" min="20" max="50" step="5" value="40">
-                <div class="slider-value"><span id="ltv-value">40</span>%</div>
+                <label for="v2-kelly-fraction">Kelly Fraction (%)</label>
+                <input type="range" id="v2-kelly-fraction" min="25" max="100" step="5" value="50">
+                <div class="slider-value"><span id="v2-kelly-fraction-value">50</span>%</div>
               </div>
-
               <div class="input-group">
-                <label for="loan-interest">Annual Interest Rate (%)</label>
-                <input type="range" id="loan-interest" min="3" max="15" step="0.5" value="8">
-                <div class="slider-value"><span id="interest-value">8</span>%</div>
+                <label for="v2-gold-return">Expected Gold Return (%/yr)</label>
+                <input type="range" id="v2-gold-return" min="3" max="12" step="0.5" value="7.5">
+                <div class="slider-value"><span id="v2-gold-return-value">7.5</span>%</div>
               </div>
-
               <div class="input-group">
-                <label for="loan-threshold">Borrow when price/trend below</label>
-                <input type="range" id="loan-threshold" min="0.5" max="1.5" step="0.1" value="1.0">
-                <div class="slider-value"><span id="threshold-value">1.0</span>×</div>
+                <label for="v2-gold-allocation">Initial Gold Allocation (%)</label>
+                <input type="range" id="v2-gold-allocation" min="10" max="60" step="5" value="30">
+                <div class="slider-value"><span id="v2-gold-allocation-value">30</span>%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Loan Facility -->
+          <div class="toggle-switch-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="v2-loans-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">BTC-Backed Loan Facility</span>
+          </div>
+          <div id="v2-loans-params" class="strategy-params hidden">
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="v2-loan-ltv">Maximum LTV (%)</label>
+                <input type="range" id="v2-loan-ltv" min="10" max="50" step="5" value="30">
+                <div class="slider-value"><span id="v2-loan-ltv-value">30</span>%</div>
+              </div>
+              <div class="input-group">
+                <label for="v2-loan-interest">Loan Interest Rate (%/yr)</label>
+                <input type="range" id="v2-loan-interest" min="3" max="15" step="0.5" value="8">
+                <div class="slider-value"><span id="v2-loan-interest-value">8</span>%</div>
               </div>
             </div>
           </div>
         </div>
 
-        <button class="calculate-btn" id="calculate-btn">Calculate Retirement Plan</button>
-        <button class="calculate-btn secondary" id="compare-btn">Compare: Loans vs No Loans</button>
-
-        <!-- Action buttons — shown after first calculation -->
-        <div class="action-buttons hidden" id="action-buttons">
-          <button class="calculate-btn secondary" id="export-pdf-btn">&#128196; Save as PDF</button>
-          <button class="calculate-btn secondary" id="reset-defaults-btn">&#8634; Reset Defaults</button>
+        <!-- Geographic Arbitrage -->
+        <div class="geo-section">
+          <h3>Geographic Arbitrage</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Adjust your burn rate based on cost of living in different countries.</p>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-geo-country">Country / Region</label>
+              <select id="v2-geo-country">
+                <option value="us" selected>United States (100%)</option>
+                <option value="uk">United Kingdom (95%)</option>
+                <option value="nl">Netherlands (90%)</option>
+                <option value="de">Germany (85%)</option>
+                <option value="es">Spain (70%)</option>
+                <option value="pt">Portugal (65%)</option>
+                <option value="cz">Czech Republic (55%)</option>
+                <option value="mx">Mexico (45%)</option>
+                <option value="th">Thailand (40%)</option>
+                <option value="co">Colombia (40%)</option>
+                <option value="vn">Vietnam (35%)</option>
+                <option value="id">Indonesia (35%)</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Cost Multiplier</label>
+              <div class="slider-value" style="font-size: 1.125rem;"><span id="v2-geo-multiplier-value">100</span>% of US baseline</div>
+            </div>
+            <div class="input-group hidden" id="v2-geo-custom-group">
+              <label for="v2-geo-custom">Custom Multiplier (%)</label>
+              <input type="number" id="v2-geo-custom" value="100" min="10" max="200" step="5">
+            </div>
+          </div>
         </div>
 
-        <!-- Status Banner - appears in-place after calculation -->
-        <div id="status-banner" class="status-banner hidden">
-          <div class="status-icon" id="status-icon"></div>
+        <button class="calculate-btn" id="v2-calculate-btn">Calculate Retirement Plan</button>
+        <button class="calculate-btn secondary" id="v2-compare-btn">Compare All Scenarios</button>
+
+        <!-- Action buttons (shown after calculation) -->
+        <div class="action-buttons hidden" id="v2-action-buttons">
+          <button class="calculate-btn secondary" id="v2-sidebyside-btn">Side-by-Side Comparison</button>
+          <button class="calculate-btn secondary" id="v2-montecarlo-btn">Monte Carlo Analysis</button>
+          <button class="calculate-btn secondary" id="v2-export-pdf-btn">Save as PDF</button>
+          <button class="calculate-btn secondary" id="v2-reset-btn">Reset Defaults</button>
+        </div>
+
+        <!-- Status Banner -->
+        <div id="v2-status-banner" class="status-banner hidden">
+          <div class="status-icon" id="v2-status-icon"></div>
           <div class="status-content">
-            <div class="status-headline" id="status-headline"></div>
-            <div class="status-detail" id="status-detail"></div>
+            <div class="status-headline" id="v2-status-headline"></div>
+            <div class="status-detail" id="v2-status-detail"></div>
           </div>
         </div>
       </div>
 
+      <!-- ── Storm Period Section ──────────────────────── -->
+      <section id="v2-storm-section" class="hidden">
+        <h2>The Storm Period</h2>
+        <div id="v2-storm-content"></div>
+      </section>
 
-      <!-- ── CAGR Decay Section ─────────────────────────── -->
-      <section id="cagr-section" class="hidden">
-        <h2>Expected Return Decay</h2>
-        <p>Power law assets have decreasing annual returns over time. Unlike exponential growth (constant CAGR), the power law's CAGR declines — which fundamentally changes retirement math.</p>
+      <!-- ── Accumulation Chart (End Result) ───────────── -->
+      <section id="v2-accum-chart-section" class="hidden">
+        <h2>Accumulation Phase</h2>
+        <p>Your BTC stack grows during the stacking years through monthly DCA purchases.</p>
         <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="cagr-chart" aria-label="CAGR decay over time"></canvas>
+          <canvas id="v2-accum-chart" aria-label="BTC accumulation over time"></canvas>
         </div>
       </section>
 
-      <!-- ── Summary Cards ──────────────────────────────── -->
-      <section id="results-section" class="hidden">
+      <!-- ── Bridge Half Chart ─────────────────────────── -->
+      <section id="v2-bridge-chart-section" class="hidden">
+        <h2>Bridge Half Projection</h2>
+        <p>Your active capital: withdrawals, rebalancing, and the tactical fight to survive the storm.</p>
+        <div class="chart-container" style="position: relative; height: 450px;">
+          <canvas id="v2-bridge-chart" aria-label="Bridge half projection over time"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Forever Half Chart ────────────────────────── -->
+      <section id="v2-forever-chart-section" class="hidden">
+        <h2>Forever Half Projection</h2>
+        <p>Your reserved capital: growing along the power law curve until your burn rate becomes a rounding error.</p>
+        <div class="chart-container" style="position: relative; height: 400px;">
+          <canvas id="v2-forever-chart" aria-label="Forever half value vs annual burn"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Summary Cards ─────────────────────────────── -->
+      <section id="v2-results-section" class="hidden">
         <h2>Retirement Summary</h2>
-        <div class="dashboard" id="summary-cards">
-          <!-- Populated by JS -->
-        </div>
+        <div class="dashboard" id="v2-summary-cards"></div>
       </section>
 
-      <!-- ── Comparison Section ─────────────────────────── -->
-      <section id="comparison-section" class="hidden">
-        <h2>Loans vs Sell-Only: Required Stack</h2>
-        <p>How much bitcoin you need to survive your full retirement horizon under each scenario.</p>
+      <!-- ── Comparison Section ────────────────────────── -->
+      <section id="v2-comparison-section" class="hidden">
+        <h2>Scenario Comparison</h2>
+        <p>How your Bridge/Forever plan holds up across different price scenarios.</p>
         <div class="table-container">
-          <table id="comparison-table">
+          <table>
             <thead>
               <tr>
                 <th>Scenario</th>
-                <th>Sell Only (BTC needed)</th>
-                <th>With Loans (BTC needed)</th>
-                <th>BTC Saved</th>
-                <th>Savings %</th>
-                <th>Total Interest Paid</th>
+                <th>Storm Period</th>
+                <th>Bridge Survives</th>
+                <th>Minimum BTC</th>
+                <th>Avg SWR</th>
               </tr>
             </thead>
-            <tbody id="comparison-body">
-            </tbody>
+            <tbody id="v2-comparison-body"></tbody>
           </table>
         </div>
       </section>
 
-
-      <!-- ── Stack Over Time Chart ──────────────────────── -->
-      <section id="stack-chart-section" class="hidden">
-        <h2>Stack & Spending Over Time</h2>
-        <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="stack-chart" aria-label="BTC stack and spending over time"></canvas>
-        </div>
-      </section>
-
-      <!-- ── Year-by-Year Table ─────────────────────────── -->
-      <section id="table-section" class="hidden">
+      <!-- ── Year-by-Year Table ────────────────────────── -->
+      <section id="v2-table-section" class="hidden">
         <h2>Year-by-Year Breakdown</h2>
         <div class="table-container">
           <div class="weekly-table-wrapper" style="max-height: 500px;">
@@ -215,42 +338,55 @@
                 <tr>
                   <th>Year</th>
                   <th>BTC Price</th>
-                  <th>Trend</th>
                   <th>Multiple</th>
-                  <th>Spending</th>
+                  <th>SWR</th>
+                  <th>Withdrawal</th>
                   <th>BTC Sold</th>
-                  <th>Loan Balance</th>
-                  <th>Stack</th>
-                  <th>Portfolio Value</th>
-                  <th>SWR %</th>
+                  <th>Bridge BTC</th>
+                  <th>Bridge Value</th>
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody id="yearly-table-body">
-              </tbody>
+              <tbody id="v2-yearly-table-body"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ── Key Insight ────────────────────────────────── -->
-      <section id="insight-section" class="hidden">
+      <!-- ── Key Insight ───────────────────────────────── -->
+      <section id="v2-insight-section" class="hidden">
         <div class="info-box">
-          <h4>Why This Matters</h4>
-          <p id="insight-text"></p>
+          <h4>The Bridge/Forever Insight</h4>
+          <p id="v2-insight-text"></p>
+        </div>
+      </section>
+
+      <!-- ── Side-by-Side Comparison ────────────────────── -->
+      <section id="v2-sidebyside-section" class="hidden">
+        <h2>Freedom Now vs. End Result</h2>
+        <p>Compare retiring today with stacking for a few more years.</p>
+        <div id="v2-sidebyside-content"></div>
+      </section>
+
+      <!-- ── Monte Carlo Analysis ──────────────────────── -->
+      <section id="v2-montecarlo-section" class="hidden">
+        <h2>Monte Carlo Analysis</h2>
+        <p>200 random price simulations around the power law trend. How often does your Bridge Half survive the storm?</p>
+        <div id="v2-montecarlo-summary" style="margin-bottom: var(--spacing-md);"></div>
+        <div class="chart-container" style="position: relative; height: 400px;">
+          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo bridge survival confidence bands"></canvas>
         </div>
       </section>
 
     </div>
   </main>
 
-
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
           <h4>Methodology</h4>
-          <p>Power law trend: expected growth path. M2 growth: real inflation proxy. Loans: borrow below trend to preserve stack. SWR: dynamic, decreasing with power law CAGR.</p>
+          <p>Bridge Half: active decumulation with dynamic withdrawal rate (adjusts 1%–6% based on price vs. power law trend). Forever Half: passive growth along power law curve. Storm period: years until burn &lt; 1% of Forever value.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
@@ -265,19 +401,56 @@
 
   <!-- Page-specific styles -->
   <style>
-    /* Override global canvas height to respect container */
     .chart-container canvas {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Ensure sections don't overlap */
     section {
       position: relative;
       z-index: 1;
       margin-bottom: var(--spacing-xl);
     }
 
+    .hidden { display: none; }
+
+    /* Mode Toggle */
+    .mode-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: var(--spacing-xl);
+      border: 2px solid var(--black);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mode-toggle .toggle-btn {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: none;
+      background: var(--white);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-toggle .toggle-btn.active {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .mode-toggle .toggle-btn:not(.active):hover {
+      background: var(--gray-light);
+    }
+
+    /* Input Grid */
     .input-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -320,10 +493,48 @@
       text-align: center;
     }
 
-    .loans-toggle-section {
+    /* Split Slider */
+    .split-section {
       margin-top: var(--spacing-xl);
       padding-top: var(--spacing-lg);
       border-top: 1px solid var(--gray-border);
+    }
+
+    .split-slider-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+
+    .split-slider-row input[type="range"] {
+      flex: 1;
+    }
+
+    .split-label {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      white-space: nowrap;
+      min-width: 110px;
+    }
+
+    .split-label:last-child {
+      text-align: right;
+    }
+
+    /* Strategy Section */
+    .strategy-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .strategy-params {
+      margin-top: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
     }
 
     .toggle-switch-row {
@@ -376,15 +587,7 @@
       font-size: 0.9375rem;
     }
 
-    .loan-params {
-      margin-top: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--gray-light);
-      border-radius: var(--border-radius);
-    }
-
-    .hidden { display: none; }
-
+    /* Buttons */
     .calculate-btn {
       display: inline-block;
       padding: var(--spacing-sm) var(--spacing-xl);
@@ -420,15 +623,41 @@
       color: var(--orange);
     }
 
-    /* Status badges in table */
-    .status-ok { color: var(--green); }
-    .status-borrow { color: var(--orange); }
-    .status-ruin { color: var(--red); font-weight: 700; }
-    .status-sell { color: var(--gray); }
+    .year-input-row {
+      display: flex;
+      gap: var(--spacing-xs);
+      align-items: stretch;
+    }
 
-    .comparison-highlight {
+    .year-input-row input {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .now-btn {
+      padding: 0 var(--spacing-sm);
+      border: 1px solid var(--orange);
+      border-radius: var(--border-radius);
       background: rgba(247, 147, 26, 0.08);
+      color: var(--orange);
+      font-family: var(--font-family);
+      font-size: 0.8125rem;
       font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .now-btn:hover {
+      background: var(--orange);
+      color: var(--white);
+    }
+
+    .action-buttons {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-top: var(--spacing-md);
+      flex-wrap: wrap;
     }
 
     /* Status Banner */
@@ -469,10 +698,7 @@
       flex-shrink: 0;
     }
 
-    .status-content {
-      flex: 1;
-      min-width: 0;
-    }
+    .status-content { flex: 1; min-width: 0; }
 
     .status-headline {
       font-size: 1.125rem;
@@ -487,72 +713,82 @@
       line-height: 1.5;
     }
 
-    .status-detail strong {
+    /* Storm Period */
+    .storm-summary {
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+    }
+
+    .storm-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .storm-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .storm-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .storm-value {
+      font-size: 1.5rem;
+      font-weight: 700;
       color: var(--black);
     }
 
-    .spending-growth-hint {
-      font-size: 0.8125rem;
-      color: var(--orange);
-      margin-top: 2px;
-      line-height: 1.4;
-    }
+    /* Table statuses */
+    .status-ok { color: var(--green); }
+    .status-borrow { color: var(--orange); }
+    .status-ruin { color: var(--red); font-weight: 700; }
+    .status-sell { color: var(--gray); }
+    .gold-cell { color: #B8860B; }
 
-    .year-input-row {
-      display: flex;
-      gap: var(--spacing-xs);
-      align-items: stretch;
-    }
-
-    .year-input-row input {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .now-btn {
-      padding: 0 var(--spacing-sm);
-      border: 1px solid var(--orange);
-      border-radius: var(--border-radius);
-      background: rgba(247, 147, 26, 0.08);
-      color: var(--orange);
-      font-family: var(--font-family);
-      font-size: 0.8125rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    .now-btn:hover {
-      background: var(--orange);
-      color: var(--white);
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: var(--spacing-sm);
-      margin-top: var(--spacing-md);
-      flex-wrap: wrap;
+    .geo-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
     }
 
     @media print {
       .header, .footer, .nav, .hero, .disclaimer,
-      .calculate-btn, .action-buttons, .loans-toggle-section,
-      #input-section { display: none !important; }
+      .calculate-btn, .action-buttons, .mode-toggle,
+      #v2-input-section { display: none !important; }
       .hidden { display: block !important; }
       body { background: white; }
       .container { max-width: 100%; padding: 0; }
       section { page-break-inside: avoid; margin-bottom: 1rem; }
       .chart-container { height: 300px !important; }
     }
-  </style>
 
+    @media (max-width: 768px) {
+      .split-slider-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .split-label:last-child {
+        text-align: left;
+      }
+      .mode-toggle {
+        max-width: 100%;
+      }
+    }
+  </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../js/powerlaw.js"></script>
   <script src="../js/retirement.js"></script>
-  <script src="../js/retirement-ui.js"></script>
+  <script src="../js/retirement-v2.js"></script>
+  <script src="../js/retirement-v2-ui.js"></script>
 </body>
 </html>

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
-  <meta name="description" content="Plan je pensioen op een Bitcoin-standaard met machtswetprojecties en optionele bitcoin-gedekte leningen.">
+  <meta name="description" content="Plan je pensioen met het Brug/Eeuwig raamwerk. Splits je Bitcoin stack in actief inkomen en onuitputtelijke reserves met machtswetprojecties.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,60 +38,42 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Bitcoin Pensioenrekentool</h1>
-        <p>Hoeveel bitcoin heb je nodig om met pensioen te gaan? Ontdek de wiskunde achter het opnemen van een machtswet-asset, met of zonder bitcoin-gedekte leningen.</p>
+        <h1>Brug/Eeuwig Pensioenrekentool</h1>
+        <p>De helft van je stack koopt je vrijheid. De andere helft doorstaat de storm en wordt onuitputtelijk.</p>
       </section>
 
       <div class="disclaimer">
-        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetwetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken. Doe altijd je eigen onderzoek en raadpleeg professionals.</p>
+        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken. Doe altijd je eigen onderzoek en raadpleeg professionals.</p>
       </div>
 
-      <!-- ── Invoer Sectie ──────────────────────────────── -->
-      <div class="card" id="input-section">
-        <h3>Jouw Parameters</h3>
+      <!-- ── Modus Schakelaar ─────────────────────────── -->
+      <div class="mode-toggle" id="v2-mode-toggle">
+        <button class="toggle-btn active" data-mode="freedom_now">Vrijheid Nu</button>
+        <button class="toggle-btn" data-mode="end_result">Eindresultaat</button>
+      </div>
 
+      <!-- ── Invoer Sectie ───────────────────────────── -->
+      <div class="card" id="v2-input-section">
+
+        <!-- Gedeelde Invoer -->
+        <h3>Jouw Stack</h3>
         <div class="input-grid">
           <div class="input-group">
-            <label for="btc-holdings">Bitcoin Bezit (BTC)</label>
-            <input type="number" id="btc-holdings" value="1.0" min="0.01" step="0.01">
+            <label for="v2-total-btc">Totaal Bitcoin Bezit (BTC)</label>
+            <input type="number" id="v2-total-btc" value="1.0" min="0.001" step="0.01">
           </div>
 
           <div class="input-group">
-            <label for="currency">Valuta</label>
-            <select id="currency">
+            <label for="v2-currency">Valuta</label>
+            <select id="v2-currency">
               <option value="USD" selected>$ USD</option>
               <option value="EUR">&euro; EUR</option>
             </select>
           </div>
 
           <div class="input-group">
-            <label for="annual-spend">Jaarlijkse Uitgaven (<span id="currency-label">USD</span>)</label>
-            <input type="number" id="annual-spend" value="50000" min="1000" step="1000">
-          </div>
-
-          <div class="input-group">
-            <label for="retirement-year">Startjaar Pensioen</label>
-            <div class="year-input-row">
-              <input type="number" id="retirement-year" value="2030" min="2024" max="2060" step="1">
-              <button type="button" class="now-btn" id="start-now-btn" title="Start pensioen dit jaar">Nu</button>
-            </div>
-          </div>
-
-          <div class="input-group">
-            <label for="time-horizon">Tijdshorizon (jaren)</label>
-            <input type="number" id="time-horizon" value="30" min="5" max="50" step="1">
-          </div>
-
-          <div class="input-group">
-            <label for="m2-growth">Jaarlijkse Uitgavengroei (%)</label>
-            <input type="range" id="m2-growth" min="0" max="12" step="0.5" value="6.5">
-            <div class="slider-value"><span id="m2-value">6.5</span>%</div>
-            <div class="spending-growth-hint hidden" id="spending-growth-hint">0% betekent vaste uitgaven — je koopkracht daalt na verloop van tijd naarmate prijzen stijgen</div>
-          </div>
-
-          <div class="input-group">
-            <label for="price-scenario">Prijsscenario</label>
-            <select id="price-scenario">
+            <label for="v2-price-scenario">Prijsscenario</label>
+            <select id="v2-price-scenario">
               <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde periodes)</option>
               <option value="cyclical_bear">Bear Bias Cycli (60% onder trend)</option>
               <option value="smooth_trend">Vlakke Trend (op trendlijn)</option>
@@ -101,112 +83,253 @@
           </div>
         </div>
 
-        <!-- ── Leningen Toggle ──────────────────────────────── -->
-        <div class="loans-toggle-section">
-          <h3>Bitcoin-Gedekte Leningen</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Wanneer bitcoin onder de trendlijn staat, leen je tegen je stack in plaats van te verkopen tegen ongunstige prijzen. Dit behoudt je BTC maar brengt rentekosten en liquidatierisico met zich mee.</p>
+        <!-- Brug/Eeuwig Verdeling -->
+        <div class="split-section">
+          <h3>Brug / Eeuwig Verdeling</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">De Brughelft financiert je leven tijdens de stormperiode. De Eeuwige Helft groeit langs de machtswet totdat opnames verwaarloosbaar worden.</p>
+          <div class="split-slider-row">
+            <span class="split-label">Brug: <strong id="v2-split-bridge-value">50</strong>%</span>
+            <input type="range" id="v2-bridge-split" min="10" max="90" step="5" value="50">
+            <span class="split-label">Eeuwig: <strong id="v2-split-forever-value">50</strong>%</span>
+          </div>
+        </div>
 
+        <!-- ── Vrijheid Nu Invoer ──────────────────────── -->
+        <div id="v2-freedom-inputs">
+          <h3>Levensonderhoud</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-annual-burn">Jaarlijkse Uitgaven (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-annual-burn" value="50000" min="1000" step="1000">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-income-floor">Maandelijks Inkomstenminimum (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-income-floor" value="2000" min="500" step="100">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-retirement-year">Startjaar Pensioen</label>
+              <div class="year-input-row">
+                <input type="number" id="v2-retirement-year" value="2030" min="2024" max="2060" step="1">
+                <button type="button" class="now-btn" id="v2-start-now-btn" title="Start pensioen dit jaar">Nu</button>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-spending-growth">Jaarlijkse Uitgavengroei (%)</label>
+              <input type="range" id="v2-spending-growth" min="0" max="12" step="0.5" value="6.5">
+              <div class="slider-value"><span id="v2-spending-growth-value">6.5</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-swr-normal">Basis Opnamepercentage (%)</label>
+              <input type="range" id="v2-swr-normal" min="1" max="8" step="0.5" value="4">
+              <div class="slider-value"><span id="v2-swr-value">4</span>%</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Eindresultaat Invoer ───────────────────── -->
+        <div id="v2-endresult-inputs" class="hidden">
+          <h3>Stapelplan</h3>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-additional-years">Jaren Doorstapelen</label>
+              <input type="number" id="v2-additional-years" value="5" min="1" max="30" step="1">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-monthly-dca">Maandelijks DCA Bedrag (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-monthly-dca" value="500" min="50" step="50">
+            </div>
+
+            <div class="input-group">
+              <label for="v2-income-growth">Jaarlijkse Inkomensgroei (%)</label>
+              <input type="range" id="v2-income-growth" min="0" max="10" step="0.5" value="3">
+              <div class="slider-value"><span id="v2-income-growth-value">3</span>%</div>
+            </div>
+
+            <div class="input-group">
+              <label for="v2-annual-burn-er">Jaarlijkse Uitgaven bij Pensioen (<span class="v2-currency-label">$</span>)</label>
+              <input type="number" id="v2-annual-burn-er" value="50000" min="1000" step="1000">
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Strategie Opties (alleen Vrijheid Nu) ─── -->
+        <div id="v2-strategy-section" class="strategy-section">
+          <h3>Strategie Opties</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Schakel geavanceerde strategieen aan/uit om hun impact op de overleving van je Brughelft te zien.</p>
+
+          <!-- Kelly Criterium -->
           <div class="toggle-switch-row">
             <label class="toggle-switch">
-              <input type="checkbox" id="use-loans">
+              <input type="checkbox" id="v2-kelly-toggle">
               <span class="toggle-slider"></span>
             </label>
-            <span class="toggle-label" id="loans-label">Leningen: UIT — Alleen verkopen</span>
+            <span class="toggle-label">Kelly Criterium: BTC/Goud Allocatie</span>
           </div>
-
-          <div id="loan-params" class="loan-params hidden">
+          <div id="v2-kelly-params" class="strategy-params hidden">
             <div class="input-grid">
               <div class="input-group">
-                <label for="loan-ltv">Lening-tot-Waarde (%)</label>
-                <input type="range" id="loan-ltv" min="20" max="50" step="5" value="40">
-                <div class="slider-value"><span id="ltv-value">40</span>%</div>
+                <label for="v2-kelly-fraction">Kelly Fractie (%)</label>
+                <input type="range" id="v2-kelly-fraction" min="25" max="100" step="5" value="50">
+                <div class="slider-value"><span id="v2-kelly-fraction-value">50</span>%</div>
               </div>
-
               <div class="input-group">
-                <label for="loan-interest">Jaarlijkse Rente (%)</label>
-                <input type="range" id="loan-interest" min="3" max="15" step="0.5" value="8">
-                <div class="slider-value"><span id="interest-value">8</span>%</div>
+                <label for="v2-gold-return">Verwacht Goudrendement (%/jr)</label>
+                <input type="range" id="v2-gold-return" min="3" max="12" step="0.5" value="7.5">
+                <div class="slider-value"><span id="v2-gold-return-value">7.5</span>%</div>
               </div>
-
               <div class="input-group">
-                <label for="loan-threshold">Lenen wanneer prijs/trend onder</label>
-                <input type="range" id="loan-threshold" min="0.5" max="1.5" step="0.1" value="1.0">
-                <div class="slider-value"><span id="threshold-value">1.0</span>&times;</div>
+                <label for="v2-gold-allocation">Initiele Goud Allocatie (%)</label>
+                <input type="range" id="v2-gold-allocation" min="10" max="60" step="5" value="30">
+                <div class="slider-value"><span id="v2-gold-allocation-value">30</span>%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Leningen Faciliteit -->
+          <div class="toggle-switch-row">
+            <label class="toggle-switch">
+              <input type="checkbox" id="v2-loans-toggle">
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">BTC-Gedekte Leningfaciliteit</span>
+          </div>
+          <div id="v2-loans-params" class="strategy-params hidden">
+            <div class="input-grid">
+              <div class="input-group">
+                <label for="v2-loan-ltv">Maximale LTV (%)</label>
+                <input type="range" id="v2-loan-ltv" min="10" max="50" step="5" value="30">
+                <div class="slider-value"><span id="v2-loan-ltv-value">30</span>%</div>
+              </div>
+              <div class="input-group">
+                <label for="v2-loan-interest">Leningrente (%/jr)</label>
+                <input type="range" id="v2-loan-interest" min="3" max="15" step="0.5" value="8">
+                <div class="slider-value"><span id="v2-loan-interest-value">8</span>%</div>
               </div>
             </div>
           </div>
         </div>
 
-        <button class="calculate-btn" id="calculate-btn">Bereken Pensioenplan</button>
-        <button class="calculate-btn secondary" id="compare-btn">Vergelijk: Leningen vs Zonder Leningen</button>
-
-        <!-- Actieknoppen — getoond na eerste berekening -->
-        <div class="action-buttons hidden" id="action-buttons">
-          <button class="calculate-btn secondary" id="export-pdf-btn">&#128196; Opslaan als PDF</button>
-          <button class="calculate-btn secondary" id="reset-defaults-btn">&#8634; Standaardwaarden Herstellen</button>
+        <!-- Geografische Arbitrage -->
+        <div class="geo-section">
+          <h3>Geografische Arbitrage</h3>
+          <p style="color: var(--gray); font-size: 0.9375rem;">Pas je uitgaven aan op basis van kosten van levensonderhoud in verschillende landen.</p>
+          <div class="input-grid">
+            <div class="input-group">
+              <label for="v2-geo-country">Land / Regio</label>
+              <select id="v2-geo-country">
+                <option value="us" selected>Verenigde Staten (100%)</option>
+                <option value="uk">Verenigd Koninkrijk (95%)</option>
+                <option value="nl">Nederland (90%)</option>
+                <option value="de">Duitsland (85%)</option>
+                <option value="es">Spanje (70%)</option>
+                <option value="pt">Portugal (65%)</option>
+                <option value="cz">Tsjechi&euml; (55%)</option>
+                <option value="mx">Mexico (45%)</option>
+                <option value="th">Thailand (40%)</option>
+                <option value="co">Colombia (40%)</option>
+                <option value="vn">Vietnam (35%)</option>
+                <option value="id">Indonesi&euml; (35%)</option>
+                <option value="custom">Aangepast</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label>Kostenvermenigvuldiger</label>
+              <div class="slider-value" style="font-size: 1.125rem;"><span id="v2-geo-multiplier-value">100</span>% van VS basis</div>
+            </div>
+            <div class="input-group hidden" id="v2-geo-custom-group">
+              <label for="v2-geo-custom">Aangepaste Vermenigvuldiger (%)</label>
+              <input type="number" id="v2-geo-custom" value="100" min="10" max="200" step="5">
+            </div>
+          </div>
         </div>
 
-        <!-- Statusbanner - verschijnt na berekening -->
-        <div id="status-banner" class="status-banner hidden">
-          <div class="status-icon" id="status-icon"></div>
+        <button class="calculate-btn" id="v2-calculate-btn">Bereken Pensioenplan</button>
+        <button class="calculate-btn secondary" id="v2-compare-btn">Vergelijk Alle Scenario's</button>
+
+        <!-- Actieknoppen (getoond na berekening) -->
+        <div class="action-buttons hidden" id="v2-action-buttons">
+          <button class="calculate-btn secondary" id="v2-sidebyside-btn">Zij-aan-Zij Vergelijking</button>
+          <button class="calculate-btn secondary" id="v2-montecarlo-btn">Monte Carlo Analyse</button>
+          <button class="calculate-btn secondary" id="v2-export-pdf-btn">Opslaan als PDF</button>
+          <button class="calculate-btn secondary" id="v2-reset-btn">Standaardwaarden Herstellen</button>
+        </div>
+
+        <!-- Statusbanner -->
+        <div id="v2-status-banner" class="status-banner hidden">
+          <div class="status-icon" id="v2-status-icon"></div>
           <div class="status-content">
-            <div class="status-headline" id="status-headline"></div>
-            <div class="status-detail" id="status-detail"></div>
+            <div class="status-headline" id="v2-status-headline"></div>
+            <div class="status-detail" id="v2-status-detail"></div>
           </div>
         </div>
       </div>
 
+      <!-- ── Stormperiode Sectie ──────────────────────── -->
+      <section id="v2-storm-section" class="hidden">
+        <h2>De Stormperiode</h2>
+        <div id="v2-storm-content"></div>
+      </section>
 
-      <!-- ── CAGR Verval Sectie ─────────────────────────── -->
-      <section id="cagr-section" class="hidden">
-        <h2>Verwacht Rendementverval</h2>
-        <p>Machtswet-assets hebben afnemende jaarlijkse rendementen over tijd. In tegenstelling tot exponentiële groei (constante CAGR), daalt de CAGR van de machtswet — wat de pensioenberekening fundamenteel verandert.</p>
+      <!-- ── Accumulatie Grafiek (Eindresultaat) ───────── -->
+      <section id="v2-accum-chart-section" class="hidden">
+        <h2>Accumulatiefase</h2>
+        <p>Je BTC stack groeit tijdens de stapeljaren door maandelijkse DCA-aankopen.</p>
         <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="cagr-chart" aria-label="CAGR-verval over tijd"></canvas>
+          <canvas id="v2-accum-chart" aria-label="BTC accumulatie over tijd"></canvas>
         </div>
       </section>
 
-      <!-- ── Samenvattingskaarten ──────────────────────────────── -->
-      <section id="results-section" class="hidden">
+      <!-- ── Brughelft Grafiek ─────────────────────────── -->
+      <section id="v2-bridge-chart-section" class="hidden">
+        <h2>Brughelft Projectie</h2>
+        <p>Je actieve kapitaal: opnames, herbalancering en de tactische strijd om de storm te overleven.</p>
+        <div class="chart-container" style="position: relative; height: 450px;">
+          <canvas id="v2-bridge-chart" aria-label="Brughelft projectie over tijd"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Eeuwige Helft Grafiek ────────────────────── -->
+      <section id="v2-forever-chart-section" class="hidden">
+        <h2>Eeuwige Helft Projectie</h2>
+        <p>Je gereserveerd kapitaal: groeiend langs de machtswetcurve totdat je uitgaven een afrondingsfout worden.</p>
+        <div class="chart-container" style="position: relative; height: 400px;">
+          <canvas id="v2-forever-chart" aria-label="Eeuwige Helft waarde vs jaarlijkse uitgaven"></canvas>
+        </div>
+      </section>
+
+      <!-- ── Samenvattingskaarten ─────────────────────── -->
+      <section id="v2-results-section" class="hidden">
         <h2>Pensioen Samenvatting</h2>
-        <div class="dashboard" id="summary-cards">
-          <!-- Gevuld door JS -->
-        </div>
+        <div class="dashboard" id="v2-summary-cards"></div>
       </section>
 
-      <!-- ── Vergelijkingssectie ─────────────────────────── -->
-      <section id="comparison-section" class="hidden">
-        <h2>Leningen vs Alleen Verkopen: Benodigde Stack</h2>
-        <p>Hoeveel bitcoin je nodig hebt om je volledige pensioenhorizon te overleven onder elk scenario.</p>
+      <!-- ── Vergelijkingssectie ──────────────────────── -->
+      <section id="v2-comparison-section" class="hidden">
+        <h2>Scenariovergelijking</h2>
+        <p>Hoe je Brug/Eeuwig plan standhoudt onder verschillende prijsscenario's.</p>
         <div class="table-container">
-          <table id="comparison-table">
+          <table>
             <thead>
               <tr>
                 <th>Scenario</th>
-                <th>Alleen Verkopen (BTC nodig)</th>
-                <th>Met Leningen (BTC nodig)</th>
-                <th>BTC Bespaard</th>
-                <th>Besparing %</th>
-                <th>Totaal Rente Betaald</th>
+                <th>Stormperiode</th>
+                <th>Brug Overleeft</th>
+                <th>Minimale BTC</th>
+                <th>Gem. SWR</th>
               </tr>
             </thead>
-            <tbody id="comparison-body">
-            </tbody>
+            <tbody id="v2-comparison-body"></tbody>
           </table>
         </div>
       </section>
 
-
-      <!-- ── Stack Over Tijd Grafiek ──────────────────────── -->
-      <section id="stack-chart-section" class="hidden">
-        <h2>Stack & Uitgaven over Tijd</h2>
-        <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="stack-chart" aria-label="BTC stack en uitgaven over tijd"></canvas>
-        </div>
-      </section>
-
-      <!-- ── Jaar-voor-Jaar Tabel ─────────────────────────── -->
-      <section id="table-section" class="hidden">
+      <!-- ── Jaar-voor-Jaar Tabel ────────────────────── -->
+      <section id="v2-table-section" class="hidden">
         <h2>Jaar-voor-Jaar Overzicht</h2>
         <div class="table-container">
           <div class="weekly-table-wrapper" style="max-height: 500px;">
@@ -215,42 +338,55 @@
                 <tr>
                   <th>Jaar</th>
                   <th>BTC Prijs</th>
-                  <th>Trend</th>
                   <th>Veelvoud</th>
-                  <th>Uitgaven</th>
+                  <th>SWR</th>
+                  <th>Opname</th>
                   <th>BTC Verkocht</th>
-                  <th>Leningsaldo</th>
-                  <th>Stack</th>
-                  <th>Portfoliowaarde</th>
-                  <th>SWR %</th>
+                  <th>Brug BTC</th>
+                  <th>Brugwaarde</th>
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody id="yearly-table-body">
-              </tbody>
+              <tbody id="v2-yearly-table-body"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-      <!-- ── Kernpunt ────────────────────────────────── -->
-      <section id="insight-section" class="hidden">
+      <!-- ── Kernpunt ───────────────────────────────── -->
+      <section id="v2-insight-section" class="hidden">
         <div class="info-box">
-          <h4>Waarom Dit Belangrijk Is</h4>
-          <p id="insight-text"></p>
+          <h4>Het Brug/Eeuwig Inzicht</h4>
+          <p id="v2-insight-text"></p>
+        </div>
+      </section>
+
+      <!-- ── Zij-aan-Zij Vergelijking ────────────────── -->
+      <section id="v2-sidebyside-section" class="hidden">
+        <h2>Vrijheid Nu vs. Eindresultaat</h2>
+        <p>Vergelijk nu met pensioen gaan met nog een paar jaar stapelen.</p>
+        <div id="v2-sidebyside-content"></div>
+      </section>
+
+      <!-- ── Monte Carlo Analyse ─────────────────────── -->
+      <section id="v2-montecarlo-section" class="hidden">
+        <h2>Monte Carlo Analyse</h2>
+        <p>200 willekeurige prijssimulaties rond de machtswettrend. Hoe vaak overleeft je Brughelft de storm?</p>
+        <div id="v2-montecarlo-summary" style="margin-bottom: var(--spacing-md);"></div>
+        <div class="chart-container" style="position: relative; height: 400px;">
+          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo brug overlevingskans banden"></canvas>
         </div>
       </section>
 
     </div>
   </main>
 
-
   <footer class="footer">
     <div class="container">
       <div class="footer-content">
         <div class="footer-section">
           <h4>Methodologie</h4>
-          <p>Machtswettrend: verwacht groeipad. M2-groei: proxy voor reële inflatie. Leningen: lenen onder trend om stack te behouden. SWR: dynamisch, afnemend met machtswet-CAGR.</p>
+          <p>Brughelft: actieve onttrekking met dynamisch opnamepercentage (past aan 1%&ndash;6% op basis van prijs vs. machtsweettrend). Eeuwige Helft: passieve groei langs machtswetcurve. Stormperiode: jaren totdat uitgaven &lt; 1% van Eeuwige waarde.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
@@ -265,19 +401,56 @@
 
   <!-- Paginaspecifieke stijlen -->
   <style>
-    /* Override global canvas height to respect container */
     .chart-container canvas {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Ensure sections don't overlap */
     section {
       position: relative;
       z-index: 1;
       margin-bottom: var(--spacing-xl);
     }
 
+    .hidden { display: none; }
+
+    /* Modus Schakelaar */
+    .mode-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      margin-bottom: var(--spacing-xl);
+      border: 2px solid var(--black);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      max-width: 400px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .mode-toggle .toggle-btn {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border: none;
+      background: var(--white);
+      font-family: var(--font-family);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-toggle .toggle-btn.active {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .mode-toggle .toggle-btn:not(.active):hover {
+      background: var(--gray-light);
+    }
+
+    /* Invoer Raster */
     .input-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -320,10 +493,54 @@
       text-align: center;
     }
 
-    .loans-toggle-section {
+    /* Verdeling Slider */
+    .split-section {
       margin-top: var(--spacing-xl);
       padding-top: var(--spacing-lg);
       border-top: 1px solid var(--gray-border);
+    }
+
+    .geo-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .split-slider-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-md);
+    }
+
+    .split-slider-row input[type="range"] {
+      flex: 1;
+    }
+
+    .split-label {
+      font-size: 0.9375rem;
+      font-weight: 500;
+      white-space: nowrap;
+      min-width: 110px;
+    }
+
+    .split-label:last-child {
+      text-align: right;
+    }
+
+    /* Strategie Sectie */
+    .strategy-section {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .strategy-params {
+      margin-top: var(--spacing-sm);
+      margin-bottom: var(--spacing-md);
+      padding: var(--spacing-md);
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
     }
 
     .toggle-switch-row {
@@ -376,15 +593,7 @@
       font-size: 0.9375rem;
     }
 
-    .loan-params {
-      margin-top: var(--spacing-md);
-      padding: var(--spacing-md);
-      background: var(--gray-light);
-      border-radius: var(--border-radius);
-    }
-
-    .hidden { display: none; }
-
+    /* Knoppen */
     .calculate-btn {
       display: inline-block;
       padding: var(--spacing-sm) var(--spacing-xl);
@@ -418,84 +627,6 @@
     .calculate-btn.secondary:hover {
       border-color: var(--orange);
       color: var(--orange);
-    }
-
-    /* Status badges in table */
-    .status-ok { color: var(--green); }
-    .status-borrow { color: var(--orange); }
-    .status-ruin { color: var(--red); font-weight: 700; }
-    .status-sell { color: var(--gray); }
-
-    .comparison-highlight {
-      background: rgba(247, 147, 26, 0.08);
-      font-weight: 600;
-    }
-
-    /* Status Banner */
-    .status-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--spacing-md);
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-radius: var(--border-radius);
-      margin-top: var(--spacing-lg);
-      border-left: 4px solid;
-      animation: statusFadeIn 0.3s ease-out;
-    }
-
-    @keyframes statusFadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .status-banner.status-green {
-      background: rgba(0, 200, 83, 0.08);
-      border-left-color: var(--green);
-    }
-
-    .status-banner.status-amber {
-      background: rgba(247, 147, 26, 0.08);
-      border-left-color: var(--orange);
-    }
-
-    .status-banner.status-red {
-      background: rgba(255, 23, 68, 0.08);
-      border-left-color: var(--red);
-    }
-
-    .status-icon {
-      font-size: 2rem;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .status-content {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .status-headline {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--black);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .status-detail {
-      font-size: 0.9375rem;
-      color: var(--gray);
-      line-height: 1.5;
-    }
-
-    .status-detail strong {
-      color: var(--black);
-    }
-
-    .spending-growth-hint {
-      font-size: 0.8125rem;
-      color: var(--orange);
-      margin-top: 2px;
-      line-height: 1.4;
     }
 
     .year-input-row {
@@ -535,24 +666,129 @@
       flex-wrap: wrap;
     }
 
+    /* Statusbanner */
+    .status-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-radius: var(--border-radius);
+      margin-top: var(--spacing-lg);
+      border-left: 4px solid;
+      animation: statusFadeIn 0.3s ease-out;
+    }
+
+    @keyframes statusFadeIn {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .status-banner.status-green {
+      background: rgba(0, 200, 83, 0.08);
+      border-left-color: var(--green);
+    }
+
+    .status-banner.status-amber {
+      background: rgba(247, 147, 26, 0.08);
+      border-left-color: var(--orange);
+    }
+
+    .status-banner.status-red {
+      background: rgba(255, 23, 68, 0.08);
+      border-left-color: var(--red);
+    }
+
+    .status-icon {
+      font-size: 2rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+
+    .status-content { flex: 1; min-width: 0; }
+
+    .status-headline {
+      font-size: 1.125rem;
+      font-weight: 600;
+      color: var(--black);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .status-detail {
+      font-size: 0.9375rem;
+      color: var(--gray);
+      line-height: 1.5;
+    }
+
+    /* Stormperiode */
+    .storm-summary {
+      background: var(--gray-light);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+    }
+
+    .storm-metrics-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: var(--spacing-md);
+    }
+
+    .storm-metric {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .storm-label {
+      font-size: 0.8125rem;
+      font-weight: 500;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .storm-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    /* Tabel statussen */
+    .status-ok { color: var(--green); }
+    .status-borrow { color: var(--orange); }
+    .status-ruin { color: var(--red); font-weight: 700; }
+    .status-sell { color: var(--gray); }
+    .gold-cell { color: #B8860B; }
+
     @media print {
       .header, .footer, .nav, .hero, .disclaimer,
-      .calculate-btn, .action-buttons, .loans-toggle-section,
-      #input-section { display: none !important; }
+      .calculate-btn, .action-buttons, .mode-toggle,
+      #v2-input-section { display: none !important; }
       .hidden { display: block !important; }
       body { background: white; }
       .container { max-width: 100%; padding: 0; }
       section { page-break-inside: avoid; margin-bottom: 1rem; }
       .chart-container { height: 300px !important; }
     }
-  </style>
 
+    @media (max-width: 768px) {
+      .split-slider-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .split-label:last-child {
+        text-align: left;
+      }
+      .mode-toggle {
+        max-width: 100%;
+      }
+    }
+  </style>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../../js/powerlaw.js"></script>
   <script src="../../js/retirement.js"></script>
-  <script src="../js/retirement-ui.js"></script>
+  <script src="../../js/retirement-v2.js"></script>
+  <script src="../js/retirement-v2-ui.js"></script>
 </body>
 </html>
