@@ -244,17 +244,32 @@
   }
 
   function runFreedomNow(params) {
-    const bridgeResult = V2.simulateBridge(params);
-    const foreverResult = V2.simulateForever(params);
+    // Auto-optimizer: find the best split% across 10-90%
+    const plan = V2.optimizePlan(params);
+
+    // Auto-update split slider to optimizer recommendation
+    const splitSlider = $('v2-bridge-split');
+    if (splitSlider) {
+      const pctVal = Math.round(plan.bestSplit * 100);
+      splitSlider.value = pctVal;
+      const d = $('v2-split-bridge-value');
+      const d2 = $('v2-split-forever-value');
+      if (d) d.textContent = pctVal;
+      if (d2) d2.textContent = 100 - pctVal;
+    }
+
+    const usedParams = plan.params;
+    const bridgeResult = plan.bridgeResult;
+    const foreverResult = plan.foreverResult;
     const summary = V2.bridgeSummary(bridgeResult);
 
-    renderStatusBanner(params, bridgeResult, summary);
-    renderStormSection(bridgeResult.stormPeriod, params);
-    renderBridgeChart(bridgeResult, params);
-    renderForeverChart(foreverResult, params);
-    renderSummaryCards(params, bridgeResult, foreverResult, summary);
-    renderYearlyTable(bridgeResult, params);
-    renderInsight(params, bridgeResult, foreverResult, summary);
+    renderStatusBanner(usedParams, bridgeResult, summary, plan);
+    renderStormSection(bridgeResult.stormPeriod, usedParams);
+    renderBridgeChart(bridgeResult, usedParams);
+    renderForeverChart(foreverResult, usedParams);
+    renderSummaryCards(usedParams, bridgeResult, foreverResult, summary);
+    renderYearlyTable(bridgeResult, usedParams);
+    renderInsight(usedParams, bridgeResult, foreverResult, summary);
 
     show('v2-status-banner');
     show('v2-storm-section');
@@ -352,7 +367,7 @@
   }
 
   // ── Status Banner ───────────────────────────────────────────
-  function renderStatusBanner(params, bridgeResult, summary) {
+  function renderStatusBanner(params, bridgeResult, summary, plan) {
     const banner = $('v2-status-banner');
     const icon = $('v2-status-icon');
     const headline = $('v2-status-headline');
@@ -362,7 +377,38 @@
 
     const storm = bridgeResult.stormPeriod;
 
-    if (bridgeResult.bridgeSurvivesStorm && storm.stormYears !== Infinity) {
+    if (plan && plan.status === 'OK') {
+      // Optimizer found a surviving split
+      banner.classList.add('status-green');
+      icon.textContent = '\u2705';
+      const splitPct = Math.round(plan.bestSplit * 100);
+      headline.textContent = 'Optimal plan found. Storm period: ' + storm.stormYears + ' years.';
+      const fundBTC = (params.totalBTC * plan.bestSplit).toFixed(4);
+      const foreverBTC = (params.totalBTC * (1 - plan.bestSplit)).toFixed(4);
+      detail.textContent = 'Recommended split: ' + splitPct + '% Navigation Fund / ' + (100 - splitPct) + '% Forever Half. '
+        + 'Navigation Fund (' + fundBTC + ' BTC) sustains you through the storm. '
+        + 'Forever Half (' + foreverBTC + ' BTC) becomes inexhaustible by ' + storm.stormEndYear + '.';
+    } else if (plan && plan.status === 'BUST') {
+      // Optimizer: no split survives
+      banner.classList.add('status-red');
+      icon.textContent = '\uD83D\uDED1';
+      headline.textContent = 'No split survives the storm.';
+
+      // Build fix lines
+      const fixes = plan.fixes;
+      const lines = [];
+      if (fixes.additionalBTC !== undefined && fixes.minTotalBTC !== Infinity) {
+        lines.push('\u2022 Stack ' + fixes.additionalBTC.toFixed(3) + ' more BTC (total ' + fixes.minTotalBTC.toFixed(3) + ' BTC)');
+      }
+      if (fixes.maxBurnUSD && fixes.maxBurnUSD >= 1000) {
+        lines.push('\u2022 OR reduce spending to ' + fmtCurrency(fixes.maxBurnUSD) + '/year');
+      }
+      if (fixes.earliestYear) {
+        lines.push('\u2022 OR delay retirement to ' + fixes.earliestYear + ' (+' + fixes.yearDelay + ' years)');
+      }
+      detail.textContent = lines.join('  ') || 'Insufficient BTC for this scenario.';
+    } else if (bridgeResult.bridgeSurvivesStorm && storm.stormYears !== Infinity) {
+      // Non-optimizer path (e.g. End Result mode)
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
       headline.textContent = 'You can retire. Storm period: ' + storm.stormYears + ' years.';
@@ -809,7 +855,7 @@
     const thead = tbody.parentElement ? tbody.parentElement.querySelector('thead tr') : null;
     if (thead) {
       while (thead.firstChild) thead.removeChild(thead.firstChild);
-      var headers = ['Year', 'BTC Price', 'Multiple', 'SWR', 'Withdrawal', 'BTC Sold', 'Fund BTC', 'Fund Value', 'Status'];
+      var headers = ['Year', 'BTC Price', 'Multiple', 'SWR', 'Withdrawal', 'BTC Sold', 'Fund BTC', 'Fund Value', 'Debt', 'Status'];
       headers.forEach(function(text) {
         var th = document.createElement('th');
         th.textContent = text;
@@ -825,17 +871,21 @@
       switch (row.status) {
         case 'RUIN': statusClass = 'status-ruin'; statusText = 'RUIN'; break;
         case 'SELLING': statusClass = 'status-ok'; statusText = 'Sell'; break;
+        case 'BORROW': statusClass = 'status-borrow'; statusText = 'Borrow'; break;
+        case 'REPAYING': statusClass = 'status-repay'; statusText = 'Repay'; break;
+        case 'FORCED_SELL': statusClass = 'status-ruin'; statusText = 'Forced'; break;
       }
 
       const cells = [
         { text: '' + row.year, bold: true },
-        { text: row.price > 0 ? fmtCurrency(row.price) : '—' },
-        { text: row.multiple > 0 ? row.multiple.toFixed(2) + '\u00d7' : '—', className: 'multiple-cell ' + (row.multiple < 1 ? 'under' : row.multiple > 1.5 ? 'over' : 'fair') },
-        { text: row.swrRate > 0 ? (row.swrRate * 100).toFixed(1) + '%' : '—' },
-        { text: row.actualWithdrawal > 0 ? fmtCurrency(row.actualWithdrawal) : '—' },
-        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '—' },
+        { text: row.price > 0 ? fmtCurrency(row.price) : '\u2014' },
+        { text: row.multiple > 0 ? row.multiple.toFixed(2) + '\u00d7' : '\u2014', className: 'multiple-cell ' + (row.multiple < 1 ? 'under' : row.multiple > 1.5 ? 'over' : 'fair') },
+        { text: row.swrRate > 0 ? (row.swrRate * 100).toFixed(1) + '%' : '\u2014' },
+        { text: row.actualWithdrawal > 0 ? fmtCurrency(row.actualWithdrawal) : '\u2014' },
+        { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '\u2014' },
         { text: row.bridgeBTC > 0 ? fmtBTC(row.bridgeBTC) : '0' },
-        { text: row.bridgeValueUSD > 0 ? fmtCurrency(row.bridgeValueUSD) : '—' },
+        { text: row.bridgeValueUSD > 0 ? fmtCurrency(row.bridgeValueUSD) : '\u2014' },
+        { text: row.debt > 0 ? fmtCurrency(row.debt) : '\u2014' },
         { text: statusText, className: statusClass }
       ];
 
@@ -853,6 +903,8 @@
       });
 
       if (row.status === 'RUIN') tr.style.background = 'rgba(255, 23, 68, 0.05)';
+      if (row.status === 'BORROW') tr.style.background = 'rgba(33, 150, 243, 0.05)';
+      if (row.status === 'REPAYING') tr.style.background = 'rgba(0, 200, 83, 0.05)';
 
       tbody.appendChild(tr);
     });

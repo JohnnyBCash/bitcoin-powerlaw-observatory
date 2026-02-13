@@ -256,17 +256,32 @@
   }
 
   function runFreedomNow(params) {
-    const bridgeResult = V2.simulateBridge(params);
-    const foreverResult = V2.simulateForever(params);
+    // Auto-optimizer: vind de beste verdeling% over 10-90%
+    const plan = V2.optimizePlan(params);
+
+    // Stel split-slider automatisch in op aanbeveling
+    const splitSlider = $('v2-bridge-split');
+    if (splitSlider) {
+      const pctVal = Math.round(plan.bestSplit * 100);
+      splitSlider.value = pctVal;
+      const d = $('v2-split-bridge-value');
+      const d2 = $('v2-split-forever-value');
+      if (d) d.textContent = pctVal;
+      if (d2) d2.textContent = 100 - pctVal;
+    }
+
+    const usedParams = plan.params;
+    const bridgeResult = plan.bridgeResult;
+    const foreverResult = plan.foreverResult;
     const summary = V2.bridgeSummary(bridgeResult);
 
-    renderStatusBanner(params, bridgeResult, summary);
-    renderStormSection(bridgeResult.stormPeriod, params);
-    renderBridgeChart(bridgeResult, params);
-    renderForeverChart(foreverResult, params);
-    renderSummaryCards(params, bridgeResult, foreverResult, summary);
-    renderYearlyTable(bridgeResult, params);
-    renderInsight(params, bridgeResult, foreverResult, summary);
+    renderStatusBanner(usedParams, bridgeResult, summary, plan);
+    renderStormSection(bridgeResult.stormPeriod, usedParams);
+    renderBridgeChart(bridgeResult, usedParams);
+    renderForeverChart(foreverResult, usedParams);
+    renderSummaryCards(usedParams, bridgeResult, foreverResult, summary);
+    renderYearlyTable(bridgeResult, usedParams);
+    renderInsight(usedParams, bridgeResult, foreverResult, summary);
 
     show('v2-status-banner');
     show('v2-storm-section');
@@ -364,7 +379,7 @@
   }
 
   // ── Statusbanner ───────────────────────────────────────────
-  function renderStatusBanner(params, bridgeResult, summary) {
+  function renderStatusBanner(params, bridgeResult, summary, plan) {
     const banner = $('v2-status-banner');
     const icon = $('v2-status-icon');
     const headline = $('v2-status-headline');
@@ -374,7 +389,37 @@
 
     const storm = bridgeResult.stormPeriod;
 
-    if (bridgeResult.bridgeSurvivesStorm && storm.stormYears !== Infinity) {
+    if (plan && plan.status === 'OK') {
+      // Optimizer vond een overlevende verdeling
+      banner.classList.add('status-green');
+      icon.textContent = '\u2705';
+      const splitPct = Math.round(plan.bestSplit * 100);
+      headline.textContent = 'Optimaal plan gevonden. Stormperiode: ' + storm.stormYears + ' jaar.';
+      const fundBTC = (params.totalBTC * plan.bestSplit).toFixed(4);
+      const foreverBTC = (params.totalBTC * (1 - plan.bestSplit)).toFixed(4);
+      detail.textContent = 'Aanbevolen verdeling: ' + splitPct + '% Navigatiefonds / ' + (100 - splitPct) + '% Eeuwige Helft. '
+        + 'Navigatiefonds (' + fundBTC + ' BTC) draagt je door de storm. '
+        + 'Eeuwige Helft (' + foreverBTC + ' BTC) wordt onuitputtelijk tegen ' + storm.stormEndYear + '.';
+    } else if (plan && plan.status === 'BUST') {
+      // Optimizer: geen verdeling overleeft
+      banner.classList.add('status-red');
+      icon.textContent = '\uD83D\uDED1';
+      headline.textContent = 'Geen verdeling overleeft de storm.';
+
+      const fixes = plan.fixes;
+      const lines = [];
+      if (fixes.additionalBTC !== undefined && fixes.minTotalBTC !== Infinity) {
+        lines.push('\u2022 Stapel ' + fixes.additionalBTC.toFixed(3) + ' meer BTC (totaal ' + fixes.minTotalBTC.toFixed(3) + ' BTC)');
+      }
+      if (fixes.maxBurnUSD && fixes.maxBurnUSD >= 1000) {
+        lines.push('\u2022 OF verlaag uitgaven naar ' + fmtCurrency(fixes.maxBurnUSD) + '/jaar');
+      }
+      if (fixes.earliestYear) {
+        lines.push('\u2022 OF stel pensioen uit naar ' + fixes.earliestYear + ' (+' + fixes.yearDelay + ' jaar)');
+      }
+      detail.textContent = lines.join('  ') || 'Onvoldoende BTC voor dit scenario.';
+    } else if (bridgeResult.bridgeSurvivesStorm && storm.stormYears !== Infinity) {
+      // Niet-optimizer pad (bijv. Eindresultaat modus)
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
       headline.textContent = 'Je kunt met pensioen. Stormperiode: ' + storm.stormYears + ' jaar.';
@@ -819,7 +864,7 @@
     const thead = tbody.parentElement ? tbody.parentElement.querySelector('thead tr') : null;
     if (thead) {
       while (thead.firstChild) thead.removeChild(thead.firstChild);
-      var headers = ['Jaar', 'BTC Prijs', 'Multiple', 'SWR', 'Opname', 'BTC Verkocht', 'Fonds BTC', 'Fondswaarde', 'Status'];
+      var headers = ['Jaar', 'BTC Prijs', 'Multiple', 'SWR', 'Opname', 'BTC Verkocht', 'Fonds BTC', 'Fondswaarde', 'Schuld', 'Status'];
       headers.forEach(function(text) {
         var th = document.createElement('th');
         th.textContent = text;
@@ -835,6 +880,9 @@
       switch (row.status) {
         case 'RUIN': statusClass = 'status-ruin'; statusText = 'FAILLIET'; break;
         case 'SELLING': statusClass = 'status-ok'; statusText = 'Verkoop'; break;
+        case 'BORROW': statusClass = 'status-borrow'; statusText = 'Lenen'; break;
+        case 'REPAYING': statusClass = 'status-repay'; statusText = 'Aflossen'; break;
+        case 'FORCED_SELL': statusClass = 'status-ruin'; statusText = 'Gedwongen'; break;
       }
 
       const cells = [
@@ -846,6 +894,7 @@
         { text: row.btcSold > 0 ? row.btcSold.toFixed(4) : '\u2014' },
         { text: row.bridgeBTC > 0 ? fmtBTC(row.bridgeBTC) : '0' },
         { text: row.bridgeValueUSD > 0 ? fmtCurrency(row.bridgeValueUSD) : '\u2014' },
+        { text: row.debt > 0 ? fmtCurrency(row.debt) : '\u2014' },
         { text: statusText, className: statusClass }
       ];
 
@@ -863,6 +912,8 @@
       });
 
       if (row.status === 'RUIN') tr.style.background = 'rgba(255, 23, 68, 0.05)';
+      if (row.status === 'BORROW') tr.style.background = 'rgba(33, 150, 243, 0.05)';
+      if (row.status === 'REPAYING') tr.style.background = 'rgba(0, 200, 83, 0.05)';
 
       tbody.appendChild(tr);
     });

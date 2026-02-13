@@ -40,6 +40,13 @@
     swrNormalRate: 0.04,          // 4% base
     swrHighRate: 0.06,            // 6% in euphoria
     swrLowRate: 0.01,             // 1% in deep bear
+
+    // BTC-backed loans (active when price < trend)
+    loanLTV: 0.50,                // max 50% loan-to-value ratio
+    loanInterestRate: 0.05,       // 5% annual interest on outstanding debt
+
+    // Monte Carlo power law support floor
+    supportFloorMultiple: 0.45,   // price never drops below 0.45× trend (power law support)
   };
 
 
@@ -142,17 +149,19 @@
 
 
   // ── Navigation Fund Simulation ──────────────────────────────
-  // Year-by-year simulation of the Navigation Fund with dynamic SWR
-  // Pure BTC drawdown — sell to meet living expenses, survive the storm
+  // Year-by-year simulation with dynamic SWR + BTC-backed loans
+  // Below trend (multiple < 1.0): borrow against BTC instead of selling at a loss
+  // Above trend (multiple ≥ 1.0): sell BTC for expenses + repay outstanding debt
   function simulateBridge(params) {
     const {
       totalBTC, bridgeSplitPct, annualBurnUSD, spendingGrowthRate,
       model, sigma, scenarioMode, retirementYear,
-      maxProjectionYears, initialK
+      maxProjectionYears, initialK, loanLTV, loanInterestRate
     } = params;
 
     let bridgeBTC = totalBTC * bridgeSplitPct;
     let annualBurn = annualBurnUSD;
+    let debt = 0;  // outstanding loan balance
 
     const storm = computeStormPeriod(params);
     const simYears = storm.stormYears === Infinity
@@ -170,49 +179,117 @@
       const trend = PL.trendPrice(model, date);
       const multiple = price / trend;
 
-      // Dynamic SWR on navigation fund value
       const bridgeValue = bridgeBTC * price;
       const swrRate = dynamicSWR(price, trend, params);
-      // Always withdraw at least annual burn — expenses are non-negotiable
-      // SWR scales UP in euphoria but never scales below what the user needs
-      const targetWithdrawal = Math.max(bridgeValue * swrRate, annualBurn);
+
+      // 1. Accrue interest on existing debt
+      debt *= (1 + loanInterestRate);
+
+      // 2. Check liquidation: debt exceeds collateral capacity
+      if (debt > bridgeValue * loanLTV && bridgeBTC > 0) {
+        // Liquidation — all BTC seized
+        results.push({
+          year, yearIndex: i, price, trend, multiple, effectiveK, swrRate,
+          annualBurn, targetWithdrawal: 0, actualWithdrawal: 0,
+          btcSold: bridgeBTC, bridgeBTC: 0, bridgeValueUSD: 0,
+          debt: debt, loanThisYear: 0, repaidThisYear: 0, status: 'RUIN'
+        });
+        bridgeBTC = 0;
+        ruinYear = year;
+        // Fill remaining years
+        for (let j = i + 1; j < simYears; j++) {
+          results.push({
+            year: retirementYear + j, yearIndex: j,
+            price: 0, trend: 0, multiple: 0, effectiveK: 0,
+            swrRate: 0, annualBurn: 0, targetWithdrawal: 0,
+            actualWithdrawal: 0, btcSold: 0,
+            bridgeBTC: 0, bridgeValueUSD: 0,
+            debt: 0, loanThisYear: 0, repaidThisYear: 0, status: 'RUIN'
+          });
+        }
+        break;
+      }
 
       let btcSold = 0;
       let actualWithdrawal = 0;
+      let loanThisYear = 0;
+      let repaidThisYear = 0;
       let yearStatus = 'OK';
 
-      if (targetWithdrawal > 0 && bridgeBTC > 0) {
-        const btcNeeded = targetWithdrawal / price;
+      if (bridgeBTC <= 0) {
+        ruinYear = year;
+        yearStatus = 'RUIN';
+      } else if (multiple < 1.0) {
+        // ── BELOW TREND: Borrow instead of sell ──
+        const maxLoanCapacity = bridgeValue * loanLTV - debt;
 
-        if (btcNeeded >= bridgeBTC) {
-          // Ruin — not enough BTC
+        if (annualBurn <= maxLoanCapacity) {
+          // Can borrow — take loan for living expenses
+          debt += annualBurn;
+          loanThisYear = annualBurn;
+          actualWithdrawal = annualBurn;
+          yearStatus = 'BORROW';
+        } else {
+          // Loan capacity exceeded — forced sell
+          const targetWithdrawal = Math.max(bridgeValue * swrRate, annualBurn);
+          const btcNeeded = targetWithdrawal / price;
+          if (btcNeeded >= bridgeBTC) {
+            btcSold = bridgeBTC;
+            actualWithdrawal = bridgeBTC * price;
+            bridgeBTC = 0;
+            ruinYear = year;
+            yearStatus = 'RUIN';
+          } else {
+            btcSold = btcNeeded;
+            bridgeBTC -= btcNeeded;
+            actualWithdrawal = targetWithdrawal;
+            yearStatus = 'FORCED_SELL';
+          }
+        }
+      } else {
+        // ── ABOVE TREND: Sell BTC + repay debt ──
+        const targetWithdrawal = Math.max(bridgeValue * swrRate, annualBurn);
+        const btcForExpenses = targetWithdrawal / price;
+
+        if (btcForExpenses >= bridgeBTC) {
           btcSold = bridgeBTC;
           actualWithdrawal = bridgeBTC * price;
           bridgeBTC = 0;
           ruinYear = year;
           yearStatus = 'RUIN';
         } else {
-          btcSold = btcNeeded;
-          bridgeBTC -= btcNeeded;
+          btcSold = btcForExpenses;
+          bridgeBTC -= btcForExpenses;
           actualWithdrawal = targetWithdrawal;
-          yearStatus = multiple >= 1.0 ? 'SELLING' : 'FORCED_SELL';
+
+          // Repay outstanding debt with additional BTC sales
+          if (debt > 0) {
+            const btcForDebt = debt / price;
+            const availableForDebt = bridgeBTC * 0.5; // don't sell more than half remaining
+            const btcRepay = Math.min(btcForDebt, availableForDebt);
+            repaidThisYear = btcRepay * price;
+            debt -= repaidThisYear;
+            if (debt < 0.01) debt = 0; // clean up rounding
+            btcSold += btcRepay;
+            bridgeBTC -= btcRepay;
+            yearStatus = 'REPAYING';
+          } else {
+            yearStatus = 'SELLING';
+          }
         }
       }
 
       results.push({
-        year,
-        yearIndex: i,
-        price,
-        trend,
-        multiple,
-        effectiveK,
-        swrRate,
+        year, yearIndex: i, price, trend, multiple, effectiveK, swrRate,
         annualBurn,
-        targetWithdrawal,
+        targetWithdrawal: actualWithdrawal,
         actualWithdrawal,
         btcSold,
         bridgeBTC,
         bridgeValueUSD: bridgeBTC * price,
+        debt,
+        loanThisYear,
+        repaidThisYear,
         status: yearStatus
       });
 
@@ -220,12 +297,12 @@
         // Fill remaining years
         for (let j = i + 1; j < simYears; j++) {
           results.push({
-            year: retirementYear + j,
-            yearIndex: j,
+            year: retirementYear + j, yearIndex: j,
             price: 0, trend: 0, multiple: 0, effectiveK: 0,
             swrRate: 0, annualBurn: 0, targetWithdrawal: 0,
             actualWithdrawal: 0, btcSold: 0,
-            bridgeBTC: 0, bridgeValueUSD: 0, status: 'RUIN'
+            bridgeBTC: 0, bridgeValueUSD: 0,
+            debt: 0, loanThisYear: 0, repaidThisYear: 0, status: 'RUIN'
           });
         }
         break;
@@ -419,6 +496,114 @@
   }
 
 
+  // ── Find Optimal Split ──────────────────────────────────────
+  // Grid search: which bridgeSplitPct gives shortest storm while surviving?
+  function findOptimalSplit(baseParams) {
+    let bestSplit = null;
+    let bestStorm = Infinity;
+    const allResults = [];
+
+    for (let pct = 10; pct <= 90; pct += 5) {
+      const splitPct = pct / 100;
+      const p = { ...baseParams, bridgeSplitPct: splitPct };
+      const result = simulateBridge(p);
+      const entry = {
+        splitPct,
+        survives: result.bridgeSurvivesStorm,
+        stormYears: result.stormPeriod.stormYears,
+        ruinYear: result.ruinYear
+      };
+      allResults.push(entry);
+
+      if (result.bridgeSurvivesStorm && result.stormPeriod.stormYears < bestStorm) {
+        bestStorm = result.stormPeriod.stormYears;
+        bestSplit = splitPct;
+      }
+    }
+
+    return { bestSplit, bestStormYears: bestStorm, allResults };
+  }
+
+
+  // ── Find Earliest Viable Retirement Year ────────────────────
+  // Binary search: what's the earliest year where ANY split survives?
+  function findEarliestRetirement(baseParams) {
+    const currentYear = new Date().getFullYear();
+    let lo = currentYear;
+    let hi = currentYear + 30;
+
+    // Check if even the latest year works
+    const latestResult = findOptimalSplit({ ...baseParams, retirementYear: hi });
+    if (!latestResult.bestSplit) {
+      return { year: null, impossible: true };
+    }
+
+    // Binary search
+    for (let iter = 0; iter < 20; iter++) {
+      const mid = Math.round((lo + hi) / 2);
+      const result = findOptimalSplit({ ...baseParams, retirementYear: mid });
+      if (result.bestSplit) {
+        hi = mid;
+      } else {
+        lo = mid + 1;
+      }
+      if (lo >= hi) break;
+    }
+
+    return { year: hi, impossible: false };
+  }
+
+
+  // ── Auto-Optimize Plan ──────────────────────────────────────
+  // Main entry point: given BTC + burn + year, find best plan or give fixes
+  function optimizePlan(baseParams) {
+    const optimal = findOptimalSplit(baseParams);
+
+    if (optimal.bestSplit) {
+      // SUCCESS: found a surviving split
+      const bestParams = { ...baseParams, bridgeSplitPct: optimal.bestSplit };
+      const bridgeResult = simulateBridge(bestParams);
+      const foreverResult = simulateForever(bestParams);
+      return {
+        status: 'OK',
+        bestSplit: optimal.bestSplit,
+        stormYears: optimal.bestStormYears,
+        params: bestParams,
+        bridgeResult,
+        foreverResult,
+        allSplits: optimal.allResults
+      };
+    }
+
+    // BUST: no split survives — compute fixes
+    // Use split=50% as baseline for fix calculations
+    const fixParams = { ...baseParams, bridgeSplitPct: 0.50 };
+    const minStack = findMinimumTotal(fixParams);
+    const maxBurn = findMaxBurn(fixParams);
+    const earliestYear = findEarliestRetirement(baseParams);
+
+    // Also run the simulation at 50% so we can still show charts
+    const fallbackResult = simulateBridge(fixParams);
+    const fallbackForever = simulateForever(fixParams);
+
+    return {
+      status: 'BUST',
+      bestSplit: 0.50,
+      params: fixParams,
+      bridgeResult: fallbackResult,
+      foreverResult: fallbackForever,
+      allSplits: optimal.allResults,
+      fixes: {
+        minTotalBTC: minStack.minTotal,
+        additionalBTC: minStack.minTotal - baseParams.totalBTC,
+        maxBurnUSD: maxBurn.maxBurn,
+        earliestYear: earliestYear.year,
+        yearDelay: earliestYear.year ? earliestYear.year - baseParams.retirementYear : null
+      }
+    };
+  }
+
+
   // ── Navigation Fund Summary Stats ───────────────────────────
   function bridgeSummary(bridgeResult) {
     const r = bridgeResult.results.filter(y => y.status !== 'RUIN');
@@ -522,16 +707,20 @@
   // ── Monte Carlo Simulation ────────────────────────────────
   // Run N random simulations with log-normal returns around the power law trend
   // Prices clamped at -2σ (power law absolute floor — never breached historically)
+  // Includes BTC-backed loan logic: borrow below trend, sell+repay above trend
   // Returns percentile bands for navigation fund survival
   function monteCarloSurvival(baseParams, numSims) {
     numSims = numSims || 200;
     const years = baseParams.maxProjectionYears || 50;
     const results = [];
     const sigma = baseParams.sigma;
+    const ltv = baseParams.loanLTV;
+    const loanRate = baseParams.loanInterestRate;
 
     for (let sim = 0; sim < numSims; sim++) {
       let bridgeBTC = baseParams.totalBTC * baseParams.bridgeSplitPct;
       let annualBurn = baseParams.annualBurnUSD;
+      let debt = 0;
       let ruinYear = null;
 
       const yearlyBTC = [];
@@ -544,24 +733,67 @@
         const trend = PL.trendPrice(baseParams.model, date);
 
         // Random log-normal perturbation: log10(price) = log10(trend) + N(0, σ)
-        // Clamped at -2σ: the power law absolute floor (never breached in BTC history)
+        // Floor at supportFloorMultiple × trend (power law support — never breached in BTC history)
         var logNoise = gaussianRandom() * sigma;
-        logNoise = Math.max(logNoise, -2 * sigma);
-        const price = trend * Math.pow(10, logNoise);
+        const rawPrice = trend * Math.pow(10, logNoise);
+        const price = Math.max(rawPrice, trend * baseParams.supportFloorMultiple);
 
-        // Dynamic SWR
         const btcValue = bridgeBTC * price;
+        const multiple = price / trend;
         const swrRate = dynamicSWR(price, trend, baseParams);
-        const target = Math.max(btcValue * swrRate, annualBurn);
 
-        // Sell BTC to meet target
-        if (target > 0 && bridgeBTC > 0) {
-          const btcNeeded = target / price;
-          if (btcNeeded >= bridgeBTC) {
+        // Accrue interest on existing debt
+        debt *= (1 + loanRate);
+
+        // Check liquidation
+        if (debt > btcValue * ltv && bridgeBTC > 0) {
+          bridgeBTC = 0;
+          ruinYear = year;
+          yearlyBTC.push(0);
+          annualBurn *= (1 + baseParams.spendingGrowthRate);
+          continue;
+        }
+
+        if (bridgeBTC <= 0) {
+          ruinYear = year;
+          yearlyBTC.push(0);
+          continue;
+        }
+
+        if (multiple < 1.0) {
+          // Below trend: borrow
+          const maxCapacity = btcValue * ltv - debt;
+          if (annualBurn <= maxCapacity) {
+            debt += annualBurn;
+          } else {
+            // Forced sell
+            const target = Math.max(btcValue * swrRate, annualBurn);
+            const btcNeeded = target / price;
+            if (btcNeeded >= bridgeBTC) {
+              bridgeBTC = 0;
+              ruinYear = year;
+            } else {
+              bridgeBTC -= btcNeeded;
+            }
+          }
+        } else {
+          // Above trend: sell + repay
+          const target = Math.max(btcValue * swrRate, annualBurn);
+          const btcForExpenses = target / price;
+          if (btcForExpenses >= bridgeBTC) {
             bridgeBTC = 0;
             ruinYear = year;
           } else {
-            bridgeBTC -= btcNeeded;
+            bridgeBTC -= btcForExpenses;
+            // Repay debt
+            if (debt > 0) {
+              const btcForDebt = debt / price;
+              const availableForDebt = bridgeBTC * 0.5;
+              const btcRepay = Math.min(btcForDebt, availableForDebt);
+              debt -= btcRepay * price;
+              if (debt < 0.01) debt = 0;
+              bridgeBTC -= btcRepay;
+            }
           }
         }
 
@@ -635,6 +867,9 @@
     simulateEndResult,
     findMinimumTotal,
     findMaxBurn,
+    findOptimalSplit,
+    findEarliestRetirement,
+    optimizePlan,
     bridgeSummary,
     compareScenarios,
     sideBySide,
