@@ -136,13 +136,15 @@
 
       tooltip.appendChild(el('div', 'Avg Burn: ' + fmtMoney(d.avgBurn) + '/yr', 'ret-tt-row'));
 
-      // Label above bar
-      var label = el('div', d.btcNeeded >= 0.01 ? fmtBTC(d.btcNeeded) : '<0.01', 'ret-bar-label');
+      // Label above bar (2 decimal places for readability)
+      var labelText = d.btcNeeded >= 0.01 ? d.btcNeeded.toFixed(2) : '<0.01';
+      var heightPct = maxBtc > 0 ? (d.btcNeeded / maxBtc) * 100 : 0;
+      var labelClass = 'ret-bar-label' + (heightPct < 5 ? ' ret-label-tiny' : '');
+      var label = el('div', labelText, labelClass);
 
       // The bar itself
       var bar = document.createElement('div');
       bar.className = 'ret-bar ' + d.phase;
-      var heightPct = maxBtc > 0 ? (d.btcNeeded / maxBtc) * 100 : 0;
       bar.style.height = Math.max(heightPct, 0.5) + '%';
 
       wrapper.appendChild(tooltip);
@@ -194,6 +196,30 @@
   }
 
 
+  // ── Find Maximum Safe Burn ──────────────────────────────────
+  // Binary search: highest annual burn where myStack >= totalBTC
+  function findMaxSafeBurn(params) {
+    var lo = 1000;
+    var hi = params.annualBurn;
+    if (hi <= lo) return lo;
+
+    for (var iter = 0; iter < 30; iter++) {
+      var mid = Math.round((lo + hi) / 2);
+      var testParams = {};
+      Object.keys(params).forEach(function(k) { testParams[k] = params[k]; });
+      testParams.annualBurn = mid;
+      var testResult = V2.computeLifetimeBTC(testParams);
+      if (testResult && testParams.myStack >= testResult.totalBTC) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+      if (hi - lo <= 500) break;
+    }
+    return lo;
+  }
+
+
   // ── Verdict ───────────────────────────────────────────────
   function renderVerdict(result, params) {
     var container = $('ret-verdict-text');
@@ -224,7 +250,14 @@
       }
     } else {
       var deficit = -result.surplus;
-      container.appendChild(el('span', 'You need ' + fmtBTC(deficit) + ' more BTC.', 'ret-highlight-red'));
+
+      // Actionable alternative: show max safe burn
+      var maxBurn = findMaxSafeBurn(params);
+      var maxBurnDisplay = fmtMoney(maxBurn);
+      container.appendChild(el('span', 'Reduce your burn to ' + maxBurnDisplay + ' to retire today', 'ret-highlight-red'));
+      container.appendChild(document.createTextNode(' \u2014 or stack '));
+      container.appendChild(el('span', fmtBTC(deficit) + ' more BTC', 'ret-btc'));
+      container.appendChild(document.createTextNode('.'));
 
       if (result.earliestRetirementAge) {
         var retYear = new Date().getFullYear() + (result.earliestRetirementAge - params.currentAge);
@@ -243,13 +276,21 @@
     var insightEl = $('ret-insight');
     if (!insightEl) return;
 
-    if (result.stormEndAge) {
-      var stormPct = result.totalBTC > 0 ? ((result.stormBTC / result.totalBTC) * 100).toFixed(0) : 0;
-      insightEl.textContent = 'Your lifetime BTC need is ' + fmtBTC(result.totalBTC) + ' BTC. Of that, ' +
-        stormPct + '% is concentrated in the storm period (ages ' + params.retirementAge + '\u2013' + result.stormEndAge + '). ' +
-        'After age ' + result.stormEndAge + ', the power law makes your annual BTC need negligible \u2014 ' +
-        'your remaining ' + (params.lifeExpectancy - result.stormEndAge) + ' years cost only ' + fmtBTC(result.foreverBTC) + ' BTC total.';
-    } else {
+    if (result.totalBTC > 0 && result.annualData && result.annualData.length > 0) {
+      // Find what % of total BTC is consumed in the first 10 years (or fewer if life is shorter)
+      var windowYears = Math.min(10, result.annualData.length);
+      var windowBTC = 0;
+      for (var i = 0; i < windowYears; i++) {
+        windowBTC += result.annualData[i].btcNeeded;
+      }
+      var windowPct = ((windowBTC / result.totalBTC) * 100).toFixed(0);
+      var remainingYears = result.annualData.length - windowYears;
+      var remainingBTC = result.totalBTC - windowBTC;
+
+      insightEl.textContent = windowPct + '% of all the Bitcoin you\u2019ll ever need gets spent in the first ' +
+        windowYears + ' years. After that, the power law makes your annual cost a rounding error \u2014 ' +
+        'your remaining ' + remainingYears + ' years cost only ' + fmtBTC(remainingBTC) + ' BTC total.';
+    } else if (!result.stormEndAge) {
       insightEl.textContent = 'Under this price scenario, the forever threshold is never reached. ' +
         'Your burn rate grows faster than the power law appreciates. Consider reducing spending growth or trying a different scenario.';
     }
@@ -350,6 +391,30 @@
   }
 
 
+  // ── Input Extras Toggle ──────────────────────────────────
+  function setupInputExtrasToggle() {
+    var btn = $('ret-input-extra-btn');
+    var fields = $('ret-input-extra-fields');
+    if (!btn || !fields) return;
+    var visible = false;
+    btn.addEventListener('click', function() {
+      visible = !visible;
+      if (visible) {
+        fields.classList.remove('hidden');
+        btn.textContent = 'Fewer options';
+      } else {
+        fields.classList.add('hidden');
+        btn.textContent = 'More options';
+        // Sync retirement age to current age when hiding
+        var ageEl = $('ret-age');
+        var retireEl = $('ret-retire-age');
+        if (ageEl && retireEl) retireEl.value = ageEl.value;
+        scheduleCalculation();
+      }
+    });
+  }
+
+
   // ── Advanced Toggle ───────────────────────────────────────
   function setupAdvancedToggle() {
     var btn = $('ret-advanced-btn');
@@ -419,6 +484,7 @@
     fetchLiveData();
     loadSettings();
     setupInputListeners();
+    setupInputExtrasToggle();
     setupAdvancedToggle();
     runCalculation();
   }
@@ -459,11 +525,17 @@
     });
 
     // When current age changes, keep retirement age >= current age
+    // If extra fields are hidden, sync retirement age to current age
     $('ret-age').addEventListener('input', function() {
       var age = parseInt($('ret-age').value) || 40;
       var retireEl = $('ret-retire-age');
-      var retireAge = parseInt(retireEl.value) || age;
-      if (retireAge < age) retireEl.value = age;
+      var extraFields = $('ret-input-extra-fields');
+      if (extraFields && extraFields.classList.contains('hidden')) {
+        retireEl.value = age;
+      } else {
+        var retireAge = parseInt(retireEl.value) || age;
+        if (retireAge < age) retireEl.value = age;
+      }
     });
 
     // Currency toggle

@@ -136,13 +136,15 @@
 
       tooltip.appendChild(el('div', 'Gem. Uitgaven: ' + fmtMoney(d.avgBurn) + '/jr', 'ret-tt-row'));
 
-      // Label above bar
-      var label = el('div', d.btcNeeded >= 0.01 ? fmtBTC(d.btcNeeded) : '<0,01', 'ret-bar-label');
+      // Label above bar (2 decimal places for readability)
+      var labelText = d.btcNeeded >= 0.01 ? d.btcNeeded.toFixed(2) : '<0,01';
+      var heightPct = maxBtc > 0 ? (d.btcNeeded / maxBtc) * 100 : 0;
+      var labelClass = 'ret-bar-label' + (heightPct < 5 ? ' ret-label-tiny' : '');
+      var label = el('div', labelText, labelClass);
 
       // The bar itself
       var bar = document.createElement('div');
       bar.className = 'ret-bar ' + d.phase;
-      var heightPct = maxBtc > 0 ? (d.btcNeeded / maxBtc) * 100 : 0;
       bar.style.height = Math.max(heightPct, 0.5) + '%';
 
       wrapper.appendChild(tooltip);
@@ -194,6 +196,29 @@
   }
 
 
+  // ── Find Maximum Safe Burn ──────────────────────────────────
+  function findMaxSafeBurn(params) {
+    var lo = 1000;
+    var hi = params.annualBurn;
+    if (hi <= lo) return lo;
+
+    for (var iter = 0; iter < 30; iter++) {
+      var mid = Math.round((lo + hi) / 2);
+      var testParams = {};
+      Object.keys(params).forEach(function(k) { testParams[k] = params[k]; });
+      testParams.annualBurn = mid;
+      var testResult = V2.computeLifetimeBTC(testParams);
+      if (testResult && testParams.myStack >= testResult.totalBTC) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+      if (hi - lo <= 500) break;
+    }
+    return lo;
+  }
+
+
   // ── Verdict ───────────────────────────────────────────────
   function renderVerdict(result, params) {
     var container = $('ret-verdict-text');
@@ -224,7 +249,14 @@
       }
     } else {
       var deficit = -result.surplus;
-      container.appendChild(el('span', 'Je hebt nog ' + fmtBTC(deficit) + ' BTC nodig.', 'ret-highlight-red'));
+
+      // Actionable alternative: show max safe burn
+      var maxBurn = findMaxSafeBurn(params);
+      var maxBurnDisplay = fmtMoney(maxBurn);
+      container.appendChild(el('span', 'Verlaag je uitgaven naar ' + maxBurnDisplay + ' om vandaag te stoppen', 'ret-highlight-red'));
+      container.appendChild(document.createTextNode(' \u2014 of stack '));
+      container.appendChild(el('span', fmtBTC(deficit) + ' meer BTC', 'ret-btc'));
+      container.appendChild(document.createTextNode('.'));
 
       if (result.earliestRetirementAge) {
         var retYear = new Date().getFullYear() + (result.earliestRetirementAge - params.currentAge);
@@ -243,13 +275,20 @@
     var insightEl = $('ret-insight');
     if (!insightEl) return;
 
-    if (result.stormEndAge) {
-      var stormPct = result.totalBTC > 0 ? ((result.stormBTC / result.totalBTC) * 100).toFixed(0) : 0;
-      insightEl.textContent = 'Je levenslange BTC-behoefte is ' + fmtBTC(result.totalBTC) + ' BTC. Daarvan is ' +
-        stormPct + '% geconcentreerd in de stormperiode (leeftijd ' + params.retirementAge + '\u2013' + result.stormEndAge + '). ' +
-        'Na leeftijd ' + result.stormEndAge + ' maakt de machtswet je jaarlijkse BTC-behoefte verwaarloosbaar \u2014 ' +
-        'je resterende ' + (params.lifeExpectancy - result.stormEndAge) + ' jaar kosten slechts ' + fmtBTC(result.foreverBTC) + ' BTC totaal.';
-    } else {
+    if (result.totalBTC > 0 && result.annualData && result.annualData.length > 0) {
+      var windowYears = Math.min(10, result.annualData.length);
+      var windowBTC = 0;
+      for (var i = 0; i < windowYears; i++) {
+        windowBTC += result.annualData[i].btcNeeded;
+      }
+      var windowPct = ((windowBTC / result.totalBTC) * 100).toFixed(0);
+      var remainingYears = result.annualData.length - windowYears;
+      var remainingBTC = result.totalBTC - windowBTC;
+
+      insightEl.textContent = windowPct + '% van alle Bitcoin die je ooit nodig hebt wordt uitgegeven in de eerste ' +
+        windowYears + ' jaar. Daarna maakt de machtswet je jaarlijkse kosten verwaarloosbaar \u2014 ' +
+        'je resterende ' + remainingYears + ' jaar kosten slechts ' + fmtBTC(remainingBTC) + ' BTC totaal.';
+    } else if (!result.stormEndAge) {
       insightEl.textContent = 'Onder dit prijsscenario wordt de eeuwigheidsdrempel nooit bereikt. ' +
         'Je uitgavengroei is sneller dan de machtswet waardeert. Overweeg lagere uitgavengroei of probeer een ander scenario.';
     }
@@ -350,6 +389,29 @@
   }
 
 
+  // ── Input Extras Toggle ──────────────────────────────────
+  function setupInputExtrasToggle() {
+    var btn = $('ret-input-extra-btn');
+    var fields = $('ret-input-extra-fields');
+    if (!btn || !fields) return;
+    var visible = false;
+    btn.addEventListener('click', function() {
+      visible = !visible;
+      if (visible) {
+        fields.classList.remove('hidden');
+        btn.textContent = 'Minder opties';
+      } else {
+        fields.classList.add('hidden');
+        btn.textContent = 'Meer opties';
+        var ageEl = $('ret-age');
+        var retireEl = $('ret-retire-age');
+        if (ageEl && retireEl) retireEl.value = ageEl.value;
+        scheduleCalculation();
+      }
+    });
+  }
+
+
   // ── Advanced Toggle ───────────────────────────────────────
   function setupAdvancedToggle() {
     var btn = $('ret-advanced-btn');
@@ -419,6 +481,7 @@
     fetchLiveData();
     loadSettings();
     setupInputListeners();
+    setupInputExtrasToggle();
     setupAdvancedToggle();
     runCalculation();
   }
@@ -462,8 +525,13 @@
     $('ret-age').addEventListener('input', function() {
       var age = parseInt($('ret-age').value) || 40;
       var retireEl = $('ret-retire-age');
-      var retireAge = parseInt(retireEl.value) || age;
-      if (retireAge < age) retireEl.value = age;
+      var extraFields = $('ret-input-extra-fields');
+      if (extraFields && extraFields.classList.contains('hidden')) {
+        retireEl.value = age;
+      } else {
+        var retireAge = parseInt(retireEl.value) || age;
+        if (retireAge < age) retireEl.value = age;
+      }
     });
 
     // Currency toggle

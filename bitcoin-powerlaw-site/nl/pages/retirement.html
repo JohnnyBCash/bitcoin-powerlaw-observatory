@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
+  <title>Storm Rekentool - Bitcoin Machtswet Observatorium</title>
   <meta name="description" content="Hoeveel Bitcoin heb je nodig om met pensioen te gaan? Bereken je levenslange BTC-behoefte met machtswetprojecties.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,13 +38,10 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>&#x20BF; Stormnavigatie Rekentool</h1>
+        <h1>&#x20BF; Storm Rekentool</h1>
         <p>Hoeveel Bitcoin heb je nodig &mdash; en wanneer eindigt de storm?</p>
+        <p class="ret-subtle-disclaimer">Educatief hulpmiddel gebaseerd op machtswetmodellen. Geen financieel advies.</p>
       </section>
-
-      <div class="disclaimer">
-        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken.</p>
-      </div>
 
       <!-- ── Invoer ─────────────────────────────── -->
       <div class="card" id="ret-inputs">
@@ -52,10 +49,6 @@
           <div class="ret-input-group">
             <label for="ret-age">Huidige Leeftijd</label>
             <input type="number" id="ret-age" value="40" min="18" max="90" step="1">
-          </div>
-          <div class="ret-input-group">
-            <label for="ret-retire-age">Pensioenleeftijd</label>
-            <input type="number" id="ret-retire-age" value="40" min="18" max="100" step="1">
           </div>
           <div class="ret-input-group">
             <label for="ret-life">Levensverwachting</label>
@@ -66,13 +59,6 @@
             <input type="number" id="ret-burn" value="100000" min="1000" step="1000">
           </div>
           <div class="ret-input-group">
-            <label for="ret-currency">Valuta</label>
-            <select id="ret-currency">
-              <option value="USD" selected>$ USD</option>
-              <option value="EUR">&euro; EUR</option>
-            </select>
-          </div>
-          <div class="ret-input-group">
             <label for="ret-growth">Uitgavengroei (%)</label>
             <input type="number" id="ret-growth" value="6" min="0" max="20" step="0.5">
           </div>
@@ -80,15 +66,33 @@
             <label for="ret-stack">Mijn Stack (&#x20BF;)</label>
             <input type="number" id="ret-stack" value="1.0" min="0" step="0.01">
           </div>
-          <div class="ret-input-group">
-            <label for="ret-scenario">Prijsscenario</label>
-            <select id="ret-scenario">
-              <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;)</option>
-              <option value="cyclical_bear">Bear Bias Cycli</option>
-              <option value="smooth_trend">Vlakke Trend</option>
-              <option value="smooth_bear">Bear (&minus;1&sigma;)</option>
-              <option value="smooth_deep_bear">Diepe Bear (&minus;2&sigma;)</option>
-            </select>
+        </div>
+        <div class="ret-input-extra">
+          <button class="ret-input-extra-btn" id="ret-input-extra-btn">Meer opties</button>
+          <div class="ret-input-extra-fields hidden" id="ret-input-extra-fields">
+            <div class="ret-input-strip">
+              <div class="ret-input-group">
+                <label for="ret-retire-age">Pensioenleeftijd</label>
+                <input type="number" id="ret-retire-age" value="40" min="18" max="100" step="1">
+              </div>
+              <div class="ret-input-group">
+                <label for="ret-scenario">Prijsscenario</label>
+                <select id="ret-scenario">
+                  <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;)</option>
+                  <option value="cyclical_bear">Bear Bias Cycli</option>
+                  <option value="smooth_trend">Vlakke Trend</option>
+                  <option value="smooth_bear">Bear (&minus;1&sigma;)</option>
+                  <option value="smooth_deep_bear">Diepe Bear (&minus;2&sigma;)</option>
+                </select>
+              </div>
+              <div class="ret-input-group">
+                <label for="ret-currency">Valuta</label>
+                <select id="ret-currency">
+                  <option value="USD" selected>$ USD</option>
+                  <option value="EUR">&euro; EUR</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -120,7 +124,7 @@
           <div class="ret-summary-number" id="ret-storm-btc">&mdash;</div>
           <div class="ret-summary-fiat" id="ret-storm-fiat"></div>
           <div class="ret-summary-detail" id="ret-storm-detail"></div>
-          <div class="ret-summary-sub">Dit is het moeilijke deel. Overleef dit.</div>
+          <div class="ret-summary-sub">Overleef dit en je bent vrij.</div>
         </div>
         <div class="ret-summary-box ret-forever-box">
           <div class="ret-summary-icon">&#x267E;&#xFE0F;</div>
@@ -185,7 +189,7 @@
       <!-- ── Kerninzicht ──────────────────────── -->
       <section>
         <div class="info-box">
-          <h4>Het Stormnavigatie Inzicht</h4>
+          <h4>Het Storm Inzicht</h4>
           <p id="ret-insight">De machtswet betekent dat je BTC-behoefte in de loop der tijd keldert. Het eerste decennium is de storm &mdash; overleef die, en de rest van je leven kost bijna niets in Bitcoin-termen.</p>
         </div>
       </section>
@@ -213,6 +217,14 @@
 
   <!-- Page-specific styles -->
   <style>
+    /* ── Subtle Disclaimer ────────────────────── */
+    .ret-subtle-disclaimer {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
     /* ── Input Strip ──────────────────────────── */
     .ret-input-strip {
       display: flex;
@@ -253,6 +265,33 @@
       border-color: var(--orange);
     }
 
+    /* ── Input Extras Toggle ───────────────────── */
+    .ret-input-extra {
+      margin-top: var(--spacing-sm);
+    }
+
+    .ret-input-extra-btn {
+      background: none;
+      border: none;
+      color: var(--gray);
+      font-size: 0.8rem;
+      cursor: pointer;
+      padding: 4px 0;
+      font-family: var(--font-family);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .ret-input-extra-btn:hover {
+      color: var(--orange);
+    }
+
+    .ret-input-extra-fields {
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-sm);
+      border-top: 1px solid var(--gray-border);
+    }
+
     /* ── Bar Chart ────────────────────────────── */
     .ret-chart-header {
       margin-bottom: var(--spacing-sm);
@@ -268,7 +307,7 @@
 
     .ret-chart-container {
       position: relative;
-      height: 280px;
+      height: 320px;
       display: flex;
       align-items: flex-end;
       gap: 3px;
@@ -509,7 +548,19 @@
       }
 
       .ret-chart-container {
-        height: 200px;
+        height: 220px;
+      }
+
+      .ret-bar-label {
+        font-size: 0.55rem;
+      }
+
+      .ret-age-axis .ret-tick {
+        font-size: 0.55rem;
+      }
+
+      .ret-bar-label.ret-label-tiny {
+        display: none;
       }
     }
   </style>
