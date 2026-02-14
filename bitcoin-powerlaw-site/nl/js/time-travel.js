@@ -56,11 +56,8 @@
 
   /* -------------------------------------------------------- sigma -------------------------------------------------------- */
   function computeSigma() {
-    const hist = weeklyData.map(w => ({
-      date:  w.date.toISOString().slice(0, 10),
-      price: w.price
-    }));
-    sigma = PowerLaw.calculateSigma(hist, currentModel).sigma;
+    // Use canonical model sigma (0.2) for consistent band lines
+    sigma = PowerLaw.MODELS[currentModel].sigma;
   }
 
   /* -------------------------------------------------------- opmaak ------------------------------------------------------- */

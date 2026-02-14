@@ -208,7 +208,7 @@ function xVal(dateStr) {
 /* -------------------------------------------------- grafiekopties ------------------------------------------- */
 function buildOptions() {
   const xIsLog = (xScale === 'logarithmic');
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const xAxis = xIsLog
     ? {
@@ -299,7 +299,7 @@ function buildOptions() {
 // Hoofdgeschiedenisgrafiek initialiseren
 function initHistoryChart() {
   const ctx = document.getElementById('history-chart').getContext('2d');
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const chartData = prepareChartData(historicalData, currentModel, sigma);
 
@@ -495,7 +495,7 @@ function setupScaleToggles() {
 
 // Grafiek bijwerken
 function updateChart() {
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
   const chartData = prepareChartData(historicalData, currentModel, sigma);
   historyChart.data = chartData;
   historyChart.options = buildOptions();
@@ -504,8 +504,8 @@ function updateChart() {
 
 // Statistieken bijwerken
 function updateStatistics() {
-  const sigma = sigmaCache[currentModel];
-  document.getElementById('current-sigma').textContent = sigma.sigma.toFixed(3);
+  const modelSigma = PowerLaw.MODELS[currentModel].sigma;
+  document.getElementById('current-sigma').textContent = modelSigma.toFixed(3);
 
   // Max en min vermenigvuldigers vinden
   let maxMult = 0, minMult = Infinity;
@@ -531,7 +531,7 @@ function updateStatistics() {
 
 // CSV exporteren
 function exportCSV() {
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band prices
   const rows = [['datum', 'prijs', 'trend', 'vermenigvuldiger', 'boven_1sigma', 'onder_1sigma', 'boven_2sigma', 'onder_2sigma']];
 
   for (const point of historicalData) {

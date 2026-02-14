@@ -204,7 +204,7 @@ function populateProjectionTable() {
 
 // Mijlpaaldatum berekenen voor een specifieke sigma-band
 function milestoneDateForBand(targetPrice, model, k) {
-  const sigma = sigmaCache[model].sigma;
+  const sigma = PowerLaw.MODELS[model].sigma;  // canonical σ
   // Equivalent trendprijs die nodig is zodat band k het doelprijs bereikt
   const adjustedTarget = targetPrice / Math.pow(10, k * sigma);
   return PowerLaw.milestoneDateForPrice(adjustedTarget, model);
@@ -238,7 +238,7 @@ function populateMilestoneTable() {
 // Projectiegrafiek initialiseren
 function initProjectionChart() {
   const ctx = document.getElementById('projection-chart').getContext('2d');
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
 
@@ -509,7 +509,7 @@ function setupControls() {
 
 // Grafiek opnieuw opbouwen met huidige instellingen
 function rebuildChart() {
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ
   const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
 
   if (projectionChart) {
@@ -522,7 +522,7 @@ function rebuildChart() {
 function updateSliderDisplay() {
   const slider = document.getElementById('date-slider');
   const years = parseFloat(slider.value);
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ
 
   const futureDate = new Date();
   futureDate.setFullYear(futureDate.getFullYear() + Math.floor(years));

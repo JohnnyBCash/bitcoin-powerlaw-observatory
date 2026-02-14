@@ -87,7 +87,7 @@ function updateDashboard(price, change24h) {
   const trend = PowerLaw.trendPrice(model, now);
   const mult = PowerLaw.multiplier(price, model, now);
   const valuation = PowerLaw.valuationLabel(mult);
-  const sigma = sigmaCache[model];
+  const modelSigma = PowerLaw.MODELS[model].sigma;  // canonical σ for band lines
   const days = Math.floor(PowerLaw.daysSinceGenesis(now));
 
   // DOM bijwerken
@@ -112,11 +112,11 @@ function updateDashboard(price, change24h) {
   elements.valuationBadge.style.color = valuation.color;
 
   elements.daysCount.textContent = days.toLocaleString('nl-NL');
-  elements.sigmaValue.textContent = sigma.sigma.toFixed(3);
+  elements.sigmaValue.textContent = modelSigma.toFixed(3);
 
   // Sparkline bijwerken indien aanwezig
   if (sparklineChart) {
-    updateSparkline(price, trend, mult, sigma.sigma);
+    updateSparkline(price, trend, mult, modelSigma);
   }
 }
 
@@ -141,7 +141,7 @@ function initSparklineChart() {
 
   // Laatste dagen van data voor sparkline
   const recentData = historicalData.slice(-chartRangeDays);
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const labels = recentData.map(d => d.date);
   const prices = recentData.map(d => d.price);
@@ -275,7 +275,7 @@ function updateSparklineData() {
   if (!sparklineChart) return;
 
   const recentData = historicalData.slice(-chartRangeDays);
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const labels = recentData.map(d => d.date);
   const prices = recentData.map(d => d.price);
