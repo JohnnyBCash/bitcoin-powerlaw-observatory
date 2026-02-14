@@ -31,7 +31,7 @@
     retirementYear: 2030,
     maxProjectionYears: 50,       // max years to project forward
     model: 'santostasi',
-    sigma: 0.3,
+    sigma: 0.2,
     scenarioMode: 'cyclical',
 
     // Dynamic SWR thresholds (for Navigation Fund active drawdown)
@@ -856,6 +856,124 @@
   }
 
 
+  // ── Lifetime BTC Need ──────────────────────────────────────
+  // Core calculation for the redesigned retirement page.
+  // For each year from retirement to death:
+  //   btcNeeded(i) = inflatedBurn(i) / scenarioPrice(year + i)
+  // Groups results into 5-year chunks and classifies storm vs forever.
+  function computeLifetimeBTC(params) {
+    const {
+      currentAge, lifeExpectancy, annualBurn, burnGrowth,
+      myStack, model, sigma, scenarioMode, initialK
+    } = params;
+
+    const retirementAge = params.retirementAge || currentAge;
+    const currentYear = new Date().getFullYear();
+    const yearsUntilRetirement = retirementAge - currentAge;
+    const totalYears = lifeExpectancy - retirementAge;
+    if (totalYears <= 0) return null;
+
+    const annualData = [];
+    let stormEndAge = null;
+
+    for (let i = 0; i < totalYears; i++) {
+      const age = retirementAge + i;
+      // Year offset from today — prices advance into the future
+      const yearOffset = yearsUntilRetirement + i;
+      const year = currentYear + yearOffset;
+      const date = new Date(year, 6, 1);
+      const effectiveK = R.resolveScenarioK(scenarioMode, yearOffset, initialK);
+      const price = R.scenarioPrice(model, date, sigma, effectiveK);
+      const trend = PL.trendPrice(model, date);
+      // Burn inflates from today, not from retirement
+      const burn = annualBurn * Math.pow(1 + burnGrowth, yearOffset);
+      const btcNeeded = burn / price;
+
+      // Storm/forever classification: does the user's stack cover remaining needs
+      // while keeping withdrawal below the forever SWR threshold?
+      const swr = foreverSWR(year);
+      const stackValue = myStack * price;
+      const ratio = burn / stackValue;
+      const isForever = stackValue > 0 && ratio < swr;
+
+      if (isForever && stormEndAge === null) {
+        stormEndAge = age;
+      }
+
+      annualData.push({
+        year, age, burn, price, trend, btcNeeded,
+        effectiveK, swr, ratio, isForever
+      });
+    }
+
+    // Snap stormEndAge to the next 5-year chunk boundary so bars are cleanly
+    // storm or forever — no confusing "transition" chunks for the user.
+    if (stormEndAge !== null) {
+      const yearsIntoRetirement = stormEndAge - retirementAge;
+      const snapped = Math.ceil(yearsIntoRetirement / 5) * 5;
+      stormEndAge = retirementAge + snapped;
+      if (stormEndAge > lifeExpectancy) stormEndAge = lifeExpectancy;
+      // Re-classify annual data to match snapped boundary
+      annualData.forEach(d => { d.isForever = d.age >= stormEndAge; });
+    }
+
+    // Group into 5-year chunks
+    const fiveYearData = [];
+    for (let i = 0; i < totalYears; i += 5) {
+      const chunk = annualData.slice(i, Math.min(i + 5, totalYears));
+      const btcNeeded = chunk.reduce((sum, d) => sum + d.btcNeeded, 0);
+      const avgBurn = chunk.reduce((sum, d) => sum + d.burn, 0) / chunk.length;
+      const startAge = chunk[0].age;
+      const endAge = chunk[chunk.length - 1].age;
+
+      // After snapping, chunks are cleanly storm or forever
+      const allForever = chunk.every(d => d.isForever);
+      const phase = allForever ? 'forever' : 'storm';
+
+      fiveYearData.push({
+        startAge, endAge, btcNeeded, avgBurn, phase,
+        startYear: chunk[0].year, endYear: chunk[chunk.length - 1].year
+      });
+    }
+
+    const totalBTC = annualData.reduce((sum, d) => sum + d.btcNeeded, 0);
+    const stormData = annualData.filter(d => !d.isForever);
+    const foreverData = annualData.filter(d => d.isForever);
+    const stormBTC = stormData.reduce((sum, d) => sum + d.btcNeeded, 0);
+    const foreverBTC = foreverData.reduce((sum, d) => sum + d.btcNeeded, 0);
+    const stormYears = stormEndAge !== null ? stormEndAge - retirementAge : totalYears;
+
+    // Find earliest retirement age: smallest age where stack >= totalBTC(from that age onward)
+    let earliestRetirementAge = null;
+    for (let startIdx = 0; startIdx < totalYears; startIdx++) {
+      const remaining = annualData.slice(startIdx);
+      const neededFromHere = remaining.reduce((sum, d) => sum + d.btcNeeded, 0);
+      if (myStack >= neededFromHere) {
+        earliestRetirementAge = retirementAge + startIdx;
+        break;
+      }
+    }
+
+    // USD value at today's trend price
+    const todayTrend = PL.trendPrice(model, new Date());
+
+    return {
+      annualData,
+      fiveYearData,
+      totalBTC,
+      stormBTC,
+      foreverBTC,
+      stormEndAge,
+      stormYears,
+      earliestRetirementAge,
+      todayTrendPrice: todayTrend,
+      totalUSDAtTrend: totalBTC * todayTrend,
+      canRetireNow: myStack >= totalBTC,
+      surplus: myStack - totalBTC
+    };
+  }
+
+
   // ── Export ───────────────────────────────────────────────────
   window.RetirementV2 = {
     DEFAULTS,
@@ -873,7 +991,8 @@
     bridgeSummary,
     compareScenarios,
     sideBySide,
-    monteCarloSurvival
+    monteCarloSurvival,
+    computeLifetimeBTC
   };
 
 })();

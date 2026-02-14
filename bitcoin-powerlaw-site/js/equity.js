@@ -22,7 +22,7 @@
     futureBuyMonth:     null,
 
     model:              'santostasi',
-    sigma:              0.3,
+    sigma:              0.2,
     scenarioMode:       'cyclical',
     initialK:           null
   };

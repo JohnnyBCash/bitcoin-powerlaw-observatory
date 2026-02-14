@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Stormnavigatie Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
-  <meta name="description" content="Plan je pensioen met het Stormnavigatie raamwerk. Splits je Bitcoin stack in een Navigatiefonds en Eeuwige Helft met machtswetprojecties.">
+  <title>Pensioenrekentool - Bitcoin Machtswet Observatorium</title>
+  <meta name="description" content="Hoeveel Bitcoin heb je nodig om met pensioen te gaan? Bereken je levenslange BTC-behoefte met machtswetprojecties.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -38,253 +38,155 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>Stormnavigatie Pensioenrekentool</h1>
-        <p>Het Navigatiefonds koopt je vrijheid. De Eeuwige Helft doorstaat de storm en wordt onuitputtelijk.</p>
+        <h1>&#x20BF; Stormnavigatie Rekentool</h1>
+        <p>Hoeveel Bitcoin heb je nodig &mdash; en wanneer eindigt de storm?</p>
       </section>
 
       <div class="disclaimer">
-        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken. Doe altijd je eigen onderzoek en raadpleeg professionals.</p>
+        <p><strong>Belangrijk:</strong> Dit is een educatief hulpmiddel gebaseerd op machtswetmodellen, geen financieel advies. Het model gaat ervan uit dat de machtswet blijft gelden. Werkelijke resultaten zullen afwijken.</p>
       </div>
 
-      <!-- ── Modus Schakelaar ─────────────────────────── -->
-      <div class="mode-toggle" id="v2-mode-toggle">
-        <button class="toggle-btn active" data-mode="freedom_now">Vrijheid Nu</button>
-        <button class="toggle-btn" data-mode="end_result">Eindresultaat</button>
-      </div>
-
-      <!-- ── Invoer Sectie ───────────────────────────── -->
-      <div class="card" id="v2-input-section">
-
-        <!-- Gedeelde Invoer -->
-        <h3>Jouw Stack</h3>
-        <div class="input-grid">
-          <div class="input-group">
-            <label for="v2-total-btc">Totaal Bitcoin Bezit (BTC)</label>
-            <input type="number" id="v2-total-btc" value="1.0" min="0.001" step="0.01">
+      <!-- ── Invoer ─────────────────────────────── -->
+      <div class="card" id="ret-inputs">
+        <div class="ret-input-strip">
+          <div class="ret-input-group">
+            <label for="ret-age">Huidige Leeftijd</label>
+            <input type="number" id="ret-age" value="40" min="18" max="90" step="1">
           </div>
-
-          <div class="input-group">
-            <label for="v2-currency">Valuta</label>
-            <select id="v2-currency">
+          <div class="ret-input-group">
+            <label for="ret-retire-age">Pensioenleeftijd</label>
+            <input type="number" id="ret-retire-age" value="40" min="18" max="100" step="1">
+          </div>
+          <div class="ret-input-group">
+            <label for="ret-life">Levensverwachting</label>
+            <input type="number" id="ret-life" value="100" min="50" max="120" step="1">
+          </div>
+          <div class="ret-input-group">
+            <label for="ret-burn">Jaarlijkse Uitgaven (<span id="ret-currency-sym">$</span>)</label>
+            <input type="number" id="ret-burn" value="100000" min="1000" step="1000">
+          </div>
+          <div class="ret-input-group">
+            <label for="ret-currency">Valuta</label>
+            <select id="ret-currency">
               <option value="USD" selected>$ USD</option>
               <option value="EUR">&euro; EUR</option>
             </select>
           </div>
-
-          <div class="input-group">
-            <label for="v2-price-scenario">Prijsscenario</label>
-            <select id="v2-price-scenario">
-              <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;, verlengde periodes)</option>
-              <option value="cyclical_bear">Bear Bias Cycli (60% onder trend)</option>
-              <option value="smooth_trend">Vlakke Trend (op trendlijn)</option>
-              <option value="smooth_bear">Bear (vlak &minus;1&sigma; onder trend)</option>
-              <option value="smooth_deep_bear">Diepe Bear (vlak &minus;2&sigma; onder trend)</option>
+          <div class="ret-input-group">
+            <label for="ret-growth">Uitgavengroei (%)</label>
+            <input type="number" id="ret-growth" value="6" min="0" max="20" step="0.5">
+          </div>
+          <div class="ret-input-group">
+            <label for="ret-stack">Mijn Stack (&#x20BF;)</label>
+            <input type="number" id="ret-stack" value="1.0" min="0" step="0.01">
+          </div>
+          <div class="ret-input-group">
+            <label for="ret-scenario">Prijsscenario</label>
+            <select id="ret-scenario">
+              <option value="cyclical" selected>Cyclisch (&plusmn;1&sigma;)</option>
+              <option value="cyclical_bear">Bear Bias Cycli</option>
+              <option value="smooth_trend">Vlakke Trend</option>
+              <option value="smooth_bear">Bear (&minus;1&sigma;)</option>
+              <option value="smooth_deep_bear">Diepe Bear (&minus;2&sigma;)</option>
             </select>
-          </div>
-        </div>
-
-        <!-- Navigatiefonds / Eeuwig Verdeling -->
-        <div class="split-section">
-          <h3>Navigatiefonds / Eeuwig Verdeling</h3>
-          <p style="color: var(--gray); font-size: 0.9375rem;">Het Navigatiefonds financiert je leven tijdens de stormperiode. De Eeuwige Helft groeit langs de machtswet totdat opnames verwaarloosbaar worden.</p>
-          <div class="split-slider-row">
-            <span class="split-label">Fonds: <strong id="v2-split-bridge-value">50</strong>%</span>
-            <input type="range" id="v2-bridge-split" min="10" max="90" step="5" value="50">
-            <span class="split-label">Eeuwig: <strong id="v2-split-forever-value">50</strong>%</span>
-          </div>
-        </div>
-
-        <!-- ── Vrijheid Nu Invoer ──────────────────────── -->
-        <div id="v2-freedom-inputs">
-          <h3>Levensonderhoud</h3>
-          <div class="input-grid">
-            <div class="input-group">
-              <label for="v2-annual-burn">Jaarlijkse Uitgaven (<span class="v2-currency-label">$</span>)</label>
-              <input type="number" id="v2-annual-burn" value="50000" min="1000" step="1000">
-            </div>
-
-            <div class="input-group">
-              <label for="v2-retirement-year">Startjaar Pensioen</label>
-              <div class="year-input-row">
-                <input type="number" id="v2-retirement-year" value="2030" min="2024" max="2060" step="1">
-                <button type="button" class="now-btn" id="v2-start-now-btn" title="Start pensioen dit jaar">Nu</button>
-              </div>
-            </div>
-
-            <div class="input-group">
-              <label for="v2-spending-growth">Jaarlijkse Uitgavengroei (%)</label>
-              <input type="range" id="v2-spending-growth" min="0" max="12" step="0.5" value="6.5">
-              <div class="slider-value"><span id="v2-spending-growth-value">6.5</span>%</div>
-            </div>
-
-            <div class="input-group">
-              <label>Eeuwige Helft SWR</label>
-              <div class="slider-value" id="v2-forever-swr-display" style="font-size: 1.125rem;">&mdash;</div>
-              <div style="color: var(--gray); font-size: 0.8rem;">25% &times; verwacht rendement voor pensioenjaar</div>
-            </div>
-
-            <div class="input-group">
-              <label for="v2-swr-normal">Basis Opnamepercentage (%)</label>
-              <input type="range" id="v2-swr-normal" min="1" max="8" step="0.5" value="4">
-              <div class="slider-value"><span id="v2-swr-value">4</span>%</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── Eindresultaat Invoer ───────────────────── -->
-        <div id="v2-endresult-inputs" class="hidden">
-          <h3>Stapelplan</h3>
-          <div class="input-grid">
-            <div class="input-group">
-              <label for="v2-additional-years">Jaren Doorstapelen</label>
-              <input type="number" id="v2-additional-years" value="5" min="1" max="30" step="1">
-            </div>
-
-            <div class="input-group">
-              <label for="v2-monthly-dca">Maandelijks DCA Bedrag (<span class="v2-currency-label">$</span>)</label>
-              <input type="number" id="v2-monthly-dca" value="500" min="50" step="50">
-            </div>
-
-            <div class="input-group">
-              <label for="v2-income-growth">Jaarlijkse Inkomensgroei (%)</label>
-              <input type="range" id="v2-income-growth" min="0" max="10" step="0.5" value="3">
-              <div class="slider-value"><span id="v2-income-growth-value">3</span>%</div>
-            </div>
-
-            <div class="input-group">
-              <label for="v2-annual-burn-er">Jaarlijkse Uitgaven bij Pensioen (<span class="v2-currency-label">$</span>)</label>
-              <input type="number" id="v2-annual-burn-er" value="50000" min="1000" step="1000">
-            </div>
-          </div>
-        </div>
-
-        <button class="calculate-btn" id="v2-calculate-btn">Bereken Pensioenplan</button>
-        <button class="calculate-btn secondary" id="v2-compare-btn">Vergelijk Alle Scenario's</button>
-
-        <!-- Actieknoppen (getoond na berekening) -->
-        <div class="action-buttons hidden" id="v2-action-buttons">
-          <button class="calculate-btn secondary" id="v2-sidebyside-btn">Zij-aan-Zij Vergelijking</button>
-          <button class="calculate-btn secondary" id="v2-montecarlo-btn">Monte Carlo Analyse</button>
-          <button class="calculate-btn secondary" id="v2-export-pdf-btn">Opslaan als PDF</button>
-          <button class="calculate-btn secondary" id="v2-reset-btn">Standaardwaarden Herstellen</button>
-        </div>
-
-        <!-- Statusbanner -->
-        <div id="v2-status-banner" class="status-banner hidden">
-          <div class="status-icon" id="v2-status-icon"></div>
-          <div class="status-content">
-            <div class="status-headline" id="v2-status-headline"></div>
-            <div class="status-detail" id="v2-status-detail"></div>
           </div>
         </div>
       </div>
 
-      <!-- ── Stormperiode Sectie ──────────────────────── -->
-      <section id="v2-storm-section" class="hidden">
-        <h2>De Stormperiode</h2>
-        <div id="v2-storm-content"></div>
-      </section>
+      <!-- ── Verdict ──────────────────────────── -->
+      <div class="ret-verdict" id="ret-verdict">
+        <div class="ret-verdict-label">Jouw Verdict</div>
+        <div class="ret-verdict-text" id="ret-verdict-text">&mdash;</div>
+      </div>
 
-      <!-- ── Accumulatie Grafiek (Eindresultaat) ───────── -->
-      <section id="v2-accum-chart-section" class="hidden">
-        <h2>Accumulatiefase</h2>
-        <p>Je BTC stack groeit tijdens de stapeljaren door maandelijkse DCA-aankopen.</p>
-        <div class="chart-container" style="position: relative; height: 350px;">
-          <canvas id="v2-accum-chart" aria-label="BTC accumulatie over tijd"></canvas>
+      <!-- ── Staafdiagram ────────────────────────── -->
+      <div class="card" id="ret-chart-section">
+        <div class="ret-chart-header">
+          <span class="ret-chart-label" id="ret-chart-title">BTC Nodig Per 5-Jaarsperiode</span>
         </div>
-      </section>
-
-      <!-- ── Navigatiefonds Grafiek ──────────────────────── -->
-      <section id="v2-bridge-chart-section" class="hidden">
-        <h2>Navigatiefonds Projectie</h2>
-        <p>Je actieve kapitaal: opnames en de tactische strijd om de storm te overleven.</p>
-        <div class="chart-container" style="position: relative; height: 450px;">
-          <canvas id="v2-bridge-chart" aria-label="Navigatiefonds projectie over tijd"></canvas>
+        <div class="ret-chart-container" id="ret-chart"></div>
+        <div class="ret-age-axis" id="ret-age-axis"></div>
+        <div class="ret-phase-labels">
+          <span class="ret-storm-label">&larr; De Storm</span>
+          <span class="ret-forever-label">Eeuwig &rarr;</span>
         </div>
-      </section>
+      </div>
 
-      <!-- ── Eeuwige Helft Grafiek ────────────────────── -->
-      <section id="v2-forever-chart-section" class="hidden">
-        <h2>Eeuwige Helft Projectie</h2>
-        <p>Je gereserveerd kapitaal: groeiend langs de machtswetcurve totdat je uitgaven een afrondingsfout worden.</p>
-        <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="v2-forever-chart" aria-label="Eeuwige Helft waarde vs jaarlijkse uitgaven"></canvas>
+      <!-- ── Samenvattingsblokken ────────────────────── -->
+      <div class="ret-summary" id="ret-summary">
+        <div class="ret-summary-box ret-storm-box">
+          <div class="ret-summary-icon">&#x1F30A;</div>
+          <div class="ret-summary-title">Jouw Storm</div>
+          <div class="ret-summary-number" id="ret-storm-btc">&mdash;</div>
+          <div class="ret-summary-fiat" id="ret-storm-fiat"></div>
+          <div class="ret-summary-detail" id="ret-storm-detail"></div>
+          <div class="ret-summary-sub">Dit is het moeilijke deel. Overleef dit.</div>
         </div>
-      </section>
-
-      <!-- ── Samenvattingskaarten ─────────────────────── -->
-      <section id="v2-results-section" class="hidden">
-        <h2>Pensioen Samenvatting</h2>
-        <div class="dashboard" id="v2-summary-cards"></div>
-      </section>
-
-      <!-- ── Vergelijkingssectie ──────────────────────── -->
-      <section id="v2-comparison-section" class="hidden">
-        <h2>Scenariovergelijking</h2>
-        <p>Hoe je Stormnavigatie plan standhoudt onder verschillende prijsscenario's.</p>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Scenario</th>
-                <th>Stormperiode</th>
-                <th>Fonds Overleeft</th>
-                <th>Minimale BTC</th>
-                <th>Gem. SWR</th>
-              </tr>
-            </thead>
-            <tbody id="v2-comparison-body"></tbody>
-          </table>
+        <div class="ret-summary-box ret-forever-box">
+          <div class="ret-summary-icon">&#x267E;&#xFE0F;</div>
+          <div class="ret-summary-title">Jouw Eeuwigheid</div>
+          <div class="ret-summary-number" id="ret-forever-btc">&mdash;</div>
+          <div class="ret-summary-fiat" id="ret-forever-fiat"></div>
+          <div class="ret-summary-detail" id="ret-forever-detail"></div>
+          <div class="ret-summary-sub">De machtswet doet de rest.</div>
         </div>
-      </section>
+      </div>
 
-      <!-- ── Jaar-voor-Jaar Tabel ────────────────────── -->
-      <section id="v2-table-section" class="hidden">
-        <h2>Jaar-voor-Jaar Overzicht</h2>
-        <div class="table-container">
-          <div class="weekly-table-wrapper" style="max-height: 500px;">
+      <!-- ── Geavanceerde Sectie ─────────────────── -->
+      <div class="ret-advanced-toggle">
+        <button class="toggle-btn" id="ret-advanced-btn">Toon Geavanceerde Analyse</button>
+      </div>
+
+      <div id="ret-advanced" class="hidden">
+        <!-- Jaar-voor-jaar tabel -->
+        <section id="ret-yearly-section">
+          <h2>Jaar-voor-Jaar Overzicht</h2>
+          <div class="table-container">
+            <div class="weekly-table-wrapper" style="max-height: 500px;">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Leeftijd</th>
+                    <th>Jaar</th>
+                    <th>BTC Prijs</th>
+                    <th>Jaarlijkse Uitgaven</th>
+                    <th>BTC Nodig</th>
+                    <th>Cumulatief BTC</th>
+                    <th>Fase</th>
+                  </tr>
+                </thead>
+                <tbody id="ret-yearly-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Scenariovergelijking -->
+        <section id="ret-scenario-section">
+          <h2>Scenariovergelijking</h2>
+          <p>Hoe je BTC-behoefte verandert onder verschillende prijsscenario's.</p>
+          <div class="table-container">
             <table>
               <thead>
                 <tr>
-                  <th>Jaar</th>
-                  <th>BTC Prijs</th>
-                  <th>Veelvoud</th>
-                  <th>SWR</th>
-                  <th>Opname</th>
-                  <th>BTC Verkocht</th>
-                  <th>Fonds BTC</th>
-                  <th>Fondswaarde</th>
-                  <th>Status</th>
+                  <th>Scenario</th>
+                  <th>Totaal BTC</th>
+                  <th>Storm BTC</th>
+                  <th>Stormjaren</th>
+                  <th>Nu met Pensioen?</th>
                 </tr>
               </thead>
-              <tbody id="v2-yearly-table-body"></tbody>
+              <tbody id="ret-scenario-body"></tbody>
             </table>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <!-- ── Kernpunt ───────────────────────────────── -->
-      <section id="v2-insight-section" class="hidden">
+      <!-- ── Kerninzicht ──────────────────────── -->
+      <section>
         <div class="info-box">
           <h4>Het Stormnavigatie Inzicht</h4>
-          <p id="v2-insight-text"></p>
-        </div>
-      </section>
-
-      <!-- ── Zij-aan-Zij Vergelijking ────────────────── -->
-      <section id="v2-sidebyside-section" class="hidden">
-        <h2>Vrijheid Nu vs. Eindresultaat</h2>
-        <p>Vergelijk nu met pensioen gaan met nog een paar jaar stapelen.</p>
-        <div id="v2-sidebyside-content"></div>
-      </section>
-
-      <!-- ── Monte Carlo Analyse ─────────────────────── -->
-      <section id="v2-montecarlo-section" class="hidden">
-        <h2>Monte Carlo Analyse</h2>
-        <p>200 willekeurige prijssimulaties rond de machtswettrend. Hoe vaak overleeft je Navigatiefonds de storm?</p>
-        <div id="v2-montecarlo-summary" style="margin-bottom: var(--spacing-md);"></div>
-        <div class="chart-container" style="position: relative; height: 400px;">
-          <canvas id="v2-montecarlo-chart" aria-label="Monte Carlo navigatiefonds overlevingskans banden"></canvas>
+          <p id="ret-insight">De machtswet betekent dat je BTC-behoefte in de loop der tijd keldert. Het eerste decennium is de storm &mdash; overleef die, en de rest van je leven kost bijna niets in Bitcoin-termen.</p>
         </div>
       </section>
 
@@ -296,7 +198,7 @@
       <div class="footer-content">
         <div class="footer-section">
           <h4>Methodologie</h4>
-          <p>Navigatiefonds: actieve onttrekking met dynamisch opnamepercentage (past aan 1%&ndash;6% op basis van prijs vs. machtswettrend). Eeuwige Helft: passieve groei langs machtswetcurve. Stormperiode: jaren totdat uitgaven onder het duurzame opnamepercentage (25% &times; verwacht rendement) van de Eeuwige waarde komen.</p>
+          <p>BTC nodig per jaar = inflatiegecorrigeerde jaarlijkse uitgaven / machtswet geprojecteerde prijs. Stormperiode eindigt wanneer je opnamepercentage onder 25% &times; verwacht rendement (de eeuwige SWR-drempel) daalt.</p>
         </div>
         <div class="footer-section">
           <h4>Disclaimer</h4>
@@ -309,321 +211,309 @@
     </div>
   </footer>
 
-  <!-- Paginaspecifieke stijlen -->
+  <!-- Page-specific styles -->
   <style>
-    .chart-container canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-    section {
-      position: relative;
-      z-index: 1;
-      margin-bottom: var(--spacing-xl);
-    }
-
-    .hidden { display: none; }
-
-    /* Modus Schakelaar */
-    .mode-toggle {
+    /* ── Input Strip ──────────────────────────── */
+    .ret-input-strip {
       display: flex;
-      justify-content: center;
-      gap: 0;
-      margin-bottom: var(--spacing-xl);
-      border: 2px solid var(--black);
-      border-radius: var(--border-radius);
-      overflow: hidden;
-      max-width: 400px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .mode-toggle .toggle-btn {
-      flex: 1;
-      padding: var(--spacing-sm) var(--spacing-lg);
-      border: none;
-      background: var(--white);
-      font-family: var(--font-family);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--gray);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .mode-toggle .toggle-btn.active {
-      background: var(--black);
-      color: var(--white);
-    }
-
-    .mode-toggle .toggle-btn:not(.active):hover {
-      background: var(--gray-light);
-    }
-
-    /* Invoer Raster */
-    .input-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: var(--spacing-md);
-      margin: var(--spacing-lg) 0;
+      flex-wrap: wrap;
     }
 
-    .input-group {
+    .ret-input-group {
       display: flex;
       flex-direction: column;
-      gap: var(--spacing-xs);
+      gap: 4px;
+      flex: 1;
+      min-width: 120px;
     }
 
-    .input-group label {
-      font-size: 0.875rem;
-      font-weight: 500;
+    .ret-input-group label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       color: var(--gray);
+      font-weight: 500;
     }
 
-    .input-group input[type="number"],
-    .input-group select {
-      padding: var(--spacing-xs) var(--spacing-sm);
+    .ret-input-group input,
+    .ret-input-group select {
+      padding: 8px 12px;
       border: 1px solid var(--gray-border);
       border-radius: var(--border-radius);
       font-family: var(--font-family);
-      font-size: 1rem;
+      font-size: 0.95rem;
+      font-weight: 500;
       background: var(--white);
     }
 
-    .input-group input:focus,
-    .input-group select:focus {
+    .ret-input-group input:focus,
+    .ret-input-group select:focus {
       outline: none;
       border-color: var(--orange);
     }
 
-    .slider-value {
-      font-size: 0.875rem;
+    /* ── Bar Chart ────────────────────────────── */
+    .ret-chart-header {
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ret-chart-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray);
       font-weight: 600;
-      color: var(--orange);
+    }
+
+    .ret-chart-container {
+      position: relative;
+      height: 280px;
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--gray-border);
+    }
+
+    .ret-bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100%;
+      justify-content: flex-end;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .ret-bar {
+      width: 100%;
+      border-radius: 4px 4px 0 0;
+      min-height: 1px;
+      transition: opacity 0.2s;
+    }
+
+    .ret-bar.storm {
+      background: linear-gradient(180deg, var(--orange), #e67e22);
+    }
+
+    .ret-bar.transition {
+      background: linear-gradient(180deg, #f1c40f, #e6a817);
+    }
+
+    .ret-bar.forever {
+      background: linear-gradient(180deg, var(--green), #00a844);
+    }
+
+    .ret-bar-wrapper:hover .ret-bar {
+      opacity: 0.75;
+    }
+
+    .ret-bar-label {
+      font-size: 0.7rem;
+      color: var(--black);
+      font-weight: 600;
+      margin-bottom: 4px;
       text-align: center;
     }
 
-    /* Verdeling Slider */
-    .split-section {
-      margin-top: var(--spacing-xl);
-      padding-top: var(--spacing-lg);
-      border-top: 1px solid var(--gray-border);
-    }
-
-    .split-slider-row {
-      display: flex;
-      align-items: center;
-      gap: var(--spacing-md);
-      margin-top: var(--spacing-md);
-    }
-
-    .split-slider-row input[type="range"] {
-      flex: 1;
-    }
-
-    .split-label {
-      font-size: 0.9375rem;
-      font-weight: 500;
-      white-space: nowrap;
-      min-width: 110px;
-    }
-
-    .split-label:last-child {
-      text-align: right;
-    }
-
-    /* Knoppen */
-    .calculate-btn {
-      display: inline-block;
-      padding: var(--spacing-sm) var(--spacing-xl);
-      border: none;
-      border-radius: var(--border-radius);
-      font-family: var(--font-family);
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-top: var(--spacing-md);
-      margin-right: var(--spacing-sm);
-    }
-
-    .calculate-btn:not(.secondary) {
-      background: var(--orange);
+    /* Tooltip */
+    .ret-tooltip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--black);
       color: var(--white);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 10;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
     }
 
-    .calculate-btn:not(.secondary):hover {
-      opacity: 0.9;
-      transform: translateY(-1px);
+    .ret-bar-wrapper:hover .ret-tooltip {
+      display: block;
     }
 
-    .calculate-btn.secondary {
-      background: var(--white);
-      color: var(--black);
+    .ret-tt-year { font-weight: 600; }
+    .ret-tt-row { color: #ccc; margin-top: 3px; }
+    .ret-tt-val { color: var(--orange); font-weight: 500; }
+
+    /* Age axis */
+    .ret-age-axis {
+      display: flex;
+      gap: 3px;
+      padding-top: 6px;
+    }
+
+    .ret-age-axis .ret-tick {
+      flex: 1;
+      text-align: center;
+      font-size: 0.65rem;
+      color: var(--gray);
+      font-weight: 600;
+    }
+
+    /* Phase labels */
+    .ret-phase-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .ret-storm-label { color: var(--orange); }
+    .ret-forever-label { color: var(--green); }
+
+    /* ── Summary Boxes ────────────────────────── */
+    .ret-summary {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+      margin: var(--spacing-lg) 0;
+    }
+
+    .ret-summary-box {
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
       border: 1px solid var(--gray-border);
     }
 
-    .calculate-btn.secondary:hover {
-      border-color: var(--orange);
-      color: var(--orange);
+    .ret-storm-box {
+      background: rgba(247, 147, 26, 0.04);
+      border-color: rgba(247, 147, 26, 0.2);
     }
 
-    .year-input-row {
-      display: flex;
-      gap: var(--spacing-xs);
-      align-items: stretch;
+    .ret-forever-box {
+      background: rgba(0, 200, 83, 0.04);
+      border-color: rgba(0, 200, 83, 0.2);
     }
 
-    .year-input-row input {
-      flex: 1;
-      min-width: 0;
+    .ret-summary-icon {
+      font-size: 1.4rem;
+      margin-bottom: 8px;
     }
 
-    .now-btn {
-      padding: 0 var(--spacing-sm);
-      border: 1px solid var(--orange);
-      border-radius: var(--border-radius);
-      background: rgba(247, 147, 26, 0.08);
-      color: var(--orange);
-      font-family: var(--font-family);
-      font-size: 0.8125rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    .now-btn:hover {
-      background: var(--orange);
-      color: var(--white);
-    }
-
-    .action-buttons {
-      display: flex;
-      gap: var(--spacing-sm);
-      margin-top: var(--spacing-md);
-      flex-wrap: wrap;
-    }
-
-    /* Statusbanner */
-    .status-banner {
-      display: flex;
-      align-items: flex-start;
-      gap: var(--spacing-md);
-      padding: var(--spacing-md) var(--spacing-lg);
-      border-radius: var(--border-radius);
-      margin-top: var(--spacing-lg);
-      border-left: 4px solid;
-      animation: statusFadeIn 0.3s ease-out;
-    }
-
-    @keyframes statusFadeIn {
-      from { opacity: 0; transform: translateY(-8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .status-banner.status-green {
-      background: rgba(0, 200, 83, 0.08);
-      border-left-color: var(--green);
-    }
-
-    .status-banner.status-amber {
-      background: rgba(247, 147, 26, 0.08);
-      border-left-color: var(--orange);
-    }
-
-    .status-banner.status-red {
-      background: rgba(255, 23, 68, 0.08);
-      border-left-color: var(--red);
-    }
-
-    .status-icon {
-      font-size: 2rem;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .status-content { flex: 1; min-width: 0; }
-
-    .status-headline {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: var(--black);
-      margin-bottom: var(--spacing-xs);
-    }
-
-    .status-detail {
-      font-size: 0.9375rem;
-      color: var(--gray);
-      line-height: 1.5;
-    }
-
-    /* Stormperiode */
-    .storm-summary {
-      background: var(--gray-light);
-      border-radius: var(--border-radius);
-      padding: var(--spacing-lg);
-    }
-
-    .storm-metrics-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: var(--spacing-md);
-    }
-
-    .storm-metric {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-
-    .storm-label {
-      font-size: 0.8125rem;
-      font-weight: 500;
-      color: var(--gray);
+    .ret-summary-title {
+      font-size: 0.75rem;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+      font-weight: 600;
     }
 
-    .storm-value {
-      font-size: 1.5rem;
+    .ret-storm-box .ret-summary-title { color: var(--orange); }
+    .ret-forever-box .ret-summary-title { color: var(--green); }
+
+    .ret-summary-number {
+      font-size: 2rem;
       font-weight: 700;
       color: var(--black);
+      line-height: 1.1;
     }
 
-    /* Tabel statussen */
-    .status-ok { color: var(--green); }
-    .status-ruin { color: var(--red); font-weight: 700; }
-    .status-sell { color: var(--gray); }
-    .status-borrow { color: #2196F3; font-weight: 600; }
-    .status-repay { color: #00C853; font-weight: 600; }
-
-    @media print {
-      .header, .footer, .nav, .hero, .disclaimer,
-      .calculate-btn, .action-buttons, .mode-toggle,
-      #v2-input-section { display: none !important; }
-      .hidden { display: block !important; }
-      body { background: white; }
-      .container { max-width: 100%; padding: 0; }
-      section { page-break-inside: avoid; margin-bottom: 1rem; }
-      .chart-container { height: 300px !important; }
+    .ret-summary-number span {
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--gray);
     }
 
+    .ret-summary-fiat {
+      font-size: 0.95rem;
+      color: var(--gray);
+      margin-top: 2px;
+    }
+
+    .ret-summary-detail {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-top: 6px;
+    }
+
+    .ret-summary-sub {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 4px;
+      font-style: italic;
+    }
+
+    /* ── Verdict ──────────────────────────────── */
+    .ret-verdict {
+      background: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ret-verdict-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--gray);
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .ret-verdict-text {
+      font-size: 1.1rem;
+      color: var(--black);
+    }
+
+    .ret-verdict-text .ret-highlight-green {
+      color: var(--green);
+      font-weight: 700;
+    }
+
+    .ret-verdict-text .ret-highlight-red {
+      color: var(--red);
+      font-weight: 700;
+    }
+
+    .ret-verdict-text .ret-btc {
+      color: var(--orange);
+      font-weight: 600;
+    }
+
+    /* ── Advanced Toggle ──────────────────────── */
+    .ret-advanced-toggle {
+      text-align: center;
+      margin: var(--spacing-lg) 0;
+    }
+
+    .hidden { display: none; }
+
+    /* ── Year-by-year status ──────────────────── */
+    .ret-phase-storm { color: var(--orange); font-weight: 600; }
+    .ret-phase-transition { color: #e6a817; font-weight: 600; }
+    .ret-phase-forever { color: var(--green); font-weight: 600; }
+
+    /* ── Responsive ───────────────────────────── */
     @media (max-width: 768px) {
-      .split-slider-row {
+      .ret-input-strip {
         flex-direction: column;
-        align-items: stretch;
       }
-      .split-label:last-child {
-        text-align: left;
+
+      .ret-input-group {
+        min-width: 100%;
       }
-      .mode-toggle {
-        max-width: 100%;
+
+      .ret-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .ret-chart-container {
+        height: 200px;
       }
     }
   </style>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../../js/powerlaw.js"></script>
   <script src="../../js/retirement.js"></script>

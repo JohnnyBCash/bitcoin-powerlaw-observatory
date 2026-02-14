@@ -15,7 +15,7 @@
     startMonth:       1,        // 1-12
     timeHorizonYears: 10,
     model:            'santostasi',
-    sigma:            0.3,
+    sigma:            0.2,
     scenarioMode:     'cyclical',
     initialK:         null
   };

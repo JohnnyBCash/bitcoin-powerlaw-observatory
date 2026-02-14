@@ -187,7 +187,7 @@ function populateProjectionTable() {
 // bandPrice = trend * 10^(k*sigma), so trend = targetPrice / 10^(k*sigma)
 // Then use the standard inverse formula to find the date for that trend value
 function milestoneDateForBand(targetPrice, model, k) {
-  const sigma = sigmaCache[model].sigma;
+  const sigma = PowerLaw.MODELS[model].sigma;  // canonical σ
   const adjustedTarget = targetPrice / Math.pow(10, k * sigma);
   return PowerLaw.milestoneDateForPrice(adjustedTarget, model);
 }
@@ -220,7 +220,7 @@ function populateMilestoneTable() {
 // Initialize projection chart
 function initProjectionChart() {
   const ctx = document.getElementById('projection-chart').getContext('2d');
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ for band lines
 
   const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
 
@@ -504,7 +504,7 @@ function setupControls() {
 
 // Rebuild chart with current settings
 function rebuildChart() {
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ
   const chartData = prepareProjectionData(currentModel, sigma, projectionYears);
 
   if (projectionChart) {
@@ -517,7 +517,7 @@ function rebuildChart() {
 function updateSliderDisplay() {
   const slider = document.getElementById('date-slider');
   const years = parseFloat(slider.value);
-  const sigma = sigmaCache[currentModel].sigma;
+  const sigma = PowerLaw.MODELS[currentModel].sigma;  // canonical σ
 
   const futureDate = new Date();
   futureDate.setFullYear(futureDate.getFullYear() + Math.floor(years));

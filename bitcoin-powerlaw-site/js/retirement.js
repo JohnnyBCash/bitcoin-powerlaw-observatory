@@ -15,7 +15,7 @@
     timeHorizonYears: 30,
     m2GrowthRate: 0.065,       // 6.5% annual M2 inflation
     model: 'santostasi',
-    sigma: 0.3,                // will be recalculated from data
+    sigma: 0.2,                // canonical log10 volatility (Santostasi/Perrenod)
     // Loan parameters
     useLoans: false,
     loanLTV: 0.40,             // 40% loan-to-value

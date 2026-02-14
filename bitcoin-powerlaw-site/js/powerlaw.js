@@ -8,9 +8,17 @@ const MODELS = {
     name: 'Santostasi',
     beta: 5.688,
     logA: -16.493,
+    sigma: 0.2,
     useYears: false
   }
 };
+
+// Get the model's canonical sigma (log10 volatility)
+function modelSigma(model) {
+  const params = MODELS[model];
+  if (!params) throw new Error(`Unknown model: ${model}`);
+  return params.sigma;
+}
 
 // Calculate days since genesis
 function daysSinceGenesis(date = new Date()) {
@@ -130,6 +138,7 @@ window.PowerLaw = {
   multiplier,
   valuationLabel,
   calculateSigma,
+  modelSigma,
   bandPrice,
   formatPrice,
   formatMultiplier,
