@@ -43,6 +43,12 @@
         <p class="ret-subtle-disclaimer">Educational tool based on power law models. Not financial advice.</p>
       </section>
 
+      <!-- ── Intro Text ──────────────────────────── -->
+      <div class="ret-intro">
+        <p class="ret-intro-main">Bitcoin's power law means a small stack today can fund a lifetime. The catch: the first 10 years eat most of it. After that, the math takes care of itself. This calculator shows you exactly where the line is.</p>
+        <p class="ret-intro-sub">Enter your age, what you spend per year, and how much Bitcoin you have. The chart shows how much you need &mdash; and when the hard part ends.</p>
+      </div>
+
       <!-- ── Inputs ─────────────────────────────── -->
       <div class="card" id="ret-inputs">
         <div class="ret-input-strip">
@@ -223,6 +229,27 @@
       color: var(--gray);
       margin-top: 4px;
       font-style: italic;
+    }
+
+    /* ── Intro Text ──────────────────────────── */
+    .ret-intro {
+      max-width: 640px;
+      margin: 24px auto;
+      text-align: center;
+    }
+
+    .ret-intro-main {
+      color: #444;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin: 0 0 12px 0;
+    }
+
+    .ret-intro-sub {
+      color: #888;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0;
     }
 
     /* ── Input Strip ──────────────────────────── */

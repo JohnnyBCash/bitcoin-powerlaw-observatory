@@ -43,6 +43,12 @@
         <p class="ret-subtle-disclaimer">Educatief hulpmiddel gebaseerd op machtswetmodellen. Geen financieel advies.</p>
       </section>
 
+      <!-- ── Introtekst ──────────────────────────── -->
+      <div class="ret-intro">
+        <p class="ret-intro-main">De machtswet van Bitcoin betekent dat een kleine stack vandaag een heel leven kan financieren. Het addertje: de eerste 10 jaar vreten het meeste op. Daarna doet de wiskunde de rest. Deze rekentool laat precies zien waar de grens ligt.</p>
+        <p class="ret-intro-sub">Vul je leeftijd in, wat je per jaar uitgeeft, en hoeveel Bitcoin je hebt. De grafiek toont hoeveel je nodig hebt &mdash; en wanneer het moeilijke deel voorbij is.</p>
+      </div>
+
       <!-- ── Invoer ─────────────────────────────── -->
       <div class="card" id="ret-inputs">
         <div class="ret-input-strip">
@@ -223,6 +229,27 @@
       color: var(--gray);
       margin-top: 4px;
       font-style: italic;
+    }
+
+    /* ── Intro Text ──────────────────────────── */
+    .ret-intro {
+      max-width: 640px;
+      margin: 24px auto;
+      text-align: center;
+    }
+
+    .ret-intro-main {
+      color: #444;
+      font-size: 1rem;
+      line-height: 1.6;
+      margin: 0 0 12px 0;
+    }
+
+    .ret-intro-sub {
+      color: #888;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      margin: 0;
     }
 
     /* ── Input Strip ──────────────────────────── */
