@@ -345,18 +345,12 @@
     if (!tbody) return;
     tbody.textContent = '';
 
-    var scenarios = [
-      { label: 'Smooth Trend', mode: 'smooth_trend' },
-      { label: 'Bear (\u22121\u03c3)', mode: 'smooth_bear' },
-      { label: 'Deep Bear (\u22122\u03c3)', mode: 'smooth_deep_bear' },
-      { label: 'Cyclical (\u00b11\u03c3)', mode: 'cyclical' },
-      { label: 'Bear Bias Cycles', mode: 'cyclical_bear' }
-    ];
+    var scenarios = PowerLaw.SCENARIO_MODES;
 
     scenarios.forEach(function(s) {
       var p = {};
       Object.keys(params).forEach(function(k) { p[k] = params[k]; });
-      p.scenarioMode = s.mode;
+      p.scenarioMode = s.id;
       var result = V2.computeLifetimeBTC(p);
       if (!result) return;
 

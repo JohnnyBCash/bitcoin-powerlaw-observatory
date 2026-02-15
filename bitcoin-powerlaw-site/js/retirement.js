@@ -15,7 +15,7 @@
     timeHorizonYears: 30,
     m2GrowthRate: 0.065,       // 6.5% annual M2 inflation
     model: 'santostasi',
-    sigma: 0.2,                // canonical log10 volatility (Santostasi/Perrenod)
+    sigma: PL.MODELS['santostasi'].sigma,  // read from central config
     // Loan parameters
     useLoans: false,
     loanLTV: 0.40,             // 40% loan-to-value
@@ -65,94 +65,20 @@
   }
 
 
-  // ── Price Scenario Engine ───────────────────────────────────
-  // Returns simulated BTC price for a given date and scenario
-  // sigma_k: 0 = trend, -1 = bear (1σ below), -2 = deep bear
+  // ── Scenario Engine (delegates to centralized PowerLaw) ─────
+  // These wrappers preserve the window.Retirement API surface so
+  // all existing callers (dca.js, equity.js, etc.) work unchanged.
   function scenarioPrice(model, date, sigma, sigmaK) {
-    const trend = PL.trendPrice(model, date);
-    return trend * Math.pow(10, sigmaK * sigma);
+    return PL.scenarioPrice(model, date, sigma, sigmaK);
   }
-
-  // ── Cyclical Price Model ──────────────────────────────────
-  // Dampened sine wave with lengthening cycle periods
-  // Returns sigmaK between -1 and +1 for a given year offset
-  function cyclicalSigmaK(yearsFromStart, options = {}) {
-    const {
-      T_base = 4.0,     // initial cycle length (years)
-      T_growth = 0.3,   // each cycle grows by this many years
-      damping = 0.02,   // amplitude decay rate per year
-      bearBias = 0,      // shift wave down (0.309 → 60% below trend)
-      amplitude = 1.0,
-      initialK = null    // initial sigmaK at t=0 (null → use default -amplitude)
-    } = options;
-
-    // Compute phase offset so the cycle starts at the given sigmaK
-    let phaseOffset = -Math.PI / 2; // default: start at -1 (trough)
-    if (initialK !== null) {
-      // Clamp initialK to [-1, 1] then solve: sin(phaseOffset) = initialK / amplitude
-      const clamped = Math.max(-1, Math.min(1, initialK / amplitude));
-      phaseOffset = Math.asin(clamped);
-    }
-
-    if (yearsFromStart <= 0) {
-      const val = Math.sin(phaseOffset);
-      return Math.max(-1, Math.min(1, amplitude * val - bearBias));
-    }
-
-    // Walk through cycles via phase accumulation
-    let elapsed = 0;
-    let cycleIndex = 0;
-
-    while (true) {
-      const period = T_base + cycleIndex * T_growth;
-      if (elapsed + period > yearsFromStart) {
-        // We're inside this cycle
-        const positionInCycle = (yearsFromStart - elapsed) / period; // 0..1
-        const phase = positionInCycle * 2 * Math.PI + phaseOffset;
-
-        let sineVal = Math.sin(phase);
-
-        // Apply bear bias (shifts wave downward)
-        sineVal -= bearBias;
-
-        // Clamp to [-1, 1]
-        sineVal = Math.max(-1, Math.min(1, sineVal));
-
-        // Dampen amplitude over time
-        const dampFactor = Math.exp(-damping * yearsFromStart);
-
-        return amplitude * dampFactor * sineVal;
-      }
-      elapsed += period;
-      cycleIndex++;
-    }
+  function cyclicalSigmaK(yearsFromStart, options) {
+    return PL.cyclicalSigmaK(yearsFromStart, options);
   }
-
-  // Resolve the effective sigmaK for a given year based on scenario mode
-  // initialK: optional starting sigmaK derived from current market price
   function resolveScenarioK(scenarioMode, yearIndex, initialK) {
-    switch (scenarioMode) {
-      case 'smooth_trend':      return 0;
-      case 'smooth_bear':       return -1;
-      case 'smooth_deep_bear':  return -2;
-      case 'cyclical':
-        return cyclicalSigmaK(yearIndex, { bearBias: 0, initialK: initialK != null ? initialK : null });
-      case 'cyclical_bear':
-        return cyclicalSigmaK(yearIndex, { bearBias: 0.309, initialK: initialK != null ? initialK : null });
-      default:
-        return 0;
-    }
+    return PL.resolveScenarioK(scenarioMode, yearIndex, initialK);
   }
-
   function scenarioLabel(mode) {
-    const labels = {
-      'smooth_trend': 'Smooth Trend',
-      'smooth_bear': 'Bear (flat −1σ)',
-      'smooth_deep_bear': 'Deep Bear (flat −2σ)',
-      'cyclical': 'Cyclical (±1σ)',
-      'cyclical_bear': 'Bear Bias Cycles'
-    };
-    return labels[mode] || mode;
+    return PL.scenarioLabel(mode);
   }
 
   // ── Withdrawal Simulation: Sell-Only Mode ───────────────────
@@ -406,16 +332,10 @@
   // ── Comparison: Loans vs No Loans ───────────────────────────
   // Run both modes across all scenarios and compare required stacks
   function compareStrategies(baseParams) {
-    const scenarios = [
-      { label: 'Smooth Trend', mode: 'smooth_trend' },
-      { label: 'Bear (flat −1σ)', mode: 'smooth_bear' },
-      { label: 'Deep Bear (flat −2σ)', mode: 'smooth_deep_bear' },
-      { label: 'Cyclical (±1σ)', mode: 'cyclical' },
-      { label: 'Bear Bias Cycles', mode: 'cyclical_bear' }
-    ];
+    const scenarios = PL.SCENARIO_MODES;
 
     const comparison = scenarios.map(s => {
-      const p = { ...baseParams, scenarioMode: s.mode };
+      const p = { ...baseParams, scenarioMode: s.id };
 
       const sellMin = findMinimumStack(p, false);
       const loanMin = findMinimumStack(p, true);
@@ -428,7 +348,7 @@
 
       return {
         scenario: s.label,
-        mode: s.mode,
+        mode: s.id,
         sellOnly: {
           minStack: sellMin.minStack,
           simulation: sellSim
@@ -473,13 +393,8 @@
   }
 
 
-  // ── Current Market Position ───────────────────────────────────
-  // Compute sigmaK from a live BTC price: how many σ above/below trend
   function currentSigmaK(model, sigma, livePrice) {
-    const trend = PL.trendPrice(model, new Date());
-    if (!trend || trend <= 0 || !livePrice || livePrice <= 0) return 0;
-    const logResidual = Math.log10(livePrice) - Math.log10(trend);
-    return logResidual / sigma;  // e.g. +0.5 means half a σ above trend
+    return PL.currentSigmaK(model, sigma, livePrice);
   }
 
   // ── Export ───────────────────────────────────────────────────
