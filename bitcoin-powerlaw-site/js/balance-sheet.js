@@ -17,7 +17,7 @@
     timeHorizonYears:   10,
 
     model:              'santostasi',
-    sigma:              0.2,
+    sigma:              PL.MODELS['santostasi'].sigma,
     scenarioMode:       'cyclical',
     initialK:           null
   };
@@ -241,16 +241,16 @@
   // ── Scenario comparison ───────────────────────────────────
 
   function compareScenarios(params, livePriceUSD) {
-    const modes = ['smooth_trend', 'smooth_bear', 'smooth_deep_bear', 'cyclical', 'cyclical_bear'];
-    return modes.map(mode => {
-      const p = Object.assign({}, params, { scenarioMode: mode });
+    const modes = PL.SCENARIO_MODES;
+    return modes.map(s => {
+      const p = Object.assign({}, params, { scenarioMode: s.id });
       const result     = simulateTreasury(p, livePriceUSD);
       const summary    = treasurySummary(result);
       const margin     = calculateMarginImpact(result);
       const resilience = calculateResilienceBuffer(result);
       return {
-        scenarioMode: mode,
-        label:        R.scenarioLabel(mode),
+        scenarioMode: s.id,
+        label:        s.label,
         summary,
         marginImpact: margin,
         resilience,

@@ -31,7 +31,7 @@
     retirementYear: 2030,
     maxProjectionYears: 50,       // max years to project forward
     model: 'santostasi',
-    sigma: 0.2,
+    sigma: PL.MODELS['santostasi'].sigma,
     scenarioMode: 'cyclical',
 
     // Dynamic SWR thresholds (for Navigation Fund active drawdown)
@@ -627,16 +627,10 @@
 
   // ── Compare All Scenarios ──────────────────────────────────
   function compareScenarios(baseParams) {
-    const scenarios = [
-      { label: 'Smooth Trend', mode: 'smooth_trend' },
-      { label: 'Bear (flat −1σ)', mode: 'smooth_bear' },
-      { label: 'Deep Bear (flat −2σ)', mode: 'smooth_deep_bear' },
-      { label: 'Cyclical (±1σ)', mode: 'cyclical' },
-      { label: 'Bear Bias Cycles', mode: 'cyclical_bear' }
-    ];
+    const scenarios = PL.SCENARIO_MODES;
 
     return scenarios.map(s => {
-      const p = { ...baseParams, scenarioMode: s.mode };
+      const p = { ...baseParams, scenarioMode: s.id };
       const storm = computeStormPeriod(p);
       const bridge = simulateBridge(p);
       const summary = bridgeSummary(bridge);
@@ -644,7 +638,7 @@
 
       return {
         scenario: s.label,
-        mode: s.mode,
+        mode: s.id,
         stormYears: storm.stormYears,
         bridgeSurvives: bridge.bridgeSurvivesStorm,
         ruinYear: bridge.ruinYear,

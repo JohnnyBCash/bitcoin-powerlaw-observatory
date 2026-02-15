@@ -343,13 +343,16 @@
     if (!tbody) return;
     tbody.textContent = '';
 
-    var scenarios = [
-      { label: 'Vlakke Trend', mode: 'smooth_trend' },
-      { label: 'Bear (\u22121\u03c3)', mode: 'smooth_bear' },
-      { label: 'Diepe Bear (\u22122\u03c3)', mode: 'smooth_deep_bear' },
-      { label: 'Cyclisch (\u00b11\u03c3)', mode: 'cyclical' },
-      { label: 'Bear Bias Cycli', mode: 'cyclical_bear' }
-    ];
+    var nlLabels = {
+      'smooth_trend': 'Vlakke Trend',
+      'smooth_bear': 'Bear (\u22121\u03c3)',
+      'smooth_deep_bear': 'Diepe Bear (\u22122\u03c3)',
+      'cyclical': 'Cyclisch (\u00b11\u03c3)',
+      'cyclical_bear': 'Bear Bias Cycli'
+    };
+    var scenarios = PowerLaw.SCENARIO_MODES.map(function(s) {
+      return { label: nlLabels[s.id] || s.label, mode: s.id };
+    });
 
     scenarios.forEach(function(s) {
       var p = {};

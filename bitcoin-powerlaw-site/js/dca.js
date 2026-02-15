@@ -15,7 +15,7 @@
     startMonth:       1,        // 1-12
     timeHorizonYears: 10,
     model:            'santostasi',
-    sigma:            0.2,
+    sigma:            PL.MODELS['santostasi'].sigma,
     scenarioMode:     'cyclical',
     initialK:         null
   };
