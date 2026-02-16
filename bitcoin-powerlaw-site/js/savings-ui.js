@@ -1,6 +1,6 @@
-// ── DCA Rekentool — UI Handler (NL) ──────────────────────────────────
-// Spiegelt retirement-ui.js IIFE-patroon.
-// Afhankelijk van: window.PowerLaw, window.Retirement, window.DCA
+// ── DCA Calculator — UI Handler ──────────────────────────────────
+// Mirrors retirement-ui.js IIFE pattern.
+// Depends on: window.PowerLaw, window.Retirement, window.DCA
 (function () {
   'use strict';
 
@@ -15,25 +15,13 @@
   let historicalData    = [];
   let calculatedSigma   = 0.3;
   let livePrice         = null;
-  let showAllMonths     = false;    // tabelwisselstatus
-  let lastResult        = null;     // gecachet voor tabelwissel
+  let showAllMonths     = false;    // table toggle state
+  let lastResult        = null;     // cached for table toggle
+  let debounceTimer     = null;
 
+  const STORAGE_KEY = 'btcSavings_settings';
 
-  const STORAGE_KEY = 'btcDCA_settings_nl';
-
-  // ── Scenario Labels (NL) ────────────────────────────────────────
-  function scenarioLabelNL(mode) {
-    const labels = {
-      'smooth_trend': 'Vlakke Trend',
-      'smooth_bear': 'Bear (\u22121\u03C3)',
-      'smooth_deep_bear': 'Diepe Bear (\u22122\u03C3)',
-      'cyclical': 'Cyclisch (\u00B11\u03C3)',
-      'cyclical_bear': 'Bear Bias'
-    };
-    return labels[mode] || mode;
-  }
-
-  // ── Valuta Ondersteuning ────────────────────────────────────────
+  // ── Currency Support ──────────────────────────────────────────
   let currency = 'USD';
   let eurRate  = null;
 
@@ -48,7 +36,7 @@
     const sign = usd < 0 ? '-' : '';
     if (val >= 1e9) return sign + sym + (val / 1e9).toFixed(2) + 'B';
     if (val >= 1e6) return sign + sym + (val / 1e6).toFixed(2) + 'M';
-    if (val >= 1e3) return sign + sym + Math.round(val).toLocaleString('nl-NL');
+    if (val >= 1e3) return sign + sym + Math.round(val).toLocaleString('en-US');
     if (val >= 1)   return sign + sym + val.toFixed(2);
     return sign + sym + val.toFixed(4);
   }
@@ -62,7 +50,7 @@
         if (data.bitcoin.usd && data.bitcoin.eur) eurRate = data.bitcoin.eur / data.bitcoin.usd;
       }
     } catch (e) {
-      console.warn('Live data ophalen mislukt, fallback gebruikt', e);
+      console.warn('Live data fetch failed, using fallback', e);
       eurRate = 0.92;
     }
   }
@@ -72,7 +60,7 @@
   const show = id => { const el = $(id); if (el) el.classList.remove('hidden'); };
   const hide = id => { const el = $(id); if (el) el.classList.add('hidden'); };
 
-  // ── Gebruikersinvoer Verzamelen ─────────────────────────────────
+  // ── Gather User Inputs ────────────────────────────────────────
   function getParams() {
     const scenarioMode = $('dca-scenario').value;
     const startYear    = parseInt($('dca-start-year').value) || new Date().getFullYear();
@@ -96,7 +84,7 @@
     };
   }
 
-  // ── Initialisatie ───────────────────────────────────────────────
+  // ── Initialisation ────────────────────────────────────────────
   async function init() {
     await loadHistoricalData();
     fetchLiveData();
@@ -105,21 +93,23 @@
     setupCurrencyToggle();
     setupStartNow();
     setupButtons();
+    setupInputListeners();
+    scheduleCalculation();
   }
 
   async function loadHistoricalData() {
     try {
-      const response = await fetch('../../datasets/btc_historical.json');
+      const response = await fetch('../datasets/btc_historical.json');
       historicalData = await response.json();
       const sigmaData = PL.calculateSigma(historicalData, currentModel);
       calculatedSigma = sigmaData.sigma;
     } catch (e) {
-      console.warn('Historische data laden mislukt:', e);
+      console.warn('Failed to load historical data:', e);
     }
   }
 
   function setDefaultMonth() {
-    // Standaard startmaand op huidige maand als niet al ingesteld door opgeslagen instellingen
+    // Default start month to current month if not already set by saved settings
     const sel = $('dca-start-month');
     if (sel && !localStorage.getItem(STORAGE_KEY)) {
       sel.value = new Date().getMonth() + 1;
@@ -150,24 +140,45 @@
     });
   }
 
+  function scheduleCalculation() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      runCalculation();
+      // Auto-run comparison if both strategies have amounts
+      var lump = parseFloat($('dca-lump-sum').value) || 0;
+      var monthly = parseFloat($('dca-monthly').value) || 0;
+      if (lump > 0 && monthly > 0) {
+        runComparison();
+      }
+    }, 150);
+  }
+
+  function setupInputListeners() {
+    var inputIds = ['dca-lump-sum', 'dca-monthly', 'dca-currency', 'dca-start-year', 'dca-start-month', 'dca-horizon', 'dca-scenario'];
+    inputIds.forEach(function(id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', scheduleCalculation);
+      el.addEventListener('change', scheduleCalculation);
+    });
+  }
+
   function setupButtons() {
-    $('dca-calculate-btn').addEventListener('click', runCalculation);
-    $('dca-compare-btn').addEventListener('click', runComparison);
     $('dca-export-pdf-btn').addEventListener('click', exportPDF);
     $('dca-reset-btn').addEventListener('click', resetDefaults);
 
-    // Tabelwissel: toon alle maanden vs jaarlijks overzicht
+    // Table toggle: show all months vs yearly summary
     const toggleBtn = $('dca-table-toggle-btn');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {
         showAllMonths = !showAllMonths;
-        toggleBtn.textContent = showAllMonths ? 'Toon Jaarlijks Overzicht' : 'Toon Alle Maanden';
+        toggleBtn.textContent = showAllMonths ? 'Show Yearly Summary' : 'Show All Months';
         if (lastResult) renderMonthlyTable(lastResult);
       });
     }
   }
 
-  // ── Instellingen Opslaan ────────────────────────────────────────
+  // ── Settings Persistence ──────────────────────────────────────
   function saveSettings() {
     const data = {
       version: 1,
@@ -183,7 +194,7 @@
       }
     };
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
-    catch (e) { console.warn('Instellingen opslaan mislukt:', e); }
+    catch (e) { console.warn('Failed to save settings:', e); }
   }
 
   function loadSettings() {
@@ -214,13 +225,13 @@
 
       return true;
     } catch (e) {
-      console.warn('Instellingen laden mislukt:', e);
+      console.warn('Failed to load settings:', e);
       return false;
     }
   }
 
   function resetDefaults() {
-    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* negeren */ }
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) { /* ignore */ }
 
     $('dca-lump-sum').value    = 10000;
     $('dca-monthly').value     = 500;
@@ -237,13 +248,13 @@
     });
   }
 
-  // ── Hoofdberekening ─────────────────────────────────────────────
+  // ── Main Calculation ──────────────────────────────────────────
   function runCalculation() {
     saveSettings();
     const params = getParams();
 
     if (params.lumpSumUSD <= 0 && params.monthlyDCAUSD <= 0) {
-      alert('Voer een eenmalig bedrag, een maandelijks DCA-bedrag, of beide in.');
+      alert('Please enter a lump sum amount, a monthly DCA amount, or both.');
       return;
     }
 
@@ -269,17 +280,17 @@
     $('dca-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ── Vergelijkingsmodus ──────────────────────────────────────────
+  // ── Comparison Mode ───────────────────────────────────────────
   function runComparison() {
     saveSettings();
     const params = getParams();
 
     if (params.lumpSumUSD <= 0 && params.monthlyDCAUSD <= 0) {
-      alert('Voer zowel een eenmalig bedrag als een maandelijks DCA-bedrag in om strategieen te vergelijken.');
+      alert('Please enter both a lump sum and a monthly DCA amount to compare strategies.');
       return;
     }
     if (params.lumpSumUSD <= 0 || params.monthlyDCAUSD <= 0) {
-      alert('Vergelijking vereist zowel een eenmalig bedrag ALS een maandelijks DCA-bedrag. Stel beide in om te vergelijken.');
+      alert('Comparison needs both a lump sum amount AND a monthly DCA amount. Set both to compare.');
       return;
     }
 
@@ -304,7 +315,7 @@
     $('dca-results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  // ── Render: Samenvattingskaarten ────────────────────────────────
+  // ── Render: Summary Cards ─────────────────────────────────────
   function renderSummaryCards(summary) {
     const container = $('dca-summary-cards');
     const roiColor  = summary.roiPct >= 0 ? 'var(--green)' : 'var(--red)';
@@ -312,38 +323,38 @@
 
     container.innerHTML = `
       <div class="card">
-        <div class="card-label">Totaal Ge\u00EFnvesteerd</div>
+        <div class="card-label">Total Invested</div>
         <div class="card-value">${fmtCurrency(summary.totalInvestedUSD)}</div>
-        <div class="card-sub">over ${summary.totalMonths} maanden</div>
+        <div class="card-sub">over ${summary.totalMonths} months</div>
       </div>
       <div class="card">
-        <div class="card-label">BTC Geaccumuleerd</div>
+        <div class="card-label">BTC Accumulated</div>
         <div class="card-value" style="color: var(--orange)">${summary.totalBTC.toFixed(6)} BTC</div>
-        <div class="card-sub">gem. kostprijs ${fmtCurrency(summary.avgCostBasis)}/BTC</div>
+        <div class="card-sub">avg cost ${fmtCurrency(summary.avgCostBasis)}/BTC</div>
       </div>
       <div class="card">
-        <div class="card-label">Portfoliowaarde</div>
+        <div class="card-label">Portfolio Value</div>
         <div class="card-value">${fmtCurrency(summary.finalValueUSD)}</div>
-        <div class="card-sub">bij ${fmtCurrency(summary.finalPrice)}/BTC</div>
+        <div class="card-sub">at ${fmtCurrency(summary.finalPrice)}/BTC</div>
       </div>
       <div class="card">
-        <div class="card-label">Totale Winst / Verlies</div>
+        <div class="card-label">Total Gain / Loss</div>
         <div class="card-value" style="color: ${gainColor}">${summary.gainUSD >= 0 ? '+' : ''}${fmtCurrency(summary.gainUSD)}</div>
-        <div class="card-sub">${summary.roiPct >= 0 ? '+' : ''}${summary.roiPct.toFixed(1)}% rendement</div>
+        <div class="card-sub">${summary.roiPct >= 0 ? '+' : ''}${summary.roiPct.toFixed(1)}% return</div>
       </div>
       <div class="card">
         <div class="card-label">ROI</div>
         <div class="card-value large" style="color: ${roiColor}">${summary.roiPct >= 0 ? '+' : ''}${summary.roiPct.toFixed(1)}%</div>
       </div>
       <div class="card">
-        <div class="card-label">Gem. Kostprijs</div>
+        <div class="card-label">Avg Cost Basis</div>
         <div class="card-value">${fmtCurrency(summary.avgCostBasis)}</div>
-        <div class="card-sub">${summary.costBasisVsFinal.toFixed(1)}x onder de eindprijs</div>
+        <div class="card-sub">${summary.costBasisVsFinal.toFixed(1)}x below final price</div>
       </div>
     `;
   }
 
-  // ── Render: Groeigrafiek ────────────────────────────────────────
+  // ── Render: Growth Chart ──────────────────────────────────────
   function renderGrowthChart(result) {
     const ctx = $('dca-growth-chart');
     if (growthChart) growthChart.destroy();
@@ -355,7 +366,7 @@
         labels: result.months.map(m => m.date),
         datasets: [
           {
-            label: 'Portfoliowaarde (' + currency + ')',
+            label: 'Portfolio Value (' + currency + ')',
             data: result.months.map(m => m.portfolioValueUSD * r),
             borderColor: '#00C853',
             backgroundColor: 'rgba(0, 200, 83, 0.1)',
@@ -365,7 +376,7 @@
             tension: 0.2
           },
           {
-            label: 'Totaal Ge\u00EFnvesteerd (' + currency + ')',
+            label: 'Total Invested (' + currency + ')',
             data: result.months.map(m => m.cumulativeInvestedUSD * r),
             borderColor: '#F7931A',
             backgroundColor: 'rgba(247, 147, 26, 0.1)',
@@ -386,9 +397,9 @@
             callbacks: {
               title: items => {
                 const d = new Date(items[0].parsed.x);
-                return d.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short' });
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
               },
-              label: item => item.dataset.label + ': ' + getCurrencySymbol() + Math.round(item.raw).toLocaleString('nl-NL')
+              label: item => item.dataset.label + ': ' + getCurrencySymbol() + Math.round(item.raw).toLocaleString()
             }
           }
         },
@@ -416,7 +427,7 @@
     });
   }
 
-  // ── Render: Accumulatiegrafiek ──────────────────────────────────
+  // ── Render: Accumulation Chart ────────────────────────────────
   function renderAccumulationChart(result) {
     const ctx = $('dca-accumulation-chart');
     if (accumulationChart) accumulationChart.destroy();
@@ -426,7 +437,7 @@
       data: {
         labels: result.months.map(m => m.date),
         datasets: [{
-          label: 'BTC Geaccumuleerd',
+          label: 'BTC Accumulated',
           data: result.months.map(m => m.cumulativeBTC),
           borderColor: '#F7931A',
           backgroundColor: 'rgba(247, 147, 26, 0.15)',
@@ -445,7 +456,7 @@
             callbacks: {
               title: items => {
                 const d = new Date(items[0].parsed.x);
-                return d.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short' });
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
               },
               label: item => item.raw.toFixed(6) + ' BTC'
             }
@@ -474,7 +485,7 @@
     });
   }
 
-  // ── Render: Maandelijkse Tabel ──────────────────────────────────
+  // ── Render: Monthly Table ─────────────────────────────────────
   function renderMonthlyTable(result) {
     const tbody = $('dca-monthly-table-body');
     tbody.innerHTML = '';
@@ -482,14 +493,14 @@
     const months = result.months;
     const horizon = result.params.timeHorizonYears;
 
-    // Voor lange horizonnen, standaard jaarlijkse samenvattingen
+    // For long horizons, default to yearly summaries
     if (!showAllMonths && horizon > 5) {
       renderYearlySummary(months, tbody);
     } else {
       months.forEach(m => {
         const tr = document.createElement('tr');
         const roiClass = m.roiPct >= 0 ? 'roi-positive' : 'roi-negative';
-        const dateStr = m.date.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short' });
+        const dateStr = m.date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
         tr.innerHTML =
           '<td>' + dateStr + '</td>' +
           '<td>' + fmtCurrency(m.price) + '</td>' +
@@ -505,7 +516,7 @@
   }
 
   function renderYearlySummary(months, tbody) {
-    // Groepeer per jaar, toon einde-jaar snapshot
+    // Group by year, show end-of-year snapshot
     let currentYear = null;
     let yearFiat = 0;
     let yearBTC  = 0;
@@ -515,7 +526,7 @@
       const isLast    = i === months.length - 1;
 
       if (isNewYear && currentYear !== null) {
-        // Render de samenvatting van het vorige jaar met de vorige maand
+        // Render the previous year's summary row using the previous month
         const prev = months[i - 1];
         appendYearRow(tbody, currentYear, yearFiat, yearBTC, prev);
         yearFiat = 0;
@@ -547,7 +558,7 @@
     tbody.appendChild(tr);
   }
 
-  // ── Render: Statusinzicht Banner ────────────────────────────────
+  // ── Render: Status Insight Banner ─────────────────────────────
   function renderStatusInsight(params, summary) {
     const banner   = $('dca-status-banner');
     const icon     = $('dca-status-icon');
@@ -555,88 +566,88 @@
     const detail   = $('dca-status-detail');
 
     banner.classList.remove('status-green', 'status-amber', 'hidden');
-    // Animatie opnieuw triggeren
+    // Re-trigger animation
     banner.style.animation = 'none';
-    banner.offsetHeight; // forceer reflow
+    banner.offsetHeight; // force reflow
     banner.style.animation = '';
 
     if (summary.roiPct >= 0) {
       banner.classList.add('status-green');
       icon.textContent = '\u2705';
-      headline.textContent = 'Je investering groeide ' + summary.roiPct.toFixed(0) + '%';
+      headline.textContent = 'Your investment grew ' + summary.roiPct.toFixed(0) + '%';
       detail.innerHTML =
-        '<strong>' + fmtCurrency(summary.totalInvestedUSD) + '</strong> ge\u00EFnvesteerd werd ' +
+        '<strong>' + fmtCurrency(summary.totalInvestedUSD) + '</strong> invested became ' +
         '<strong>' + fmtCurrency(summary.finalValueUSD) + '</strong>. ' +
-        'Je gemiddelde kostprijs van <strong>' + fmtCurrency(summary.avgCostBasis) + '</strong>/BTC ' +
-        'is ' + summary.costBasisVsFinal.toFixed(1) + '\u00D7 onder de eindprijs van ' +
+        'Your average cost basis of <strong>' + fmtCurrency(summary.avgCostBasis) + '</strong>/BTC ' +
+        'is ' + summary.costBasisVsFinal.toFixed(1) + '\u00D7 below the final price of ' +
         '<strong>' + fmtCurrency(summary.finalPrice) + '</strong>.';
     } else {
       banner.classList.add('status-amber');
       icon.textContent = '\u26A0\uFE0F';
-      headline.textContent = 'Nog steeds onder water aan het einde van de projectie';
+      headline.textContent = 'Still underwater at end of projection';
       detail.innerHTML =
-        'Onder het <strong>' + scenarioLabelNL(params.scenarioMode) + '</strong> scenario, ' +
-        'zou je DCA een verlies van <strong>' + Math.abs(summary.roiPct).toFixed(1) + '%</strong> tonen na ' +
-        summary.totalMonths + ' maanden. Overweeg een langere tijdshorizon \u2014 machtsweetrendementen verbeteren met de tijd.';
+        'Under the <strong>' + R.scenarioLabel(params.scenarioMode) + '</strong> scenario, ' +
+        'your DCA would show a <strong>' + Math.abs(summary.roiPct).toFixed(1) + '%</strong> loss after ' +
+        summary.totalMonths + ' months. Consider a longer time horizon \u2014 power law returns improve over time.';
     }
 
     show('dca-status-banner');
   }
 
-  // ── Render: Inzichttekst ────────────────────────────────────────
+  // ── Render: Insight Text ──────────────────────────────────────
   function renderInsightText(params, summary) {
     const el = $('dca-insight-text');
     if (!el) return;
 
-    const scenarioName = scenarioLabelNL(params.scenarioMode);
+    const scenarioName = R.scenarioLabel(params.scenarioMode);
     const lumpPart = params.lumpSumUSD > 0
-      ? 'een eenmalige investering van <strong>' + fmtCurrency(params.lumpSumUSD) + '</strong>' : '';
+      ? 'a <strong>' + fmtCurrency(params.lumpSumUSD) + '</strong> lump sum' : '';
     const dcaPart = params.monthlyDCAUSD > 0
-      ? '<strong>' + fmtCurrency(params.monthlyDCAUSD) + '</strong>/maand DCA' : '';
+      ? '<strong>' + fmtCurrency(params.monthlyDCAUSD) + '</strong>/month DCA' : '';
     const strategyText = lumpPart && dcaPart
       ? lumpPart + ' plus ' + dcaPart
       : lumpPart || dcaPart;
 
-    let text = 'Onder het <strong>' + scenarioName + '</strong> scenario, ' +
-      'accumuleert ' + strategyText + ' over <strong>' + params.timeHorizonYears + ' jaar</strong> ' +
-      '<strong>' + summary.totalBTC.toFixed(4) + ' BTC</strong>.';
+    let text = 'Under the <strong>' + scenarioName + '</strong> scenario, ' +
+      strategyText + ' over <strong>' + params.timeHorizonYears + ' years</strong> ' +
+      'accumulates <strong>' + summary.totalBTC.toFixed(4) + ' BTC</strong>.';
 
     if (summary.roiPct >= 100) {
-      text += ' Dat is een <strong>' + summary.roiPct.toFixed(0) + '% rendement</strong> \u2014 je geld is meer dan verdubbeld.';
+      text += ' That\u2019s a <strong>' + summary.roiPct.toFixed(0) + '% return</strong> \u2014 your money more than doubled.';
     } else if (summary.roiPct >= 0) {
-      text += ' Dat is een <strong>' + summary.roiPct.toFixed(0) + '% rendement</strong>.';
+      text += ' That\u2019s a <strong>' + summary.roiPct.toFixed(0) + '% return</strong>.';
     }
 
-    text += ' Het machtswetmodel suggereert dat de jaarlijkse rendementen van Bitcoin afnemen in de tijd, ' +
-      'maar vroege accumuleerders profiteren nog steeds van samengestelde groei op een langetermijntrend.';
+    text += ' The power law model suggests Bitcoin\u2019s annualised returns decrease over time, ' +
+      'but early accumulators still benefit from compounding on a long-term growth trend.';
 
     if (summary.costBasisVsFinal > 2) {
-      text += ' Je gemiddelde kostprijs van <strong>' + fmtCurrency(summary.avgCostBasis) + '</strong>/BTC ' +
-        'ligt ruim onder de verwachte eindprijs van <strong>' + fmtCurrency(summary.finalPrice) + '</strong>, ' +
-        'wat de kracht van accumuleren tijdens dips laat zien.';
+      text += ' Your average cost of <strong>' + fmtCurrency(summary.avgCostBasis) + '</strong>/BTC ' +
+        'is well below the projected final price of <strong>' + fmtCurrency(summary.finalPrice) + '</strong>, ' +
+        'showing the power of accumulating during dips.';
     }
 
     el.innerHTML = text;
   }
 
-  // ── Render: Vergelijkingsweergave ───────────────────────────────
+  // ── Render: Comparison View ───────────────────────────────────
   function renderComparisonView(comparison) {
     const { lumpOnly, dcaOnly, combined } = comparison;
     const lSum = D.simulationSummary(lumpOnly);
     const dSum = D.simulationSummary(dcaOnly);
     const cSum = D.simulationSummary(combined);
 
-    // Samenvattingskaarten tonen gecombineerde strategie
+    // Summary cards show combined strategy
     renderSummaryCards(cSum);
 
-    // Vergelijkingstabel
+    // Comparison table
     const tbody = $('dca-comparison-body');
     tbody.innerHTML = '';
 
     const strategies = [
-      { label: 'Alleen Eenmalig', s: lSum },
-      { label: 'Alleen DCA',      s: dSum },
-      { label: 'Gecombineerd',     s: cSum }
+      { label: 'Lump Sum Only', s: lSum },
+      { label: 'DCA Only',      s: dSum },
+      { label: 'Combined',      s: cSum }
     ];
 
     const bestROI = Math.max(...strategies.map(st => st.s.roiPct));
@@ -659,7 +670,7 @@
       tbody.appendChild(tr);
     });
 
-    // Vergelijkingsgrafiek: 3 portfoliowaardelinjen
+    // Comparison chart: 3 portfolio value lines
     renderComparisonChart(comparison);
   }
 
@@ -675,7 +686,7 @@
         labels: comparison.combined.months.map(m => m.date),
         datasets: [
           {
-            label: 'Gecombineerd (' + currency + ')',
+            label: 'Combined (' + currency + ')',
             data: comparison.combined.months.map(m => m.portfolioValueUSD * r),
             borderColor: '#00C853',
             borderWidth: 2.5,
@@ -683,7 +694,7 @@
             tension: 0.2
           },
           {
-            label: 'Alleen Eenmalig (' + currency + ')',
+            label: 'Lump Sum Only (' + currency + ')',
             data: comparison.lumpOnly.months.map(m => m.portfolioValueUSD * r),
             borderColor: '#F7931A',
             borderWidth: 2,
@@ -692,7 +703,7 @@
             tension: 0.2
           },
           {
-            label: 'Alleen DCA (' + currency + ')',
+            label: 'DCA Only (' + currency + ')',
             data: comparison.dcaOnly.months.map(m => m.portfolioValueUSD * r),
             borderColor: '#9C27B0',
             borderWidth: 2,
@@ -712,9 +723,9 @@
             callbacks: {
               title: items => {
                 const d = new Date(items[0].parsed.x);
-                return d.toLocaleDateString('nl-NL', { year: 'numeric', month: 'short' });
+                return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
               },
-              label: item => item.dataset.label + ': ' + getCurrencySymbol() + Math.round(item.raw).toLocaleString('nl-NL')
+              label: item => item.dataset.label + ': ' + getCurrencySymbol() + Math.round(item.raw).toLocaleString()
             }
           }
         },
@@ -742,16 +753,16 @@
     });
   }
 
-  // ── PDF Export (jsPDF directe tekening — compact) ───────────────
+  // ── PDF Export (jsPDF direct drawing — compact) ────────────────
   function exportPDF() {
     if (typeof jspdf === 'undefined' && typeof jsPDF === 'undefined' && typeof window.jspdf === 'undefined') {
-      alert('PDF-bibliotheek niet geladen. Controleer je verbinding en ververs de pagina.');
+      alert('PDF library not loaded. Please check your connection and refresh.');
       return;
     }
 
     const btn = $('dca-export-pdf-btn');
     const originalHTML = btn.innerHTML;
-    btn.innerHTML = '&#9203; Genereren\u2026';
+    btn.innerHTML = '&#9203; Generating\u2026';
     btn.disabled = true;
 
     try {
@@ -766,7 +777,7 @@
         return y;
       }
 
-      // Titel
+      // Title
       doc.setFillColor(247, 147, 26);
       doc.rect(M, y, pw, 0.5, 'F');
       y += 3;
@@ -776,24 +787,24 @@
       doc.setFontSize(6);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(120);
-      doc.text(new Date().toLocaleDateString('nl-NL', { year: 'numeric', month: 'short', day: 'numeric' }) + ' \u2014 Machtswet Observatorium', W - M, y, { align: 'right' });
+      doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) + ' \u2014 Power Law Observatory', W - M, y, { align: 'right' });
       doc.setTextColor(0);
       y += 3;
 
       // Parameters
       const params = getParams();
-      const scenarioName = scenarioLabelNL(params.scenarioMode);
+      const scenarioName = R.scenarioLabel(params.scenarioMode);
       doc.setFillColor(248, 248, 248);
       doc.rect(M, y - 1, pw, 5, 'F');
       doc.setFontSize(5.5);
 
       const pairs = [
-        ['Eenmalig:', fmtCurrency(params.lumpSumUSD)],
-        ['Maandelijks:', fmtCurrency(params.monthlyDCAUSD) + '/ma'],
+        ['Lump Sum:', fmtCurrency(params.lumpSumUSD)],
+        ['Monthly:', fmtCurrency(params.monthlyDCAUSD) + '/mo'],
         ['Start:', params.startYear + '/' + params.startMonth],
-        ['Horizon:', params.timeHorizonYears + 'jr'],
+        ['Horizon:', params.timeHorizonYears + 'yr'],
         ['Scenario:', scenarioName],
-        ['Valuta:', currency]
+        ['Currency:', currency]
       ];
       const pairW = pw / pairs.length;
       pairs.forEach((p, i) => {
@@ -821,7 +832,7 @@
       doc.setTextColor(0);
       y += 6;
 
-      // Grafieken naast elkaar
+      // Charts side by side
       const chartMaxH = 38;
       const growthCanvas = $('dca-growth-chart');
       const accumCanvas  = $('dca-accumulation-chart');
@@ -835,20 +846,20 @@
           const gImg = growthCanvas.toDataURL('image/png');
           const gH = Math.min(halfW * growthCanvas.height / growthCanvas.width, chartMaxH);
           doc.setFontSize(6); doc.setFont('helvetica', 'bold');
-          doc.text('Portfoliowaarde vs Ge\u00EFnvesteerd', M, y + 2);
+          doc.text('Portfolio Value vs Invested', M, y + 2);
           doc.addImage(gImg, 'PNG', M, y + 3, halfW, gH);
         } catch (e) {}
         try {
           const aImg = accumCanvas.toDataURL('image/png');
           const aH = Math.min(halfW * accumCanvas.height / accumCanvas.width, chartMaxH);
           doc.setFontSize(6); doc.setFont('helvetica', 'bold');
-          doc.text('BTC Accumulatie', M + halfW + 2, y + 2);
+          doc.text('BTC Accumulation', M + halfW + 2, y + 2);
           doc.addImage(aImg, 'PNG', M + halfW + 2, y + 3, halfW, aH);
         } catch (e) {}
         y += chartMaxH + 5;
       }
 
-      // Samenvattingskaarten rij
+      // Summary cards row
       const summaryCards = document.querySelectorAll('#dca-results-section .card');
       if (summaryCards.length > 0) {
         checkPage(8);
@@ -869,27 +880,27 @@
         y += 7;
       }
 
-      // Voettekst
+      // Footer
       checkPage(5);
       doc.setDrawColor(210);
       doc.line(M, y, W - M, y);
       y += 2;
       doc.setFontSize(5);
       doc.setTextColor(160);
-      doc.text('Geen financieel advies. Machtswetmodellen zijn educatieve projecties, geen garanties.', W / 2, y, { align: 'center' });
+      doc.text('Not financial advice. Power law models are educational projections, not guarantees.', W / 2, y, { align: 'center' });
 
-      const filename = 'btc_dca_' + params.timeHorizonYears + 'jr_' + new Date().toISOString().split('T')[0] + '.pdf';
+      const filename = 'btc_dca_' + params.timeHorizonYears + 'yr_' + new Date().toISOString().split('T')[0] + '.pdf';
       doc.save(filename);
     } catch (err) {
-      console.error('PDF genereren mislukt:', err);
-      alert('PDF genereren mislukt: ' + err.message);
+      console.error('PDF generation failed:', err);
+      alert('PDF generation failed: ' + err.message);
     }
 
     btn.innerHTML = originalHTML;
     btn.disabled = false;
   }
 
-  // ── Start ──────────────────────────────────────────────────────
+  // ── Start ─────────────────────────────────────────────────────
   init();
 
 })();

@@ -628,7 +628,7 @@ function generateGaussianCurve(mean, sigma, numPoints = 100) {
 function getBarColor(x, sigma) {
   if (x < -sigma) return 'rgba(0, 200, 83, 0.6)';      // Green - undervalued
   if (x > sigma) return 'rgba(255, 23, 68, 0.6)';      // Red - overvalued
-  return 'rgba(117, 117, 117, 0.5)';                    // Gray - fair value
+  return 'rgba(117, 117, 117, 0.5)';                    // Gray - trend value
 }
 
 // Calculate what percentile a value falls in

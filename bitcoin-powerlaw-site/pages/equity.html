@@ -21,7 +21,7 @@
         <a href="../index.html">Dashboard</a>
         <a href="history.html">History</a>
         <a href="future.html">Future</a>
-        <a href="dca.html">DCA</a>
+        <a href="savings.html">Savings</a>
         <a href="equity.html" class="active">Mortgage</a>
         <a href="balance-sheet.html">Balance Sheet</a>
         <a href="retirement.html">Retirement</a>
@@ -193,10 +193,7 @@
           </div>
         </div>
 
-        <button class="calculate-btn" id="eq-calculate-btn">Calculate Mortgage Plan</button>
-        <button class="calculate-btn secondary" id="eq-compare-btn">Compare All Scenarios</button>
-
-        <!-- Action buttons — shown after first calculation -->
+        <!-- Action buttons -->
         <div class="action-buttons hidden" id="eq-action-buttons">
           <button class="calculate-btn secondary" id="eq-export-pdf-btn">&#128196; Save as PDF</button>
           <button class="calculate-btn secondary" id="eq-reset-btn">&#8634; Reset Defaults</button>
@@ -213,7 +210,7 @@
       </div>
 
       <!-- ── Summary Cards ──────────────────────────────── -->
-      <section id="eq-results-section" class="hidden">
+      <section id="eq-results-section">
         <h2>Mortgage Loan Summary</h2>
         <div class="dashboard" id="eq-summary-cards">
           <!-- Populated by JS -->
@@ -287,9 +284,9 @@
       <section class="cross-links">
         <h3>Explore More Tools</h3>
         <div class="cross-links-grid">
-          <a href="dca.html" class="cross-link-card">
-            <strong>DCA Calculator</strong>
-            <span>Simulate dollar-cost averaging into Bitcoin over time</span>
+          <a href="savings.html" class="cross-link-card">
+            <strong>Savings Calculator</strong>
+            <span>Simulate saving into Bitcoin over time</span>
           </a>
           <a href="retirement.html" class="cross-link-card">
             <strong>Retirement Calculator</strong>

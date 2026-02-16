@@ -137,11 +137,11 @@
 
     // Linear interpolation in two segments
     if (multiple >= 1.0) {
-      // Between fair value (1.0) and high multiple
+      // Between trend value (1.0) and high multiple
       const t = (multiple - 1.0) / (swrHighMultiple - 1.0);
       return swrNormalRate + t * (swrHighRate - swrNormalRate);
     } else {
-      // Between low multiple and fair value (1.0)
+      // Between low multiple and trend value (1.0)
       const t = (multiple - swrLowMultiple) / (1.0 - swrLowMultiple);
       return swrLowRate + t * (swrNormalRate - swrLowRate);
     }

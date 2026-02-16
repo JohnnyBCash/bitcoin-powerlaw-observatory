@@ -21,7 +21,7 @@
         <a href="../index.html">Dashboard</a>
         <a href="history.html">History</a>
         <a href="future.html">Future</a>
-        <a href="dca.html">DCA</a>
+        <a href="savings.html">Savings</a>
         <a href="equity.html">Mortgage</a>
         <a href="balance-sheet.html" class="active">Balance Sheet</a>
         <a href="retirement.html">Retirement</a>
@@ -131,10 +131,7 @@
           </div>
         </div>
 
-        <button class="calculate-btn" id="bs-calculate-btn">Calculate Balance Sheet Impact</button>
-        <button class="calculate-btn secondary" id="bs-compare-btn">Compare All Scenarios</button>
-
-        <!-- Action buttons — shown after first calculation -->
+        <!-- Action buttons -->
         <div class="action-buttons hidden" id="bs-action-buttons">
           <button class="calculate-btn secondary" id="bs-export-pdf-btn">&#128196; Save as PDF</button>
           <button class="calculate-btn secondary" id="bs-reset-btn">&#8634; Reset Defaults</button>
@@ -151,7 +148,7 @@
       </div>
 
       <!-- ── Summary Cards ──────────────────────────────── -->
-      <section id="bs-results-section" class="hidden">
+      <section id="bs-results-section">
         <h2>Treasury Summary</h2>
         <div class="dashboard" id="bs-summary-cards">
           <!-- Populated by JS -->

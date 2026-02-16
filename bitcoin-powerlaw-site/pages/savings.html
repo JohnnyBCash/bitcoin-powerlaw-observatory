@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DCA Calculator - Bitcoin Power Law Observatory</title>
+  <title>Savings Calculator - Bitcoin Power Law Observatory</title>
   <meta name="description" content="Simulate dollar-cost averaging and lump sum Bitcoin purchases using power law price projections. See your stack and portfolio grow over time.">
   <link rel="stylesheet" href="../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,16 +21,16 @@
         <a href="../index.html">Dashboard</a>
         <a href="history.html">History</a>
         <a href="future.html">Future</a>
-        <a href="dca.html" class="active">DCA</a>
+        <a href="savings.html" class="active">Savings</a>
         <a href="equity.html">Mortgage</a>
         <a href="balance-sheet.html">Balance Sheet</a>
         <a href="retirement.html">Retirement</a>
         <a href="about.html">About</a>
       </nav>
       <div class="lang-toggle">
-        <a href="dca.html" class="lang-link active">EN</a>
+        <a href="savings.html" class="lang-link active">EN</a>
         <span class="lang-sep">|</span>
-        <a href="../nl/pages/dca.html" class="lang-link">NL</a>
+        <a href="../nl/pages/sparen.html" class="lang-link">NL</a>
       </div>
     </div>
   </header>
@@ -38,8 +38,8 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>DCA Calculator</h1>
-        <p>What happens when you buy Bitcoin &mdash; as a lump sum, a monthly DCA, or both? See how your stack and portfolio value grow under power law projections.</p>
+        <h1>Savings Calculator</h1>
+        <p>What happens when you buy Bitcoin &mdash; as a lump sum, a monthly savings, or both? See how your stack and portfolio value grow under power law projections.</p>
       </section>
 
       <div class="disclaimer">
@@ -48,7 +48,7 @@
 
       <!-- ── Input Section ──────────────────────────────── -->
       <div class="card" id="dca-input-section">
-        <h3>Your DCA Parameters</h3>
+        <h3>Your Savings Plan</h3>
 
         <div class="input-grid">
           <div class="input-group">
@@ -58,7 +58,7 @@
           </div>
 
           <div class="input-group">
-            <label for="dca-monthly">Monthly DCA (<span id="dca-currency-label2">USD</span>)</label>
+            <label for="dca-monthly">Monthly Savings (<span id="dca-currency-label2">USD</span>)</label>
             <input type="number" id="dca-monthly" value="500" min="0" step="50">
             <span class="input-hint">Recurring monthly buy (0 = none)</span>
           </div>
@@ -114,10 +114,7 @@
           </div>
         </div>
 
-        <button class="calculate-btn" id="dca-calculate-btn">Calculate DCA</button>
-        <button class="calculate-btn secondary" id="dca-compare-btn">Compare: Lump Sum vs DCA vs Combined</button>
-
-        <!-- Action buttons — shown after first calculation -->
+        <!-- Action buttons -->
         <div class="action-buttons hidden" id="dca-action-buttons">
           <button class="calculate-btn secondary" id="dca-export-pdf-btn">&#128196; Save as PDF</button>
           <button class="calculate-btn secondary" id="dca-reset-btn">&#8634; Reset Defaults</button>
@@ -134,8 +131,8 @@
       </div>
 
       <!-- ── Summary Cards ──────────────────────────────── -->
-      <section id="dca-results-section" class="hidden">
-        <h2>DCA Summary</h2>
+      <section id="dca-results-section">
+        <h2>Savings Summary</h2>
         <div class="dashboard" id="dca-summary-cards">
           <!-- Populated by JS -->
         </div>
@@ -446,7 +443,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../js/powerlaw.js"></script>
   <script src="../js/retirement.js"></script>
-  <script src="../js/dca.js"></script>
-  <script src="../js/dca-ui.js"></script>
+  <script src="../js/savings.js"></script>
+  <script src="../js/savings-ui.js"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@
   let historicalData  = [];
   let calculatedSigma = 0.3;
   let livePrice       = null;
+  let debounceTimer   = null;
 
   const STORAGE_KEY = 'btcEquity_settings_nl';
 
@@ -219,7 +220,9 @@
     setupSliders();
     setupToggles();
     setupButtons();
+    setupInputListeners();
     updateEquityDisplay();
+    scheduleCalculation();
   }
 
   async function loadHistoricalData() {
@@ -305,9 +308,25 @@
     });
   }
 
+  function scheduleCalculation() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      runCalculation();
+      runComparison();
+    }, 150);
+  }
+
+  function setupInputListeners() {
+    var inputIds = ['eq-loan-amount', 'eq-duration', 'eq-interest-rate', 'eq-interest-only', 'eq-home-value', 'eq-mortgage-balance', 'eq-mortgage-rate', 'eq-buy-timing', 'eq-future-year', 'eq-future-month', 'eq-scenario', 'eq-currency'];
+    inputIds.forEach(function(id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', scheduleCalculation);
+      el.addEventListener('change', scheduleCalculation);
+    });
+  }
+
   function setupButtons() {
-    $('eq-calculate-btn').addEventListener('click', runCalculation);
-    $('eq-compare-btn').addEventListener('click', runComparison);
     $('eq-export-pdf-btn').addEventListener('click', exportPDF);
     $('eq-reset-btn').addEventListener('click', resetDefaults);
   }

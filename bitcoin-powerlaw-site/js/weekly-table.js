@@ -174,7 +174,7 @@
                 <th>Multiple</th>
                 <th>
                   Log Deviation
-                  <span class="log-dev-info" data-tooltip="Log deviation = log₁₀(price/trend). Zero means fair value. Negative = undervalued, positive = overvalued. A value of -0.3 means price is ~50% below trend; +0.3 means ~100% above trend.">?</span>
+                  <span class="log-dev-info" data-tooltip="Log deviation = log₁₀(price/trend). Zero means trend value. Negative = undervalued, positive = overvalued. A value of -0.3 means price is ~50% below trend; +0.3 means ~100% above trend.">?</span>
                 </th>
                 <th>Zone</th>
               </tr>

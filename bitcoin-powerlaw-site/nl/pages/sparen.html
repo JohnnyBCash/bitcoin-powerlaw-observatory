@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>DCA Rekentool - Bitcoin Machtswet Observatorium</title>
+  <title>Spaarcalculator - Bitcoin Machtswet Observatorium</title>
   <meta name="description" content="Simuleer dollar-cost averaging en eenmalige Bitcoin-aankopen met machtswetprijsprojecties. Zie hoe je stack en portfolio groeien in de tijd.">
   <link rel="stylesheet" href="../../css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,16 +21,16 @@
         <a href="../index.html">Dashboard</a>
         <a href="history.html">Geschiedenis</a>
         <a href="future.html">Toekomst</a>
-        <a href="dca.html" class="active">DCA</a>
+        <a href="sparen.html" class="active">Sparen</a>
         <a href="equity.html">Hypotheek</a>
         <a href="balance-sheet.html">Balans</a>
         <a href="retirement.html">Pensioen</a>
         <a href="about.html">Over</a>
       </nav>
       <div class="lang-toggle">
-        <a href="../../pages/dca.html" class="lang-link">EN</a>
+        <a href="../../pages/savings.html" class="lang-link">EN</a>
         <span class="lang-sep">|</span>
-        <a href="dca.html" class="lang-link active">NL</a>
+        <a href="sparen.html" class="lang-link active">NL</a>
       </div>
     </div>
   </header>
@@ -38,8 +38,8 @@
   <main>
     <div class="container">
       <section class="hero">
-        <h1>DCA Rekentool</h1>
-        <p>Wat gebeurt er als je Bitcoin koopt &mdash; als eenmalige investering, maandelijkse DCA, of beide? Zie hoe je stack en portfoliowaarde groeien onder machtswetprojecties.</p>
+        <h1>Spaarcalculator</h1>
+        <p>Wat gebeurt er als je Bitcoin koopt &mdash; als eenmalige investering, maandelijkse inleg, of beide? Zie hoe je stack en portfoliowaarde groeien onder machtswetprojecties.</p>
       </section>
 
       <div class="disclaimer">
@@ -48,7 +48,7 @@
 
       <!-- ── Invoersectie ──────────────────────────────── -->
       <div class="card" id="dca-input-section">
-        <h3>Jouw DCA Parameters</h3>
+        <h3>Jouw Spaarplan</h3>
 
         <div class="input-grid">
           <div class="input-group">
@@ -58,7 +58,7 @@
           </div>
 
           <div class="input-group">
-            <label for="dca-monthly">Maandelijkse DCA (<span id="dca-currency-label2">USD</span>)</label>
+            <label for="dca-monthly">Maandelijkse Inleg (<span id="dca-currency-label2">USD</span>)</label>
             <input type="number" id="dca-monthly" value="500" min="0" step="50">
             <span class="input-hint">Terugkerende maandelijkse aankoop (0 = geen)</span>
           </div>
@@ -114,10 +114,7 @@
           </div>
         </div>
 
-        <button class="calculate-btn" id="dca-calculate-btn">Bereken DCA</button>
-        <button class="calculate-btn secondary" id="dca-compare-btn">Vergelijk: Eenmalig vs DCA vs Gecombineerd</button>
-
-        <!-- Actieknoppen — getoond na eerste berekening -->
+        <!-- Actieknoppen -->
         <div class="action-buttons hidden" id="dca-action-buttons">
           <button class="calculate-btn secondary" id="dca-export-pdf-btn">&#128196; Opslaan als PDF</button>
           <button class="calculate-btn secondary" id="dca-reset-btn">&#8634; Standaardwaarden Herstellen</button>
@@ -134,8 +131,8 @@
       </div>
 
       <!-- ── Samenvattingskaarten ──────────────────────────────── -->
-      <section id="dca-results-section" class="hidden">
-        <h2>DCA Samenvatting</h2>
+      <section id="dca-results-section">
+        <h2>Spaaroverzicht</h2>
         <div class="dashboard" id="dca-summary-cards">
           <!-- Gevuld door JS -->
         </div>
@@ -162,7 +159,7 @@
       <!-- ── Vergelijkingssectie ─────────────────────────── -->
       <section id="dca-comparison-section" class="hidden">
         <h2>Strategievergelijking</h2>
-        <p>Alleen eenmalig vs alleen maandelijkse DCA vs gecombineerde aanpak.</p>
+        <p>Alleen eenmalig vs alleen maandelijkse inleg vs gecombineerde aanpak.</p>
         <div class="chart-container" style="position: relative; height: 400px;">
           <canvas id="dca-comparison-chart" aria-label="Strategievergelijkingsgrafiek"></canvas>
         </div>
@@ -446,7 +443,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
   <script src="../../js/powerlaw.js"></script>
   <script src="../../js/retirement.js"></script>
-  <script src="../../js/dca.js"></script>
-  <script src="../js/dca-ui.js"></script>
+  <script src="../../js/savings.js"></script>
+  <script src="../js/sparen-ui.js"></script>
 </body>
 </html>

@@ -13,6 +13,7 @@
   let historicalData  = [];
   let calculatedSigma = 0.3;
   let livePrice       = null;
+  let debounceTimer   = null;
 
   const STORAGE_KEY = 'btcBalanceSheet_settings';
 
@@ -97,6 +98,8 @@
     setupSliders();
     setupToggles();
     setupButtons();
+    setupInputListeners();
+    scheduleCalculation();
   }
 
   async function loadHistoricalData() {
@@ -157,9 +160,25 @@
     }
   }
 
+  function scheduleCalculation() {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(function() {
+      runCalculation();
+      runComparison();
+    }, 150);
+  }
+
+  function setupInputListeners() {
+    var inputIds = ['bs-annual-revenue', 'bs-net-margin', 'bs-revenue-growth', 'bs-time-horizon', 'bs-strategy', 'bs-allocation-pct', 'bs-initial-treasury', 'bs-scenario', 'bs-currency'];
+    inputIds.forEach(function(id) {
+      var el = $(id);
+      if (!el) return;
+      el.addEventListener('input', scheduleCalculation);
+      el.addEventListener('change', scheduleCalculation);
+    });
+  }
+
   function setupButtons() {
-    $('bs-calculate-btn').addEventListener('click', runCalculation);
-    $('bs-compare-btn').addEventListener('click', runComparison);
     $('bs-export-pdf-btn').addEventListener('click', exportPDF);
     $('bs-reset-btn').addEventListener('click', resetDefaults);
   }
