@@ -105,8 +105,61 @@
 
       <!-- ── Verdict ──────────────────────────── -->
       <div class="ret-verdict" id="ret-verdict">
-        <div class="ret-verdict-label">Your Verdict</div>
+        <div class="ret-verdict-label">Your Path to Freedom</div>
         <div class="ret-verdict-text" id="ret-verdict-text">—</div>
+      </div>
+
+      <!-- ── Three Levers ──────────────────────── -->
+      <div class="ret-levers" id="ret-levers">
+        <div class="ret-levers-header">
+          <span class="ret-levers-label">Your Three Levers</span>
+          <span class="ret-levers-sub">Adjust any lever to see how it changes your retirement plan.</span>
+        </div>
+
+        <!-- Lever 1: Stack More -->
+        <div class="ret-lever-card" id="ret-lever1">
+          <div class="ret-lever-title">&#x20BF; Stack More Bitcoin</div>
+          <div class="ret-lever-gap" id="ret-lever1-gap">&mdash;</div>
+          <div class="ret-lever-inputs">
+            <div class="ret-lever-input-row">
+              <label for="ret-lever-dca">Monthly Savings (<span class="ret-lever-sym">$</span>)</label>
+              <input type="number" id="ret-lever-dca" value="0" min="0" step="50">
+            </div>
+            <div class="ret-lever-input-row">
+              <label for="ret-lever-lump">Lump Sum Today (<span class="ret-lever-sym">$</span>)</label>
+              <input type="number" id="ret-lever-lump" value="0" min="0" step="1000">
+            </div>
+          </div>
+          <div class="ret-lever-impact" id="ret-lever1-impact"></div>
+        </div>
+
+        <!-- Lever 2: Reduce Spending -->
+        <div class="ret-lever-card" id="ret-lever2">
+          <div class="ret-lever-title">&#x1F4C9; Reduce Spending</div>
+          <div class="ret-lever-detail" id="ret-lever2-detail">&mdash;</div>
+          <div class="ret-lever-slider-row">
+            <input type="range" id="ret-lever-spend" min="0" max="15" step="1" value="0">
+            <span id="ret-lever-spend-label">0%</span>
+          </div>
+          <div class="ret-lever-impact" id="ret-lever2-impact"></div>
+        </div>
+
+        <!-- Lever 3: Retire Later -->
+        <div class="ret-lever-card" id="ret-lever3">
+          <div class="ret-lever-title">&#x1F552; Retire Later</div>
+          <div class="ret-lever-detail" id="ret-lever3-detail">&mdash;</div>
+          <div class="ret-lever-slider-row">
+            <input type="range" id="ret-lever-age" min="30" max="100" step="1" value="40">
+            <span id="ret-lever-age-label">40</span>
+          </div>
+          <div class="ret-lever-impact" id="ret-lever3-impact"></div>
+        </div>
+      </div>
+
+      <!-- ── Coast FI Panel ────────────────────── -->
+      <div class="ret-coast" id="ret-coast">
+        <div class="ret-coast-label">Coast FI Status</div>
+        <div class="ret-coast-text" id="ret-coast-text">&mdash;</div>
       </div>
 
       <!-- ── Bar Chart ────────────────────────── -->
@@ -200,6 +253,13 @@
         </div>
       </section>
 
+      <!-- ── Consultation CTA ──────────────────── -->
+      <div class="ret-cta" id="ret-cta">
+        <div class="ret-cta-text" id="ret-cta-text">
+          For a complete analysis including your AOW, pension, mortgage, and full asset picture &mdash; book a personal consultation.
+        </div>
+      </div>
+
     </div>
   </main>
 
@@ -213,6 +273,7 @@
         <div class="footer-section">
           <h4>Disclaimer</h4>
           <p>Not financial advice. For educational purposes only.</p>
+          <p class="ret-footnote"><em>*Some experienced investors use a home equity loan to accelerate their Bitcoin position.</em></p>
         </div>
       </div>
       <div class="footer-bottom">
@@ -547,6 +608,297 @@
       font-weight: 600;
     }
 
+    /* ── Verdict Enhancements ────────────────── */
+    .ret-verdict-pct {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-bottom: 12px;
+    }
+
+    .ret-verdict-headline {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin: 8px 0;
+    }
+
+    .ret-verdict-sub {
+      font-size: 0.95rem;
+      color: var(--gray);
+      margin-top: 4px;
+    }
+
+    .ret-verdict-guidance {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 12px;
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    .ret-segment-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .ret-segment-badge.seg-1 { background: #FFF3E0; color: #E65100; }
+    .ret-segment-badge.seg-2 { background: #FFF3E0; color: #E65100; }
+    .ret-segment-badge.seg-3 { background: #FFF8E1; color: #F57F17; }
+    .ret-segment-badge.seg-4 { background: #E8F5E9; color: #2E7D32; }
+    .ret-segment-badge.seg-5 { background: #E8F5E9; color: #1B5E20; }
+
+    .ret-progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--gray-border);
+      border-radius: 4px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+
+    .ret-progress-fill {
+      height: 100%;
+      background: var(--orange);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .ret-progress-fill.ret-progress-complete {
+      background: var(--green);
+    }
+
+    .ret-contrast {
+      display: flex;
+      justify-content: center;
+      gap: var(--spacing-lg);
+      margin-top: 16px;
+      padding-top: 12px;
+      border-top: 1px solid var(--gray-border);
+    }
+
+    .ret-contrast-item {
+      text-align: center;
+    }
+
+    .ret-contrast-label {
+      color: var(--gray);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .ret-contrast-value {
+      font-weight: 700;
+      font-size: 1.3rem;
+    }
+
+    .ret-contrast-saved {
+      color: var(--green);
+    }
+
+    /* ── Three Levers ────────────────────────── */
+    .ret-levers {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ret-levers-done .ret-lever-card {
+      opacity: 0.5;
+    }
+
+    .ret-levers-header {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .ret-levers-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray);
+      font-weight: 600;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .ret-levers-sub {
+      font-size: 0.85rem;
+      color: var(--gray);
+    }
+
+    .ret-lever-card {
+      background: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .ret-lever-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .ret-lever-gap {
+      font-size: 0.9rem;
+      color: var(--orange);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .ret-lever-inputs {
+      display: flex;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+    }
+
+    .ret-lever-input-row {
+      flex: 1;
+      min-width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .ret-lever-input-row label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--gray);
+      font-weight: 500;
+    }
+
+    .ret-lever-input-row input[type="number"] {
+      padding: 8px 12px;
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: 0.95rem;
+      font-weight: 500;
+      background: var(--white);
+    }
+
+    .ret-lever-input-row input:focus {
+      outline: none;
+      border-color: var(--orange);
+    }
+
+    .ret-lever-slider-row {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .ret-lever-slider-row input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      background: var(--gray-border);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .ret-lever-slider-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: var(--orange);
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .ret-lever-slider-row input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: var(--orange);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .ret-lever-slider-row span {
+      font-size: 0.85rem;
+      font-weight: 600;
+      min-width: 40px;
+      text-align: right;
+    }
+
+    .ret-lever-detail {
+      font-size: 0.85rem;
+      color: var(--gray);
+      margin-bottom: 8px;
+    }
+
+    .ret-lever-impact {
+      font-size: 0.8rem;
+      color: var(--green);
+      font-weight: 500;
+      margin-top: 8px;
+      min-height: 1.2em;
+    }
+
+    .ret-lever-disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    .ret-lever-disabled .ret-lever-detail {
+      color: var(--gray);
+    }
+
+    /* ── Coast FI Panel ──────────────────────── */
+    .ret-coast {
+      background: rgba(0, 200, 83, 0.04);
+      border: 1px solid rgba(0, 200, 83, 0.2);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ret-coast-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--green);
+      margin-bottom: 6px;
+      font-weight: 600;
+    }
+
+    .ret-coast-text {
+      font-size: 0.95rem;
+      color: var(--black);
+      line-height: 1.5;
+    }
+
+    /* ── Consultation CTA ────────────────────── */
+    .ret-cta {
+      background: var(--gray-light);
+      border: 1px solid var(--gray-border);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      text-align: center;
+      margin: var(--spacing-lg) 0;
+    }
+
+    .ret-cta-text {
+      font-size: 0.95rem;
+      color: var(--black);
+      line-height: 1.5;
+    }
+
+    /* ── Footnote ────────────────────────────── */
+    .ret-footnote {
+      font-size: 0.8rem;
+      color: var(--gray);
+      margin-top: 8px;
+    }
+
     /* ── Advanced Toggle ──────────────────────── */
     .ret-advanced-toggle {
       text-align: center;
@@ -589,6 +941,22 @@
       /* Hide labels on tiny bars (forever period) on mobile */
       .ret-bar-label.ret-label-tiny {
         display: none;
+      }
+
+      .ret-lever-inputs {
+        flex-direction: column;
+      }
+
+      .ret-lever-input-row {
+        min-width: 100%;
+      }
+
+      .ret-contrast {
+        gap: var(--spacing-md);
+      }
+
+      .ret-contrast-value {
+        font-size: 1.1rem;
       }
     }
   </style>

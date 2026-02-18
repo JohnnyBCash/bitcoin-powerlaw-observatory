@@ -51,6 +51,117 @@
   }
 
 
+  // ── Segmentation Logic ────────────────────────────────────
+  // Pure functions: derive user segment from calculator results
+
+  function btcGoalSegment(myStack, totalBTC) {
+    if (totalBTC <= 0) return { id: 5, label: 'You Can Retire', pct: 100 };
+    var pct = (myStack / totalBTC) * 100;
+    if (pct <= 0)   return { id: 1, label: 'Just Starting',  pct: 0 };
+    if (pct < 50)   return { id: 2, label: 'Early Stage',    pct: pct };
+    if (pct < 75)   return { id: 3, label: 'Halfway There',  pct: pct };
+    if (pct < 100)  return { id: 4, label: 'Nearly There',   pct: pct };
+    return { id: 5, label: 'You Can Retire', pct: pct };
+  }
+
+  function ageSegment(age) {
+    if (age <= 35) return { id: 'young', label: 'High earning potential ahead' };
+    if (age <= 50) return { id: 'mid',   label: 'Peak earning years' };
+    return { id: 'late',  label: 'Transition planning' };
+  }
+
+  function segmentedMessage(ageSeg, goalSeg) {
+    var messages = {
+      'young_1': 'You have time on your side. Focus on income growth and consistent stacking.',
+      'young_2': 'You\u2019re building momentum. Keep your DCA consistent \u2014 the power law rewards patience.',
+      'young_3': 'You\u2019re ahead of the curve. Consider coast FI \u2014 let the power law do the heavy lifting.',
+      'young_4': 'You\u2019re almost there and you\u2019re young. A few small moves could change everything.',
+      'young_5': 'You\u2019ve cracked the code early. Financial freedom is yours.',
+      'mid_1':   'Your peak earning years are now. Strategic action today makes the biggest difference.',
+      'mid_2':   'You\u2019re making progress. Focused effort in your best earning years will close the gap.',
+      'mid_3':   'You\u2019re well-positioned. A few more years of focused effort could change everything.',
+      'mid_4':   'You\u2019re in the home stretch. Fine-tuning your plan now pays off the most.',
+      'mid_5':   'You have enough. Consider optimizing your exit strategy.',
+      'late_1':  'Time is your main constraint. Combine strategies or extend your timeline for the strongest outcome.',
+      'late_2':  'Every bit counts. Your existing assets (AOW, pension) are real foundations \u2014 Bitcoin adds a powerful layer.',
+      'late_3':  'Part-time transition is available to you. You\u2019re closer than you think.',
+      'late_4':  'You\u2019re nearly there. A personal consultation can optimize the final details.',
+      'late_5':  'You have enough. Your plan might benefit from a precise exit strategy.'
+    };
+    var key = ageSeg.id + '_' + goalSeg.id;
+    return messages[key] || '';
+  }
+
+  function ctaTone(ageSeg, goalSeg) {
+    if (goalSeg.id >= 4) return 'precision';
+    if (ageSeg.id === 'young') return 'encouraging';
+    if (ageSeg.id === 'mid')   return 'strategic';
+    return 'warm';
+  }
+
+
+  // ── Lever State ──────────────────────────────────────────
+  var leverState = {
+    extraMonthlyDCA: 0,
+    lumpSum: 0,
+    spendingReduction: 0,
+    retireAgeOverride: null
+  };
+
+  function applyLevers(params, levers) {
+    var adjusted = {};
+    Object.keys(params).forEach(function(k) { adjusted[k] = params[k]; });
+
+    // Lever 2: reduce annual burn
+    if (levers.spendingReduction > 0) {
+      adjusted.annualBurn = params.annualBurn * (1 - levers.spendingReduction / 100);
+    }
+
+    // Lever 3: retirement age override
+    if (levers.retireAgeOverride !== null) {
+      adjusted.retirementAge = levers.retireAgeOverride;
+    }
+
+    // Lever 1: additional BTC from DCA/lump sum
+    if (levers.extraMonthlyDCA > 0 || levers.lumpSum > 0) {
+      var extraBTC = estimateExtraBTC(params, levers);
+      adjusted.myStack = params.myStack + extraBTC;
+    }
+
+    return adjusted;
+  }
+
+  function estimateExtraBTC(params, levers) {
+    var currentYear = new Date().getFullYear();
+    var retireAge = levers.retireAgeOverride || params.retirementAge || params.currentAge;
+    var yearsToRetirement = retireAge - params.currentAge;
+    if (yearsToRetirement <= 0) yearsToRetirement = 1;
+    var totalMonths = yearsToRetirement * 12;
+
+    var extraBTC = 0;
+
+    // Lump sum: buy at today's price
+    if (levers.lumpSum > 0) {
+      var todayPrice = livePrice || PL.trendPrice(params.model, new Date());
+      extraBTC += (levers.lumpSum / getRate()) / todayPrice;
+    }
+
+    // Monthly DCA: buy each month at projected price
+    if (levers.extraMonthlyDCA > 0) {
+      var monthlyUSD = levers.extraMonthlyDCA / getRate();
+      for (var m = 0; m < totalMonths; m++) {
+        var date = new Date(currentYear, new Date().getMonth() + m, 15);
+        var yearOffset = m / 12;
+        var effectiveK = R.resolveScenarioK(params.scenarioMode, yearOffset, params.initialK);
+        var price = R.scenarioPrice(params.model, date, params.sigma, effectiveK);
+        if (price > 0) extraBTC += monthlyUSD / price;
+      }
+    }
+
+    return extraBTC;
+  }
+
+
   // ── Gather Parameters ──────────────────────────────────────
   function getParams() {
     var scenarioMode = $('ret-scenario').value;
@@ -90,17 +201,30 @@
     var params = getParams();
     if (params.retirementAge >= params.lifeExpectancy) return;
 
-    var result = V2.computeLifetimeBTC(params);
-    if (!result) return;
+    // Base result (for segmentation — always from raw inputs)
+    var baseResult = V2.computeLifetimeBTC(params);
+    if (!baseResult) return;
 
-    renderBarChart(result, params);
-    renderSummaryBoxes(result, params);
-    renderVerdict(result, params);
-    renderInsight(result, params);
+    // Apply levers and recalculate
+    var adjustedParams = applyLevers(params, leverState);
+    var result = V2.computeLifetimeBTC(adjustedParams);
+    if (!result) result = baseResult;
+
+    // Segmentation (always from base, not adjusted)
+    var goalSeg = btcGoalSegment(params.myStack, baseResult.totalBTC);
+    var ageSeg = ageSegment(params.currentAge);
+
+    renderVerdict(result, adjustedParams, goalSeg, ageSeg, baseResult);
+    renderBarChart(result, adjustedParams);
+    renderLevers(baseResult, params, goalSeg);
+    renderCoastFI(baseResult, params);
+    renderCTA(ageSeg, goalSeg);
+    renderSummaryBoxes(result, adjustedParams);
+    renderInsight(result, adjustedParams);
 
     if (advancedVisible) {
       renderYearlyTable(result);
-      renderScenarioComparison(params);
+      renderScenarioComparison(adjustedParams);
     }
 
     saveSettings();
@@ -221,52 +345,93 @@
 
 
   // ── Verdict ───────────────────────────────────────────────
-  function renderVerdict(result, params) {
+  function renderVerdict(result, params, goalSeg, ageSeg, baseResult) {
     var container = $('ret-verdict-text');
     container.textContent = '';
 
     if (params.myStack <= 0) {
-      container.textContent = 'Enter your BTC stack above to see your verdict.';
+      container.textContent = 'Enter your BTC stack above to see your path.';
       return;
     }
 
-    // Line 1: "You have X BTC. You need Y BTC."
-    container.appendChild(document.createTextNode('You have '));
-    container.appendChild(el('span', fmtBTC(params.myStack) + ' BTC', 'ret-btc'));
-    container.appendChild(document.createTextNode('. You need '));
-    container.appendChild(el('span', fmtBTC(result.totalBTC) + ' BTC', 'ret-btc'));
-    container.appendChild(document.createTextNode('.'));
-    container.appendChild(document.createElement('br'));
+    // Segment badge
+    var badge = el('span', goalSeg.label, 'ret-segment-badge seg-' + goalSeg.id);
+    container.appendChild(badge);
 
+    // Progress bar
+    var progressWrap = document.createElement('div');
+    progressWrap.className = 'ret-progress-bar';
+    var progressFill = document.createElement('div');
+    progressFill.className = 'ret-progress-fill' + (goalSeg.pct >= 100 ? ' ret-progress-complete' : '');
+    progressFill.style.width = Math.min(goalSeg.pct, 100) + '%';
+    progressWrap.appendChild(progressFill);
+    container.appendChild(progressWrap);
+
+    var pctText = el('div', Math.round(goalSeg.pct) + '% of your Bitcoin goal', 'ret-verdict-pct');
+    container.appendChild(pctText);
+
+    // Primary message — lead positive
     if (result.canRetireNow) {
       if (params.retirementAge > params.currentAge) {
         var retireYear = new Date().getFullYear() + (params.retirementAge - params.currentAge);
-        container.appendChild(el('span', 'You can retire at age ' + params.retirementAge + ' (' + retireYear + ').', 'ret-highlight-green'));
+        container.appendChild(el('div', 'You can retire at age ' + params.retirementAge + ' (' + retireYear + ')', 'ret-verdict-headline ret-highlight-green'));
       } else {
-        container.appendChild(el('span', 'You can stop working today.', 'ret-highlight-green'));
+        container.appendChild(el('div', 'You can stop working today', 'ret-verdict-headline ret-highlight-green'));
       }
       if (result.surplus > 0.001) {
-        container.appendChild(document.createTextNode(' Surplus: ' + fmtBTC(result.surplus) + ' BTC.'));
+        container.appendChild(el('div', 'Surplus: ' + fmtBTC(result.surplus) + ' BTC', 'ret-verdict-sub'));
       }
     } else {
-      var deficit = -result.surplus;
-
-      // Actionable alternative: show max safe burn
-      var maxBurn = findMaxSafeBurn(params);
-      var maxBurnDisplay = fmtMoney(maxBurn);
-      container.appendChild(el('span', 'Reduce your burn to ' + maxBurnDisplay + ' to retire today', 'ret-highlight-red'));
-      container.appendChild(document.createTextNode(' \u2014 or stack '));
-      container.appendChild(el('span', fmtBTC(deficit) + ' more BTC', 'ret-btc'));
-      container.appendChild(document.createTextNode('.'));
-
-      if (result.earliestRetirementAge) {
-        var retYear = new Date().getFullYear() + (result.earliestRetirementAge - params.currentAge);
-        container.appendChild(document.createElement('br'));
-        container.appendChild(document.createTextNode('Earliest viable retirement: age '));
-        var strong = document.createElement('strong');
-        strong.textContent = result.earliestRetirementAge + ' (' + retYear + ')';
-        container.appendChild(strong);
+      // Show earliest viable retirement age first (positive framing)
+      var earliestAge = result.earliestRetirementAge || baseResult.earliestRetirementAge;
+      if (earliestAge) {
+        var retYear = new Date().getFullYear() + (earliestAge - params.currentAge);
+        container.appendChild(el('div', 'You can retire at age ' + earliestAge + ' (' + retYear + ')', 'ret-verdict-headline ret-highlight-green'));
+      } else {
+        container.appendChild(el('div', 'You need ' + fmtBTC(-result.surplus) + ' more BTC', 'ret-verdict-headline'));
       }
+
+      // Stack info
+      var stackLine = document.createElement('div');
+      stackLine.className = 'ret-verdict-sub';
+      stackLine.appendChild(document.createTextNode('You have '));
+      stackLine.appendChild(el('span', fmtBTC(params.myStack) + ' BTC', 'ret-btc'));
+      stackLine.appendChild(document.createTextNode(' \u2014 you need '));
+      stackLine.appendChild(el('span', fmtBTC(result.totalBTC) + ' BTC', 'ret-btc'));
+      container.appendChild(stackLine);
+    }
+
+    // Traditional retirement contrast
+    var earliestBtc = result.earliestRetirementAge || baseResult.earliestRetirementAge || null;
+    if (earliestBtc && earliestBtc < 65) {
+      var contrast = document.createElement('div');
+      contrast.className = 'ret-contrast';
+
+      var trad = document.createElement('div');
+      trad.className = 'ret-contrast-item';
+      trad.appendChild(el('div', 'Traditional', 'ret-contrast-label'));
+      trad.appendChild(el('div', '65', 'ret-contrast-value'));
+      contrast.appendChild(trad);
+
+      var btcRetire = document.createElement('div');
+      btcRetire.className = 'ret-contrast-item';
+      btcRetire.appendChild(el('div', 'Bitcoin', 'ret-contrast-label'));
+      btcRetire.appendChild(el('div', '' + earliestBtc, 'ret-contrast-value ret-highlight-green'));
+      contrast.appendChild(btcRetire);
+
+      var saved = document.createElement('div');
+      saved.className = 'ret-contrast-item';
+      saved.appendChild(el('div', 'Years saved', 'ret-contrast-label'));
+      saved.appendChild(el('div', '' + (65 - earliestBtc), 'ret-contrast-value ret-contrast-saved'));
+      contrast.appendChild(saved);
+
+      container.appendChild(contrast);
+    }
+
+    // Segmented guidance message
+    var guidance = segmentedMessage(ageSeg, goalSeg);
+    if (guidance) {
+      container.appendChild(el('div', guidance, 'ret-verdict-guidance'));
     }
   }
 
@@ -294,6 +459,150 @@
       insightEl.textContent = 'Under this price scenario, the forever threshold is never reached. ' +
         'Your burn rate grows faster than the power law appreciates. Consider reducing spending growth or trying a different scenario.';
     }
+  }
+
+
+  // ── Three Levers ────────────────────────────────────────
+  function renderLevers(baseResult, params, goalSeg) {
+    var leversSection = $('ret-levers');
+    if (!leversSection) return;
+
+    // Show/hide levers based on whether user already has enough
+    if (goalSeg.id >= 5 && leverState.extraMonthlyDCA === 0 && leverState.lumpSum === 0 &&
+        leverState.spendingReduction === 0 && leverState.retireAgeOverride === null) {
+      leversSection.classList.add('ret-levers-done');
+    } else {
+      leversSection.classList.remove('ret-levers-done');
+    }
+
+    // Update currency symbols
+    var syms = document.querySelectorAll('.ret-lever-sym');
+    for (var i = 0; i < syms.length; i++) syms[i].textContent = getCurrencySym();
+
+    // Lever 1: BTC gap
+    var gapEl = $('ret-lever1-gap');
+    if (gapEl) {
+      if (baseResult.surplus < 0) {
+        var deficit = -baseResult.surplus;
+        var deficitFiat = deficit * (livePrice || baseResult.todayTrendPrice);
+        gapEl.textContent = 'You need ' + fmtBTC(deficit) + ' more BTC (\u2248 ' + fmtMoney(deficitFiat) + ' today)';
+      } else {
+        gapEl.textContent = 'You already have enough BTC';
+        gapEl.style.color = 'var(--green)';
+      }
+    }
+
+    // Lever 1: impact text
+    var impact1 = $('ret-lever1-impact');
+    if (impact1) {
+      if (leverState.extraMonthlyDCA > 0 || leverState.lumpSum > 0) {
+        var extraBTC = estimateExtraBTC(params, leverState);
+        impact1.textContent = '+' + fmtBTC(extraBTC) + ' BTC from additional savings';
+      } else {
+        impact1.textContent = '';
+      }
+    }
+
+    // Lever 2: spending reduction
+    var detail2 = $('ret-lever2-detail');
+    var lever2Card = $('ret-lever2');
+    if (detail2 && lever2Card) {
+      if (baseResult.canRetireNow) {
+        lever2Card.classList.add('ret-lever-disabled');
+        detail2.textContent = 'You can already retire at this spending level.';
+      } else {
+        var maxBurn = findMaxSafeBurn(params);
+        var maxReductionPct = Math.round((1 - maxBurn / params.annualBurn) * 100);
+        if (maxReductionPct > 15 || maxReductionPct < 0) {
+          lever2Card.classList.add('ret-lever-disabled');
+          detail2.textContent = 'Reducing spending alone won\u2019t get you there.';
+        } else {
+          lever2Card.classList.remove('ret-lever-disabled');
+          var reducedBurn = params.annualBurn * (1 - leverState.spendingReduction / 100);
+          detail2.textContent = 'Reduce by ' + leverState.spendingReduction +
+            '% to ' + fmtMoney(reducedBurn) + '/year';
+        }
+      }
+    }
+
+    // Lever 2: label
+    var spendLabel = $('ret-lever-spend-label');
+    if (spendLabel) spendLabel.textContent = leverState.spendingReduction + '%';
+
+    // Lever 3: retirement age slider
+    var ageSlider = $('ret-lever-age');
+    var ageLabel = $('ret-lever-age-label');
+    if (ageSlider) {
+      ageSlider.min = params.currentAge;
+      ageSlider.max = params.lifeExpectancy - 1;
+      if (leverState.retireAgeOverride === null) {
+        var defaultAge = baseResult.earliestRetirementAge || params.currentAge;
+        ageSlider.value = defaultAge;
+        if (ageLabel) ageLabel.textContent = defaultAge;
+      } else {
+        if (ageLabel) ageLabel.textContent = leverState.retireAgeOverride;
+      }
+    }
+
+    // Lever 3: detail
+    var detail3 = $('ret-lever3-detail');
+    if (detail3) {
+      var sliderAge = leverState.retireAgeOverride || baseResult.earliestRetirementAge || params.currentAge;
+      if (sliderAge !== params.retirementAge) {
+        var laterParams = {};
+        Object.keys(params).forEach(function(k) { laterParams[k] = params[k]; });
+        laterParams.retirementAge = sliderAge;
+        var laterResult = V2.computeLifetimeBTC(laterParams);
+        if (laterResult) {
+          detail3.textContent = 'At age ' + sliderAge + ': ' + fmtBTC(laterResult.totalBTC) +
+            ' BTC needed (vs ' + fmtBTC(baseResult.totalBTC) + ' now)';
+        }
+      } else {
+        detail3.textContent = 'Slide to explore different retirement ages';
+      }
+    }
+  }
+
+
+  // ── Coast FI Panel ─────────────────────────────────────
+  function renderCoastFI(result, params) {
+    var textEl = $('ret-coast-text');
+    if (!textEl) return;
+
+    if (params.myStack <= 0) {
+      textEl.textContent = 'Enter your BTC stack to see your Coast FI status.';
+      return;
+    }
+
+    var currentYear = new Date().getFullYear();
+    var swr = V2.foreverSWR(currentYear);
+    var stackValue = params.myStack * (livePrice || result.todayTrendPrice);
+    var safeWithdrawal = stackValue * swr;
+    var coveragePct = Math.min((safeWithdrawal / params.annualBurn) * 100, 100);
+
+    textEl.textContent = 'Your ' + fmtBTC(params.myStack) + ' BTC already covers ' +
+      coveragePct.toFixed(0) + '% of your ' + fmtMoney(params.annualBurn) +
+      ' annual expenses at today\u2019s safe withdrawal rate. ' +
+      (coveragePct >= 50
+        ? 'You could reduce your workload proportionally and let Bitcoin handle the rest.'
+        : 'Keep stacking \u2014 every sat moves the needle.');
+  }
+
+
+  // ── Consultation CTA ──────────────────────────────────
+  function renderCTA(ageSeg, goalSeg) {
+    var textEl = $('ret-cta-text');
+    if (!textEl) return;
+
+    var tone = ctaTone(ageSeg, goalSeg);
+    var messages = {
+      'encouraging': 'You have time on your side. For a complete analysis including your AOW, pension, mortgage, and full asset picture \u2014 book a personal consultation to map out your path.',
+      'strategic':   'Strategic planning now yields the biggest returns. For a complete analysis including your AOW, pension, mortgage, and full asset picture \u2014 book a personal consultation.',
+      'warm':        'You are closer than you think. For a complete analysis including your AOW, pension, mortgage, and full asset picture \u2014 book a personal consultation. Small moves make a big difference at this stage.',
+      'precision':   'You are in the endgame. For a precise exit plan including your AOW, pension, mortgage, and full asset picture \u2014 book a personal consultation to optimize the final details.'
+    };
+
+    textEl.textContent = messages[tone] || messages['strategic'];
   }
 
 
@@ -472,12 +781,55 @@
   }
 
 
+  // ── Lever Listeners ─────────────────────────────────────
+  function setupLeverListeners() {
+    // Lever 1: DCA
+    var dcaInput = $('ret-lever-dca');
+    if (dcaInput) {
+      dcaInput.addEventListener('input', function() {
+        leverState.extraMonthlyDCA = parseFloat(dcaInput.value) || 0;
+        scheduleCalculation();
+      });
+    }
+
+    // Lever 1: Lump sum
+    var lumpInput = $('ret-lever-lump');
+    if (lumpInput) {
+      lumpInput.addEventListener('input', function() {
+        leverState.lumpSum = parseFloat(lumpInput.value) || 0;
+        scheduleCalculation();
+      });
+    }
+
+    // Lever 2: Spending reduction slider
+    var spendSlider = $('ret-lever-spend');
+    if (spendSlider) {
+      spendSlider.addEventListener('input', function() {
+        leverState.spendingReduction = parseFloat(spendSlider.value) || 0;
+        scheduleCalculation();
+      });
+    }
+
+    // Lever 3: Retirement age slider
+    var ageSlider = $('ret-lever-age');
+    if (ageSlider) {
+      ageSlider.addEventListener('input', function() {
+        leverState.retireAgeOverride = parseInt(ageSlider.value) || null;
+        var label = $('ret-lever-age-label');
+        if (label) label.textContent = ageSlider.value;
+        scheduleCalculation();
+      });
+    }
+  }
+
+
   // ── Initialize ────────────────────────────────────────────
   async function init() {
     await loadHistoricalData();
     fetchLiveData();
     loadSettings();
     setupInputListeners();
+    setupLeverListeners();
     setupInputExtrasToggle();
     setupAdvancedToggle();
     runCalculation();
