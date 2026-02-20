@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bitcoin Pensioen — Wanneer kun jij stoppen met werken?</title>
+<meta name="description" content="Bereken wanneer je kunt stoppen met werken dankzij Bitcoin. Gebaseerd op de power law — het wiskundig model achter Bitcoin's groei.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="pensioen.css">
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-mark">&#8383;</div>
+    <span class="logo-text">Bitcoin Pensioen</span>
+  </a>
+  <div class="nav-right">
+    <div class="btc-price" id="pen-nav-price">
+      <span class="dot"></span>
+      <span id="pen-nav-price-text">BTC &mdash;</span>
+    </div>
+  </div>
+</nav>
+
+<div class="page">
+
+  <section class="hero">
+    <h1>Wanneer kun jij <em>stoppen met werken?</em></h1>
+    <p>Vul je cijfers in. De Bitcoin power law* doet de rest.</p>
+    <span class="disclaimer">Educatieve tool &mdash; geen financieel advies</span>
+  </section>
+
+  <div class="main-grid">
+
+    <!-- LEFT: Input Panel -->
+    <div class="input-panel">
+      <div class="input-card">
+        <div class="input-card-title">Jouw situatie</div>
+
+        <!-- Age + spending -->
+        <div class="field-row">
+          <div class="field-group">
+            <div class="field-label">Leeftijd</div>
+            <input class="field-input" type="number" id="pen-age" value="38" min="18" max="80">
+          </div>
+          <div class="field-group">
+            <div class="field-label">Jaarlijkse uitgaven</div>
+            <input class="field-input" type="text" id="pen-burn" value="48000" inputmode="numeric">
+            <div class="fine-tune">
+              <span class="fine-tune-label">Besparen</span>
+              <input type="range" id="pen-reduce" min="0" max="30" value="0">
+              <span class="fine-tune-val" id="pen-reduce-val">0%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- The big slider: investment amount -->
+        <div class="big-slider-group">
+          <div class="big-slider-label">
+            <span class="big-slider-label-text">Inleg in Bitcoin</span>
+            <span class="big-slider-label-value" id="pen-invest-val">&mdash;</span>
+          </div>
+          <div class="big-slider-context" id="pen-invest-btc">&nbsp;</div>
+          <div class="trend-indicator" id="pen-trend">
+            <span class="trend-dot neutral"></span>
+            <span id="pen-trend-text">Laden&hellip;</span>
+          </div>
+          <input type="range" id="pen-invest" min="5000" max="500000" value="50000" step="1000">
+        </div>
+
+        <!-- Existing BTC + DCA -->
+        <div class="field-row" style="margin-bottom: 0;">
+          <div class="field-group">
+            <div class="field-label">Al in bezit</div>
+            <input class="field-input" type="text" id="pen-stack" value="0" placeholder="0.00" inputmode="decimal">
+            <div class="field-suffix">&#8383; Bitcoin</div>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Maandelijks bijkopen</div>
+            <input class="field-input" type="text" id="pen-dca" value="200" placeholder="0" inputmode="numeric">
+            <div class="field-suffix">&euro; per maand</div>
+          </div>
+        </div>
+
+        <!-- More options -->
+        <div style="margin-top: 14px;">
+          <button class="more-options-btn" id="pen-more-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            Meer opties
+          </button>
+          <div class="extra-options" id="pen-extra">
+            <div class="field-row" style="margin-top: 12px; margin-bottom: 8px;">
+              <div class="field-group">
+                <div class="field-label">Levensverwachting</div>
+                <input class="field-input" type="number" id="pen-life" value="100" min="60" max="120">
+              </div>
+              <div class="field-group">
+                <div class="field-label">Kostenstijging per jaar</div>
+                <input class="field-input" type="text" id="pen-growth" value="6" inputmode="decimal">
+                <div class="field-suffix">% inflatie + lifestyle</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Verdict -->
+        <div class="verdict" id="pen-verdict">
+          <div class="verdict-badge close" id="pen-verdict-badge"><span class="dot"></span> <span id="pen-badge-text">Berekenen&hellip;</span></div>
+          <h2 id="pen-verdict-title">&mdash;</h2>
+          <div class="verdict-sub" id="pen-verdict-sub">&nbsp;</div>
+          <div class="verdict-comparison">
+            <span class="comp-saved" id="pen-comp-saved">&mdash;</span>
+            <span class="comp-trad">vs AOW-leeftijd 67</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Results Panel -->
+    <div class="results-panel">
+
+      <!-- 5-Year Period Bars -->
+      <div class="result-card">
+        <div class="card-header">
+          <span class="card-title">BTC benodigd per 5-jaarsperiode</span>
+          <div class="period-bars-legend">
+            <span><span class="legend-dot" style="background:#D97706"></span> Storm</span>
+            <span><span class="legend-dot" style="background:#16A34A"></span> Voor Altijd</span>
+          </div>
+        </div>
+        <div class="period-bars" id="pen-bars"></div>
+        <div class="period-insight" id="pen-insight">
+          <span style="flex-shrink:0; color: var(--accent);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z"/></svg></span>
+          <span id="pen-insight-text">&nbsp;</span>
+        </div>
+      </div>
+
+      <!-- Storm & Forever -->
+      <div class="result-card">
+        <div style="font-size: 14px; color: var(--text-secondary); line-height: 1.55; margin-bottom: 16px;">
+          Omdat de Bitcoin-prijs volgens de power law blijft stijgen, heb je elk jaar <em>minder</em> Bitcoin nodig om van te leven. De eerste jaren zijn het duurst &mdash; daarna wordt je stack praktisch onuitputtelijk.
+        </div>
+        <div class="card-header" style="margin-bottom: 12px;">
+          <span class="card-title">Samengevat in twee fases</span>
+        </div>
+        <div class="sf-row">
+          <div class="sf-storm">
+            <div class="phase-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9"/><polyline points="13 11 9 17 15 17 11 23"/></svg> De Storm</div>
+            <div class="phase-amount" id="pen-storm-btc">&mdash;</div>
+            <div class="phase-detail" id="pen-storm-detail">&nbsp;</div>
+          </div>
+          <div class="sf-forever">
+            <div class="phase-label"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg> Voor Altijd</div>
+            <div class="phase-amount" id="pen-forever-btc">&mdash;</div>
+            <div class="phase-detail" id="pen-forever-detail">&nbsp;</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CTA -->
+      <div class="cta-card">
+        <h3>Wil je het complete plaatje?</h3>
+        <p>Voor een volledige analyse inclusief AOW, pensioen, hypotheekwaarde en je totale vermogensplaatje &mdash; boek een persoonlijk gesprek.</p>
+        <a href="#" class="cta-btn">Plan een Gesprek &rarr;</a>
+        <div class="cta-details">
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 45 minuten</span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><path d="M15 10l5 5-5 5"/><path d="M4 4v7a4 4 0 0 0 4 4h12"/></svg> Zoom of bij jou thuis</span>
+          <span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Vertrouwelijk</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footnote" id="pen-footnote">
+    * De <strong>Bitcoin Power Law</strong> is een wiskundig model dat de Bitcoin-prijs beschrijft met meer dan 95% nauwkeurigheid over 15+ jaar aan data. Het voorspelt dat de prijs een voorspelbaar groeipad volgt &mdash; vergelijkbaar met natuurwetten in andere complexe systemen.
+  </div>
+  <div style="margin-top: 16px;">
+    Geen financieel advies. Educatieve tool gebaseerd op power law modellen.<br>
+    Historische modelpassing biedt geen garantie voor toekomstige prestaties.<br>
+    Bitcoin Pensioen &middot; 2025
+  </div>
+</footer>
+
+<!-- Engine scripts (shared from main site) -->
+<script src="../js/powerlaw.js"></script>
+<script src="../js/retirement.js"></script>
+<script src="../js/retirement-v2.js"></script>
+<!-- Pensioen UI bridge -->
+<script src="pensioen.js"></script>
+
+</body>
+</html>
