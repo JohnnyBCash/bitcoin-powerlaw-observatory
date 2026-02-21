@@ -290,6 +290,49 @@ input[type="range"]::-moz-range-thumb {
 .extra-options { display: none; }
 .extra-options.visible { display: block; }
 
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.toggle-switch {
+  position: relative;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.toggle-switch input { display: none; }
+.toggle-track {
+  display: block;
+  width: 36px;
+  height: 20px;
+  background: var(--muted);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+  position: relative;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+}
+.toggle-switch input:checked + .toggle-track {
+  background: var(--accent);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(16px);
+}
+
 /* === VERDICT === */
 .verdict {
   background: var(--accent-softer);

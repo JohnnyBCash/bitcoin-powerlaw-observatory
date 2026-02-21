@@ -855,11 +855,23 @@
   // For each year from retirement to death:
   //   btcNeeded(i) = inflatedBurn(i) / scenarioPrice(year + i)
   // Groups results into 5-year chunks and classifies storm vs forever.
+  //
+  // Optional BTC-backed loan strategy (params.loanEnabled):
+  //   - When price < loanBorrowBelow × trend: borrow fiat instead of selling BTC
+  //   - When price >= loanRepayAbove × trend: sell BTC for expenses + repay debt
+  //   - Debt accrues loanRate interest annually
+  //   - Any remaining debt at end of life is settled from BTC
   function computeLifetimeBTC(params) {
     const {
       currentAge, lifeExpectancy, annualBurn, burnGrowth,
       myStack, model, sigma, scenarioMode, initialK
     } = params;
+
+    // Loan parameters (optional — off by default)
+    const loanEnabled = params.loanEnabled || false;
+    const loanBorrowBelow = params.loanBorrowBelow || 0.9;
+    const loanRepayAbove = params.loanRepayAbove || 1.0;
+    const loanRate = params.loanRate || 0.10;
 
     const retirementAge = params.retirementAge || currentAge;
     const currentYear = new Date().getFullYear();
@@ -869,6 +881,7 @@
 
     const annualData = [];
     let stormEndAge = null;
+    let debt = 0; // outstanding loan balance (USD)
 
     for (let i = 0; i < totalYears; i++) {
       const age = retirementAge + i;
@@ -881,7 +894,34 @@
       const trend = PL.trendPrice(model, date);
       // Burn inflates from today, not from retirement
       const burn = annualBurn * Math.pow(1 + burnGrowth, yearOffset);
-      const btcNeeded = burn / price;
+
+      let btcNeeded;
+      let loanAction = null;
+
+      if (loanEnabled && trend > 0) {
+        const multiple = price / trend;
+
+        // Accrue interest on existing debt
+        if (debt > 0) debt *= (1 + loanRate);
+
+        if (multiple < loanBorrowBelow) {
+          // Below threshold: borrow fiat instead of selling BTC at a loss
+          debt += burn;
+          btcNeeded = 0;
+          loanAction = 'borrow';
+        } else if (multiple >= loanRepayAbove && debt > 0) {
+          // Above threshold with debt: sell BTC for expenses + full debt repayment
+          btcNeeded = (burn + debt) / price;
+          debt = 0;
+          loanAction = 'repay';
+        } else {
+          // Neutral zone or above trend with no debt: sell BTC normally
+          btcNeeded = burn / price;
+          loanAction = debt > 0 ? 'hold' : null;
+        }
+      } else {
+        btcNeeded = burn / price;
+      }
 
       // Storm/forever classification: does the user's stack cover remaining needs
       // while keeping withdrawal below the forever SWR threshold?
@@ -896,8 +936,18 @@
 
       annualData.push({
         year, age, burn, price, trend, btcNeeded,
-        effectiveK, swr, ratio, isForever
+        effectiveK, swr, ratio, isForever,
+        debt: loanEnabled ? debt : 0,
+        loanAction
       });
+    }
+
+    // Settle any remaining debt at end of life from BTC
+    if (loanEnabled && debt > 0 && annualData.length > 0) {
+      const last = annualData[annualData.length - 1];
+      last.btcNeeded += debt / last.price;
+      last.loanAction = 'settle';
+      last.debt = 0;
     }
 
     // Snap stormEndAge to the next 5-year chunk boundary so bars are cleanly

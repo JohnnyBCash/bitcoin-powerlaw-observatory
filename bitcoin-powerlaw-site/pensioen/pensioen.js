@@ -149,6 +149,9 @@
       initialK = R.currentSigmaK(currentModel, calculatedSigma, livePrice);
     }
 
+    // Loan toggle
+    var loansOn = $('pen-loans') && $('pen-loans').checked;
+
     return {
       currentAge: age,
       retirementAge: retirementAge || age,
@@ -159,7 +162,11 @@
       model: currentModel,
       sigma: calculatedSigma,
       scenarioMode: scenarioMode,
-      initialK: initialK
+      initialK: initialK,
+      loanEnabled: loansOn,
+      loanBorrowBelow: 0.9,
+      loanRepayAbove: 1.0,
+      loanRate: 0.10
     };
   }
 
@@ -404,6 +411,10 @@
       var el = $(id);
       if (el) el.addEventListener('input', scheduleCalculation);
     });
+
+    // Loan toggle
+    var loanToggle = $('pen-loans');
+    if (loanToggle) loanToggle.addEventListener('change', scheduleCalculation);
 
     // More options toggle
     var moreBtn = $('pen-more-btn');
