@@ -373,6 +373,13 @@ input[type="range"]::-moz-range-thumb {
   padding: 2px 10px; border-radius: 100px;
 }
 .comp-trad { color: var(--muted); }
+.verdict-surplus {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  margin-top: 8px;
+}
+.surplus-positive { color: var(--green-text); }
+.surplus-negative { color: var(--red); }
 
 /* === RESULTS PANEL === */
 .results-panel {

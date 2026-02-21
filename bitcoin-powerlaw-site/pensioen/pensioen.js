@@ -201,6 +201,10 @@
     var investBtc = (livePriceEUR && livePriceEUR > 0) ? investEUR / livePriceEUR : 0;
     var baseStack = existingBtc + investBtc;
 
+    // Always compute "now" result for surplus/shortfall display
+    var nowParams = getParams(baseParams.currentAge, baseStack);
+    var nowResult = V2.computeLifetimeBTC(nowParams);
+
     var bestAge = null;
     var bestResult = null;
 
@@ -220,7 +224,7 @@
       }
     }
 
-    return { retireAge: bestAge, result: bestResult };
+    return { retireAge: bestAge, result: bestResult, nowResult: nowResult };
   }
 
   // ── Main Calculation ────────────────────────────────────────
@@ -245,6 +249,7 @@
     renderBars(result);
     renderStormForever(retireAge, result);
     renderInsight(result);
+    renderSurplus(result, found.nowResult);
   }
 
   // ── Display Updates ─────────────────────────────────────────
@@ -396,6 +401,26 @@
       { bold: result.stormYears + ' jaar' },
       { text: ' uitgegeven. Daarna maakt de power law je stack praktisch onuitputtelijk.' }
     ]);
+  }
+
+  // ── Surplus / Shortfall ────────────────────────────────────
+  // Always shows gap vs retiring NOW (current age), regardless of found age.
+  // Positive = more than enough today, negative = shortfall to close.
+  function renderSurplus(result, nowResult) {
+    var el = $('pen-surplus');
+    if (!el) return;
+
+    if (!nowResult) { el.textContent = '\u00A0'; return; }
+
+    var surplus = nowResult.surplus; // myStack - totalBTC at current age
+
+    if (surplus >= 0) {
+      el.className = 'verdict-surplus surplus-positive';
+      el.textContent = '+' + fmtBTC(surplus) + ' \u20BF over';
+    } else {
+      el.className = 'verdict-surplus surplus-negative';
+      el.textContent = 'Nog ' + fmtBTC(Math.abs(surplus)) + ' \u20BF nodig om nu te stoppen';
+    }
   }
 
   // ── Input Listeners ─────────────────────────────────────────
