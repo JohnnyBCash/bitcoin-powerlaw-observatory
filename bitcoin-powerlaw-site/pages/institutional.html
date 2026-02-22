@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rethinking Bitcoin Risk &mdash; A Power Law Framework for Institutional Allocation</title>
+<meta name="description" content="A data-driven analysis of Bitcoin allocation for institutional portfolios using power law mathematics and Kelly criterion positioning.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700;8..60,900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="../css/institutional.css">
+</head>
+<body>
+
+<!-- ── Nav ────────────────────────────────────────────────── -->
+<nav class="nav">
+  <div class="nav-brand">Bitcoin Power Law Observatory</div>
+  <div class="nav-right">
+    <div class="nav-price">
+      <span class="live-dot"></span>
+      BTC <span class="price-value" id="nav-live-price">...</span>
+    </div>
+    <a href="#cta" class="nav-cta">Request Analysis</a>
+  </div>
+</nav>
+
+
+<!-- ═══════ BEAT 1: THE PARADOX ═══════ -->
+<section class="hero">
+  <div class="beat-label">The Paradox</div>
+  <h1>The best performing asset of the last decade is also the most underallocated.</h1>
+  <p class="hero-lead">Bitcoin has been the top performing asset class in the majority of the last ten years. Yet most institutional portfolios allocate less than 2%. The gap between performance and allocation is not explained by the asset. It is explained by the model.</p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="stat-label">Years as top performing asset</div>
+      <div class="stat-value" id="paradox-years">...</div>
+      <div class="stat-context" id="paradox-years-range">2014&ndash;2024</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Typical institutional allocation</div>
+      <div class="stat-value" style="color: var(--red);">&le; 2%</div>
+      <div class="stat-context">Mean-variance optimized portfolios</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">The question</div>
+      <div class="stat-value" style="font-size: 24px; line-height: 1.4;">Is the asset wrong, or is the model?</div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══════ BEAT 2: THE DIAGNOSIS ═══════ -->
+<div class="alt-bg">
+  <section class="narrow">
+    <div class="beat-label">The Diagnosis</div>
+    <h2>Your volatility model is broken.</h2>
+    <p>Institutional allocation is driven by mean-variance optimization. The process is straightforward: estimate volatility, estimate returns, optimize. The problem is not the process. The problem is the volatility input.</p>
+    <p>Standard models measure Bitcoin's volatility as the standard deviation of returns, assuming a normal distribution. Bitcoin does not follow a normal distribution. It follows a power law &mdash; the same mathematical pattern governing network effects, city growth, and systems that compound over centuries.</p>
+    <p>When you measure deviation from the wrong baseline, you get the wrong volatility. When you get the wrong volatility, the optimizer produces the wrong allocation. The 2% number is not conservative. It is the output of a measurement error.</p>
+
+    <table class="vol-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Traditional model</th>
+          <th class="hl">Power law-adjusted</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Risk measure</td>
+          <td id="diag-trad-vol">...</td>
+          <td class="hl" id="diag-pl-vol">...</td>
+        </tr>
+        <tr>
+          <td>Max drawdown from baseline</td>
+          <td id="diag-trad-dd">...</td>
+          <td class="hl" id="diag-pl-dd">...</td>
+        </tr>
+        <tr>
+          <td>Recovery pattern</td>
+          <td id="diag-trad-recovery">...</td>
+          <td class="hl" id="diag-pl-recovery">...</td>
+        </tr>
+        <tr>
+          <td>Tail risk</td>
+          <td id="diag-trad-tail">...</td>
+          <td class="hl" id="diag-pl-tail">...</td>
+        </tr>
+        <tr>
+          <td>Risk trajectory</td>
+          <td id="diag-trad-trajectory">...</td>
+          <td class="hl" id="diag-pl-trajectory">...</td>
+        </tr>
+        <tr>
+          <td>Implied allocation</td>
+          <td id="diag-trad-alloc">...</td>
+          <td class="hl" id="diag-pl-alloc">...</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</div>
+
+
+<!-- ═══════ BEAT 3: THE CORRECTION ═══════ -->
+<section class="wide">
+  <div class="beat-label">The Correction</div>
+  <h2>The correct lens.</h2>
+  <p>The same fifteen years of Bitcoin price data. Three different scales. The asset appears to be either one of the most dangerous or one of the most predictable in existence &mdash; depending entirely on how you measure it.</p>
+
+  <div style="margin-top: 48px;">
+    <div class="lens-tabs">
+      <button class="lens-tab" data-lens="linear" onclick="switchLens('linear')">Linear Scale</button>
+      <button class="lens-tab" data-lens="log" onclick="switchLens('log')">Log Scale</button>
+      <button class="lens-tab active" data-lens="loglog" onclick="switchLens('loglog')">Log-Log Scale (Power Law)</button>
+    </div>
+    <div class="lens-chart">
+      <div class="lens-chart-area">
+        <canvas id="three-lens-canvas"></canvas>
+      </div>
+      <div class="lens-metrics">
+        <div class="lens-metric">
+          <div class="m-label" id="metric-vol-label">Annualized Volatility</div>
+          <div class="m-value" id="metric-vol">...</div>
+        </div>
+        <div class="lens-metric">
+          <div class="m-label">Max Drawdown</div>
+          <div class="m-value" id="metric-dd">...</div>
+        </div>
+        <div class="lens-metric">
+          <div class="m-label">Model R&sup2;</div>
+          <div class="m-value" id="metric-r2">...</div>
+        </div>
+        <div class="lens-metric">
+          <div class="m-label">Risk Assessment</div>
+          <div class="m-value" id="metric-risk">...</div>
+        </div>
+      </div>
+    </div>
+    <div class="lens-desc" id="lens-desc-text">
+      Loading...
+    </div>
+  </div>
+
+  <div class="credits">
+    The power law model was established by <strong>Giovanni Santostasi</strong>. The insight of evaluating Bitcoin through a logarithmic lens was articulated by <strong>Fred Krueger</strong> and <strong>Stephan Perrenod</strong> (Moneyordebt).
+  </div>
+</section>
+
+
+<!-- ═══════ BEAT 4: THE STRATEGY ═══════ -->
+<div class="alt-bg">
+  <section class="narrow">
+    <div class="beat-label">The Strategy</div>
+    <h2>Kelly criterion meets power law.</h2>
+    <p>The Kelly criterion provides the mathematically optimal position size when expected returns and variance are known. Applied to Bitcoin with power law-adjusted inputs, it produces a dynamic allocation that responds to where price sits relative to the trend:</p>
+
+    <div class="formula-box">
+      <div class="formula">f* = &mu; / &sigma;&sup2;</div>
+      <div class="formula-note">
+        Where &mu; = trend growth + mean reversion &minus; risk-free rate, and &sigma;&sup2; = variance of annual returns.<br>
+        Quarter-Kelly applied for institutional risk management. Reversion horizon derived from Perrenod&rsquo;s &lambda; = 2.007 cycle model.
+      </div>
+    </div>
+
+    <div class="kelly-grid">
+      <div class="kelly-cell below">
+        <div class="kc-pos">Below trend</div>
+        <div class="kc-alloc" id="kelly-below-alloc">...</div>
+        <div class="kc-note">High probability of upward reversion</div>
+      </div>
+      <div class="kelly-cell at">
+        <div class="kc-pos">At trend</div>
+        <div class="kc-alloc" id="kelly-at-alloc">...</div>
+        <div class="kc-note">Neutral &mdash; maintain base allocation</div>
+      </div>
+      <div class="kelly-cell above">
+        <div class="kc-pos">Above trend</div>
+        <div class="kc-alloc" id="kelly-above-alloc">...</div>
+        <div class="kc-note">Take profit, rebalance into other assets</div>
+      </div>
+    </div>
+
+    <p>This is not market timing. This is systematic risk management based on a model with 95%+ explanatory power. The rebalancing is quantifiable and emotionally neutral.</p>
+
+    <div class="now-box">
+      <div class="now-item">
+        <div class="ni-label">Current price / trend</div>
+        <div class="ni-value orange" id="now-mult">...</div>
+      </div>
+      <div class="now-item">
+        <div class="ni-label">Current position</div>
+        <div class="ni-value green" id="now-position">...</div>
+      </div>
+      <div class="now-item">
+        <div class="ni-label">Kelly-optimal allocation</div>
+        <div class="ni-value green" id="now-allocation">...</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<!-- ═══════ BEAT 5: THE PROOF ═══════ -->
+<section class="wide">
+  <div class="beat-label">The Proof</div>
+  <h2>Would this have worked?</h2>
+  <p>Two portfolios. Same starting capital: &euro;10 million. Same period: January 2014 &ndash; December 2024. Same asset universe. Rebalanced quarterly. The only difference is how Bitcoin risk is measured.</p>
+
+  <div class="bt-grid">
+    <div class="bt-card" id="portfolio-a">
+      <div class="bt-label">Portfolio A &mdash; Traditional Risk Model</div>
+      <div class="bt-row"><span class="bt-k">Bitcoin allocation</span><span class="bt-v" id="pa-alloc">...</span></div>
+      <div class="bt-row"><span class="bt-k">Total return</span><span class="bt-v" id="pa-total-return">...</span></div>
+      <div class="bt-row"><span class="bt-k">Annualized return</span><span class="bt-v" id="pa-ann-return">...</span></div>
+      <div class="bt-row"><span class="bt-k">Maximum drawdown</span><span class="bt-v" id="pa-max-dd">...</span></div>
+      <div class="bt-row"><span class="bt-k">Sharpe ratio</span><span class="bt-v" id="pa-sharpe">...</span></div>
+      <div class="bt-row"><span class="bt-k">Sortino ratio</span><span class="bt-v" id="pa-sortino">...</span></div>
+    </div>
+    <div class="bt-card pl" id="portfolio-b">
+      <div class="bt-label">Portfolio B &mdash; Power Law-Adjusted</div>
+      <div class="bt-row"><span class="bt-k">Bitcoin allocation</span><span class="bt-v" id="pb-alloc">...</span></div>
+      <div class="bt-row"><span class="bt-k">Total return</span><span class="bt-v" id="pb-total-return">...</span></div>
+      <div class="bt-row"><span class="bt-k">Annualized return</span><span class="bt-v" id="pb-ann-return">...</span></div>
+      <div class="bt-row"><span class="bt-k">Maximum drawdown</span><span class="bt-v" id="pb-max-dd">...</span></div>
+      <div class="bt-row"><span class="bt-k">Sharpe ratio</span><span class="bt-v" id="pb-sharpe">...</span></div>
+      <div class="bt-row"><span class="bt-k">Sortino ratio</span><span class="bt-v" id="pb-sortino">...</span></div>
+    </div>
+  </div>
+
+  <div class="bt-chart-area">
+    <canvas id="backtest-canvas"></canvas>
+  </div>
+
+  <div class="cost-box">
+    <div class="cb-label">Cost of the traditional model on &euro;100M over 10 years</div>
+    <div class="cb-value" id="cost-value">...</div>
+    <div class="cb-note">The measured cost of applying the wrong volatility model to a power law asset.</div>
+  </div>
+</section>
+
+
+<!-- ═══════ CTA ═══════ -->
+<section class="cta" id="cta">
+  <h2>The correction starts with a conversation.</h2>
+  <p>A confidential analysis applying this framework to your portfolio &mdash; with power law projections, Kelly-optimized positioning, and dynamic rebalancing strategy.</p>
+  <a href="#" class="cta-btn">REQUEST A CONFIDENTIAL PORTFOLIO ANALYSIS</a>
+  <div class="cta-meta">45 minutes &middot; Video or in-person &middot; Confidential</div>
+</section>
+
+
+<!-- ── Footer ────────────────────────────────────────────────── -->
+<div class="footer">
+  <p>The power law framework was established by Giovanni Santostasi. The logarithmic perspective on Bitcoin volatility was articulated by Fred Krueger and Stephan Perrenod (Moneyordebt). The institutional allocation framework presented here was developed by the Bitcoin Power Law Observatory.</p>
+  <br>
+  <p>This paper is an educational and analytical tool. It does not constitute financial advice. Past performance does not guarantee future results. All backtest results computed from historical data; methodology available upon request.</p>
+</div>
+
+
+<!-- ── Scripts ────────────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+<script src="../js/powerlaw.js"></script>
+<script src="../js/institutional.js"></script>
+
+</body>
+</html>
